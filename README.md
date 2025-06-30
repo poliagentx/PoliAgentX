@@ -6,7 +6,7 @@
 It is advisable to have a virtual environment for the project. NB: Make sure python is installed (preferably version 3.10 or later).
 Assuming the virtual environment name is venv:
 
-**Linux:**
+**Linux:**  
 Navigate to the folder where the application is to be run from.
 Install pip sudo apt-get install python3-pip.
 Install the virtual environment sudo pip3 install virtualenv.
