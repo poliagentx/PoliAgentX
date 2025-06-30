@@ -31,7 +31,7 @@ Clone the project git clone <PROJECT_GIT_URL>
 Make sure the virtual environment is activated
 Run pip install -r requirements.txt to install all the required dependencies. They are listed in the requirements.txt file found in the root folder of the project.  
 
-3. **Running the app**            
+3.**Running the app**            
 Assuming the app runs on port 8000, 
 
 **One-time running**   
@@ -61,11 +61,6 @@ Install the virtual environment pip install virtualenv.
 Create the virtual environment virtualenv venv.
 Activate the virtual environment venv\Scripts\activate. To deactivate the virtual environment deactivate.
 
-**2. Cloning the project**   
-Navigate into the project's directory
-Clone the project git clone <PROJECT_GIT_URL>
-Make sure the virtual environment is activated
-Run pip install -r requirements.txt to install all the required dependencies. They are listed in the requirements.txt file found in the root folder of the project.  
 
 
 
