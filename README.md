@@ -19,7 +19,7 @@ Proceed to follow the steps outlined for Linux above to set up a virtual environ
 Navigate to the folder where the application is to be run from.
 Install the virtual environment pip install virtualenv.
 Create the virtual environment virtualenv venv.
-Activate the virtual environment venv\Scripts\activate. To deactivate the virtual environment deactivate.
+Activate the virtual environment venv\Scripts\activate. To deactivate the virtual environment deactivate.   
 **2. Cloning the project**
 Navigate into the project's directory
 Clone the project git clone <PROJECT_GIT_URL>
