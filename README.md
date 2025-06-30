@@ -15,11 +15,11 @@ Activate the virtual environment source venv/bin/activate. To deactivate the vir
 
 **Windows:**   
 
-**Using WSL**   
+1.**Using WSL**   
 Set up WSL (Windows Subsystem for Linux) in order to take full advantage of all the functionality of virtual environments on Windows 10. This allows the running of a full Linux distribution within Windows.
 Proceed to follow the steps outlined for Linux above to set up a virtual environment.  
 
-**Without WSL**   
+2.**Without WSL**   
 Navigate to the folder where the application is to be run from.
 Install the virtual environment pip install virtualenv.
 Create the virtual environment virtualenv venv.
@@ -51,11 +51,11 @@ Create the virtual environment virtualenv venv.
 Activate the virtual environment source venv/bin/activate. To deactivate the virtual environment deactivate.
 
 **Windows:**  
-**Using WSL**  
+1.**Using WSL**  
 Set up WSL (Windows Subsystem for Linux) in order to take full advantage of all the functionality of virtual environments on Windows 10. This allows the running of a full Linux distribution within Windows.
 Proceed to follow the steps outlined for Linux above to set up a virtual environment.
 
-**Without WSL**    
+2.**Without WSL**    
 Navigate to the folder where the application is to be run from.
 Install the virtual environment pip install virtualenv.
 Create the virtual environment virtualenv venv.
