@@ -1,0 +1,30 @@
+{% load static tailwind_tags %}
+
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="keywords" content="PPI-KENYA, Poliagentx">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Poliagentx{% endblock %}</title>
+    
+    {% tailwind_css %}  {# ✅ Includes Tailwind-generated CSS #}
+</head>
+<body class="bg-white text-black">
+
+  <header class="sticky top-0 left-0 w-full bg-[#D9D9D9] shadow-md z-50">
+    <nav class="flex justify-start items-center w-[90%] mx-auto py-2">
+      <button class="bg-[#6969BF] text-white font-semibold px-4 py-2 rounded flex items-center space-x-2">
+        <span>LOGO</span>
+      </button>
+    </nav>
+  </header>
+
+  <main class="flex-grow w-[90%] mx-auto pt-[40px] pb-[40px] z-40">
+    {% block content %}
+    <!-- Your page content goes here -->
+    {% endblock %}
+  </main>
+
+</body>
+</html>
