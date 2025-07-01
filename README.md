@@ -40,8 +40,7 @@ Run pip install -r requirements.txt to install all the required dependencies. Th
 Assuming the app runs on port 8000, 
 
 **One-time running**   
-**To run the application**
-
+**To run the application:**   
 Navigate to the project's directory in the terminal.
 Run the following command: python manage.py runserver. Please note that if you are using a python version that requires you to use python3, then use python3 manage.py runserver
 Open a browser and go the following link: http://127.0.0.1:8000.
