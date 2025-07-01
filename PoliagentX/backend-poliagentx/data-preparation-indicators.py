@@ -37,7 +37,7 @@ successRates[successRates==1] = .95
 df['successRates'] = successRates
 
 df.loc[df.I0==df.IF, 'IF'] = df.loc[df.I0==df.IF, 'IF']*1.05
-df['qm'] = -0.33 # quality of monitoring
+df['qm'] = -0.30 # quality of monitoring
 df['rl'] = -0.33 # quality of the rule of law
 
 os.makedirs('clean_data', exist_ok=True)
