@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html>
+ <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Policy Priority Inference - AI-Driven Policy Analysis</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="externalstyle.css">
+    <style>
+        /* styling for the about section */
+        .containerX {
+        /* max-width: 1000px; */
+        margin: 0 auto;
+        padding: 60px 20px;
+        /* background-color: #0e0e0e; */
+        font-family: Arial;
+
+        }
+
+        .containerX ,h1 h2 {
+        color: #DA70D6;
+        font-family: 'Times New Roman', Times, serif;
+        }
+
+        .containerX h1 {
+        font-size: 3em;
+        margin-bottom: 10px;
+        }
+
+        .containerX h2 {
+        font-size: 2em;
+        margin-top: 40px;
+        margin-bottom: 10px;
+        }
+
+        .containerX p {
+        font-size: 1.1em;
+        color: #dddddd;
+        }
+
+        .question {
+        font-size: 1.3em;
+        color: #DA70D6;
+        margin-top: 30px;
+        margin-bottom: 10px;
+        font-weight: bold;
+        }
+
+        /* styling for the footer section */
+      
+        .main-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+        }
+
+        .footer {
+            background: #000000;
+            color: #db50d7;
+            padding: 4rem 0 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #ff6b35, #f7931e, #00d4ff, #7c3aed);
+            background-size: 400% 400%;
+            animation: gradientFlow 6s ease infinite;
+        }
+
+        @keyframes gradientFlow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .footer-brand {
+            position: relative;
+        }
+
+        .footer-logo {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(45deg, #db50d7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            letter-spacing: -0.02em;
+            color: #db50d7;
+        }
+
+        .footer-description {
+            color: #a0a0a0;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+
+        .social-icons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .social-icon {
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #a0a0a0;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .social-icon:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .footer-section h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: white;
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-links a {
+            color: #a0a0a0;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .footer-links a:hover {
+            color: #00d4ff;
+            transform: translateX(4px);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .footer-bottom-left {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .copyright {
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        .footer-bottom-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .footer-bottom-links a {
+            color: #a0a0a0;
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: color 0.3s ease;
+        }
+
+        .footer-bottom-links a:hover {
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .footer-bottom-left {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+
+        /* Floating particles effect */
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(0, 212, 255, 0.3);
+            border-radius: 50%;
+            animation: float 20s infinite linear;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) translateX(100px);
+                opacity: 0;
+            }
+        }
+
+    </style>
+ </head>
+ <body>
+    <!-- header section -->
+    <header>
+        <nav class="container">
+            <div class="logo">
+                <div class="logo-icon">📊</div>
+                <span>PoliAgentX</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#home">Home</a></li>
+                <li><a href=".containerx">About Us</a></li>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#team">Team</a></li>
+            </ul>
+        </nav>
+    </header>
+    <!-- hero section -->
+    <section class="hero" id="home">
+        <div class="container">
+            <div class="hero-content">
+                <h1>PoliAgentX</h1>
+                <p>A tool aimed to provide policymakers with information to effectively participate in evidence-based policy
+                    advocacy, resulting in efficient government resource allocation and better development outcomes.
+                </p>
+            </div>
+        </div>
+    </section>
+    
+    <!-- about section -->
+  <section class="containerX">
+    <h1>About PoliAgentX</h1>
+    <p>
+      PoliAgentX is a data-driven policy planning platform tailored for Kenya. Inspired by the global Policy Priority Inference (PPI) tool, we empower governments to identify real policy priorities, optimize public spending, and design smarter development strategies.
+    </p>
+    <div class="question-card">
+    <div class="question">What problem are we trying to solve?</div>
+    <p>
+      In many governments, there is a disconnect between stated goals and actual spending. Resources are limited, and decisions are often influenced by political or institutional constraints rather than data. This results in inefficiencies, unaddressed development gaps, and missed opportunities for progress.
+    </p>
+    </div>
+    <div class="question-card">
+    <div class="question">How do we plan to solve it?</div>
+    <p>
+      PoliAgentX uses policy simulations, expenditure data, and governance modeling to reveal what priorities are really being implemented. It helps decision-makers test new policy mixes and align resources with the areas that need them most. Our goal is to support a smarter, more transparent, and impact-focused public sector in Kenya.
+    </p>
+    </div>
+    <div class="question-card">
+    <div class="question">What is our website about?</div>
+    <p>
+      This site introduces PoliAgentX, showcases how it works, and demonstrates how it can help Kenya improve policy decisions. You'll find insights, project details, and ways to get involved or learn more. We're here to bring evidence-based planning to the heart of government action.
+    </p>
+    </div>
+  </section>
+
+  <!-- feature section-->
+    <!--section containing the two parts of the main container-->
+   <section class = "featuresect">
+
+    <!--div containing the nav main header-->
+     <div class="feature_nav">
+      <h1>LEARN THE FEATURES AND THE TEAM BEHIND IT</h1>
+     </div>
+
+    <!--div two containing the cards-->
+      <div class="feature">
+
+        <div class = "card">
+          <div class="style">  
+          <h2>Insight to the future</h2>
+          <p>
+            Using the latest AI technology our platform offers you<br />
+             the power to run different scenarios<br />
+            and see possible outcomes of the future based on the<br />
+            policies to be implemented. This helps in determining<br />
+            where to put effort to reach your goals quicker!<br />
+          </p>
+          <div class="img"></div>
+          </div>
+        </div>
+        <div class="card2">
+         <div class="style">  
+            <h2>Ease of use</h2>
+            <p>
+                Our application offers a very user friendly interface ensuring<br />
+                you focus on your task.Not only do <br />
+                we give you an easy way to perform your task,<br />
+                but also are with you every step of the way with the help button<br />
+                in every page.<br />
+            </p>
+          </div>
+          <div class="image1"></div>
+        </div>
+        <div class = "card3">
+         <div class="style">   
+         <h2>Understandable results</h2>
+          <p>
+            With our platform,we provide results with that are <br />
+            easy to read and understand. They are provided in various formats<br />
+            that can be analyzed using various tools to get the <br />
+            desired information. Our platform also allows users to  <br />
+            download the results and share them with others
+            for reference. <br /> 
+          </p>
+          <div class="image2"></div>
+          </div>
+        </div>
+        
+     </div>                            
+   </section>
+
+   <!-- the team header -->
+    <!-- <section class="teamheader">
+        <h1>Meet the team</h1>
+    </section> -->
+
+    <!-- team section  -->
+    <section class="team">
+     <div class="george">
+        <div class="img">
+
+        </div>
+        <div class="description">
+            <h3>
+                George
+            </h3><br />
+            <p>
+                team lead
+            </p><br />
+            <p>
+                Data analyst
+            </p><br />
+        </div>
+     </div>
+     <div class="lincoln">
+        <div class="img6">
+
+        </div>
+        <div class="description">
+            <h3>
+                Lincoln muraguri
+            </h3><br />
+            <p>
+               Backend developer
+            </p><br />
+            <p>
+                
+            </p><br />
+        </div>    
+     </div>
+     <div class="sundra">
+        <div class="img2">
+
+        </div>
+        <div class="description">
+            <h3>
+                sundra
+            </h3><br />
+            <p>
+                front-end developr
+            </p><br />
+            <p>
+                
+            </p><br />
+        </div>
+     </div>
+     <div class="brian">
+        <div class="img3">
+
+        </div>
+        <div class="description">
+            <h3>
+                Brian
+            </h3><br />
+            <p>
+                UI\Ux 
+            </p><br />
+            <p>
+                
+            </p><br />
+        </div>
+     </div>
+     <div class="brigit">
+        <div class="img4">
+
+        </div>
+        <div class="description">
+            <h3>
+                Bridgit
+            </h3><br />
+            <p>
+                front-end developer
+            </p><br />
+            <p>
+                
+            </p><br />
+        </div>
+     </div>
+          <div class="hannah">
+        <div class="img5">
+
+        </div>
+        <div class="description">
+            <h3>
+                Hannah
+            </h3><br />
+            <p>
+               communication
+            </p><br />
+            <p>
+                
+            </p><br />
+        </div>
+     </div>
+    </section>
+
+        <footer class="footer">
+        <!-- Floating particles -->
+        <div class="particle" style="left: 10%; animation-delay: 0s;"></div>
+        <div class="particle" style="left: 20%; animation-delay: 5s;"></div>
+        <div class="particle" style="left: 30%; animation-delay: 10s;"></div>
+        <div class="particle" style="left: 40%; animation-delay: 15s;"></div>
+        <div class="particle" style="left: 50%; animation-delay: 20s;"></div>
+        <div class="particle" style="left: 60%; animation-delay: 3s;"></div>
+        <div class="particle" style="left: 70%; animation-delay: 8s;"></div>
+        <div class="particle" style="left: 80%; animation-delay: 13s;"></div>
+        <div class="particle" style="left: 90%; animation-delay: 18s;"></div>
+
+        <div class="footer-container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div class="footer-logo">PoliAgent X</div>
+                    <p class="footer-description">
+                        Advanced political intelligence and analysis platform. Empowering informed decisions through cutting-edge data analytics and AI-driven insights.
+                    </p>
+                    <div class="social-icons">
+                        <a href="#" class="social-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="social-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="social-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="social-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.174-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.72-.359-1.781c0-1.663.967-2.911 2.168-2.911 1.024 0 1.518.769 1.518 1.688 0 1.029-.653 2.567-.992 3.992-.285 1.193.6 2.165 1.775 2.165 2.128 0 3.768-2.245 3.768-5.487 0-2.861-2.063-4.869-5.008-4.869-3.41 0-5.409 2.562-5.409 5.199 0 1.033.394 2.143.889 2.741.099.12.112.225.085.345-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.402.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.357-.629-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24.009 12.017 24c6.624 0 11.99-5.367 11.99-11.988C24.007 5.367 18.641.001 12.017.001z"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="footer-section">
+                    <h3>Platform</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Analytics Dashboard</a></li>
+                        <li><a href="#">Policy Tracker</a></li>
+                        <li><a href="#">Election Insights</a></li>
+                        <li><a href="#">AI Predictions</a></li>
+                        <li><a href="#">Data API</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <div class="footer-bottom-left">
+                    <div class="copyright">
+                        © 2025 PoliAgent X. All rights reserved.
+                    </div>
+                    <div class="footer-bottom-links">
+                        <a href="#">Privacy Policy</a>
+                        <a href="#">Terms of Service</a>
+                        <a href="#">Cookie Policy</a>
+                    </div>
+                </div>
+                <div style="color: #666; font-size: 0.85rem;">
+                    Made with precision & intelligence
+                </div>
+            </div>
+        </div>
+            </footer>
+    </div>
+ </body>
+</html>
