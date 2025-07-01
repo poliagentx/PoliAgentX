@@ -1,3 +1,10 @@
+**Summary**  
+Our project is built using django for the backend and strictly  HTML/ Taiwind-CSS for the frontend.
+**Structure of our project** 
+**Django ProjectName**: Poliagent
+**Django Appname**: PoliagentX
+**Tailwind appname**: theme
+**Theme ,tailwind app features**
 
 
 
@@ -31,7 +38,7 @@ Clone the project git clone <PROJECT_GIT_URL>
 Make sure the virtual environment is activated
 Run pip install -r requirements.txt to install all the required dependencies. They are listed in the requirements.txt file found in the root folder of the project.  
 
-3.**Running the app**            
+3.**Running the django app**            
 Assuming the app runs on port 8000, 
 
 **One-time running**   
@@ -61,8 +68,16 @@ Install the virtual environment pip install virtualenv.
 Create the virtual environment virtualenv venv.
 Activate the virtual environment venv\Scripts\activate. To deactivate the virtual environment deactivate.
 
+**Starting taiwind development server**   
+Run the command: python manage.py tailwind start   
+NB:This command compiles your inline tailwind css styles(utility classes) on the the styles.css.
 
-
+**Adding & editing django templates(Html files)**     
+Add you html files in the PoliagentX templates directory
+Remember to extend the base.html file for inheritance of common features({% extend base.html %}.
+Embedd your html content in betwen {% block content %} & {% endblock %}. Where this will automatically add your content intpo the <main></main> block in the base.html   
+NB:Your content must only contain the neccesary layout/html tags.Some tags are already in the base.html i.e <html>,<body>,<head> are inherited from the base.html hence don't include them in your content.      
+**NB:take advantage of the tailwind cheat sheat**
 
   
 
