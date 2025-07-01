@@ -3,10 +3,7 @@ Our project is built using django for the backend and strictly  HTML/ Taiwind-CS
 **Structure of our project**       
 **Django ProjectName**: Poliagent   
 **Django Appname**: PoliagentX    
-**Tailwind appname**: theme    
-**Theme ,tailwind app features**   
-
-
+**Tailwind appname**: theme
 
 **Setup**  
 1.**Creating a virtual environment**  
