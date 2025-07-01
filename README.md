@@ -9,7 +9,7 @@ Our project is built using django for the backend and strictly  HTML/ Taiwind-CS
 
 
 **Setup**  
-1. **Creating a virtual environment**  
+1.**Creating a virtual environment**  
 It is advisable to have a virtual environment for the project. NB: Make sure python is installed (preferably version 3.10 or later).
 Assuming the virtual environment name is venv:
 
