@@ -136,3 +136,13 @@ class Uploaded_indicators(forms.Form):
 #                 css_class='bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded mt-4'
 #             )
 #         )
+
+def process_default_expenditure():
+    pass  # Placeholder for future implementation
+
+def uploaded_expenditure_form():
+    pass  # Placeholder for future implementation
+
+def whole_budget_form():
+    pass  # Placeholder for future implementation
+
