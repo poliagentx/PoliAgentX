@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'tailwind',
     'django_browser_reload',
     'PoliagentX',
-    'rest_framework'
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
