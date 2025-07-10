@@ -25,11 +25,15 @@
             padding: 20px 0;
             position: relative;
             z-index: 1000;
+            background-color: black;
+            opacity: 0.9;
+            /* position: fixed; */
+            width: 100%;
         }
 
         nav {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
             animation: slideDown 1s ease-out;
         }
@@ -106,9 +110,14 @@
             align-items: center;
             position: relative;
             overflow: hidden;
+            background-image: url(./house.jpg);
+            background-repeat: no-repeat;
+            background-size: cover;
+            opacity:0.7;
+    
         }
 
-        .hero::before {
+        /* .hero::before {
             content: '';
             position: absolute;
             top: 0;
@@ -118,7 +127,7 @@
             background: radial-gradient(circle at 30% 70%, rgba(218, 112, 214, 0.1) 0%, transparent 50%),
                         radial-gradient(circle at 80% 20%, rgba(218, 112, 214, 0.15) 0%, transparent 50%);
             animation: pulseGlow 4s ease-in-out infinite alternate;
-        }
+        } */
 
         .hero-content {
             position: relative;
@@ -127,7 +136,7 @@
         }
 
         .hero h1 {
-            font-size: 3rem;
+            font-size: 80px;
             font-weight: bold;
             margin-bottom: 40px;
             background: linear-gradient(45deg, #DA70D6, white, #DA70D6);
@@ -139,7 +148,7 @@
         }
 
         .hero p {
-            font-size: 1.2rem;
+            font-size: 30px;
             margin-bottom: 40px;
             opacity: 0.9;
             max-width: 600px;
@@ -209,7 +218,7 @@
 /* PoliAgentX Card Layout Styles */
 
 .containerX {
-  background: linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #000000 100%);
+  /* background: linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #000000 100%); */
   min-height: 100vh;
   padding: 2rem;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -472,16 +481,16 @@
 .team{
     display: grid;
     /* grid-template-rows: auto auto ; */
-    grid-template-columns: auto auto;
-    grid-gap:25px ;
+    grid-template-columns: auto auto auto;
+    grid-gap:10px ;
     justify-content: center;
     /* background-color: black; */
-    height:150vh;
+    height:100vh;
 }
 .george, .brian, .sundra, .lincoln, .brigit,.hannah  {
     background-color: rgb(34, 33, 33);
     height: 300px;
-    width: 500px;
+    width: 400px;
     margin-top: 50px;
     border-radius: 20px;
     display: flex;
@@ -489,7 +498,6 @@
     margin: 20px;
     box-shadow: 0 0 20px  #db50d7 ;
     /* animation: purpleGlow 2s ease-in-out infinite alternate; */
-
 }
 
 /* styling the team divs */
@@ -543,10 +551,10 @@
 }
 .img6{
     flex: 1;
-    background-image: url(./;);
+    background-image: url(./lincoln.jpeg);
     background-position: center;
     background-repeat: no-repeat;
-    background-size: cover;
+    background-size:cover;
     background-attachment: scroll;
     border-radius: 10px;
 }
@@ -568,3 +576,33 @@
     margin: 10px 10px 10px;
 }
 
+/* footer section */
+.head{
+    text-align: center;
+}
+.head h2{
+    color:  #db50d7 ;
+}
+.main-cont{
+    display:flex;
+    flex-direction: row;
+    height: 280px;
+    overflow: hidden;
+}
+.footer div{
+    padding: 20px;
+    flex: 1;
+    text-align: center;
+    font-size: 20px;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.footer div img{
+    height: 180px;
+    width: 200px;
+    border-radius: 20px;
+    /* border:inset  #db50d7 10px; */
+    box-shadow: 0 0 20px  #db50d7 ;
+    margin-top: 15px;
+
+}
