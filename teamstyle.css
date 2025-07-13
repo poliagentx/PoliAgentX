@@ -1,0 +1,120 @@
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: black;
+  color: white;
+  overflow-x: hidden;
+}
+
+header {
+  padding: 20px;
+  background-color: black;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* styling the nav bar  */
+.nav-wrap {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.brand-logo {
+  display: flex;
+  gap: 12px;
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #DA70D6;
+}
+
+.logo-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(45deg, #DA70D6, #ff69b4);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-links {
+  list-style: none;
+  font-size: 20px;
+  color: azure;
+}
+
+.nav-links li {
+  display: inline-block;
+  margin-right: 20px;
+}
+.nav-links a {
+  color: white;
+  text-decoration: none;
+}
+
+.nav-links a:hover {
+  text-decoration: underline;
+}
+
+/* styling the group section */
+
+.group-section {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  padding: 40px;
+}
+
+.person {
+  background-color: #1f1f1f;
+  border-radius: 16px;
+  overflow: hidden;
+  width: 260px;
+  box-shadow: 0 0 15px #db50d7;
+  transition: transform 0.3s ease;
+}
+
+.person:hover {
+  transform: translateY(-8px);
+}
+
+.thumb {
+  height: 180px;
+  background-color: #333;
+  background-position: center;
+  background-size: cover;
+}
+
+.profile {
+  padding: 15px;
+}
+
+.profile h3 {
+  font-size: 22px;
+  margin-bottom: 8px;
+  color: #fff;
+}
+
+.profile p {
+  font-size: 16px;
+  font-weight: 300;
+  margin-bottom: 6px;
+}
+
+.bottom-bar {
+  background-color: #111;
+  text-align: center;
+  padding: 20px;
+  color: #aaa;
+  margin-top: 50px;
+}
