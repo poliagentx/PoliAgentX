@@ -1,28 +1,29 @@
 from django.urls import path, include
+from django.shortcuts import redirect
+from django.conf import settings
+from django.conf.urls.static import static
 from . import views
 from .views import (
     
-    CompleteWorkflowView,
-    WorkflowStatusView,
-    DownloadResultView,
-    BottleneckAnalysisView
+    # CompleteWorkflowView,
+    # WorkflowStatusView,
+    # DownloadResultView,
+    # BottleneckAnalysisView,
+    # ExcelToTableView,
+    upload_expenditure,
+    upload_indicators,
+    download_template,
+    download_budget,
 )
 
 urlpatterns = [
-    # path('', views.example, name='example'),
-
-    # For Django browser reload (live reloading during development)
+ 
     path("__reload__/", include("django_browser_reload.urls")),
 
-    # # API endpoints
-    # path('api/prepare-expenditure/', ExpenditurePreparationView.as_view(), name='prepare-expenditure'),
-    # path('api/prepare-indicators/', IndicatorPreparationView.as_view(), name='prepare-indicators'),
-    # path('api/prepare-interdependencies/', InterdependenciesPreparationView.as_view(), name='prepare-interdependencies'),
-    # path('api/calibrate-model/', ModelCalibrationView.as_view(), name='calibrate-model'),
-    # path('api/run-simulation/', SimulationView.as_view(), name='run-simulation'),
-    
-    path('api/complete-workflow/', CompleteWorkflowView.as_view(), name='complete-workflow'),
-    path('api/workflow-status/<str:run_id>/', WorkflowStatusView.as_view(), name='workflow-status'),
-    path('api/download/<str:run_id>/<str:file_type>/', DownloadResultView.as_view(), name='download-result'),
-    path('api/bottleneck-analysis/', BottleneckAnalysisView.as_view(), name='bottleneck-analysis'),
-]
+    path('upload-indicators/', upload_indicators, name='upload_indicators'),
+    path('', lambda request: redirect('upload_indicators', permanent=False)),
+    path('download_template/', download_template, name='download_template'),
+    path('download_template/', download_budget, name='download_budget'),
+    path('upload-budget/', upload_expenditure, name='upload_expenditure'),
+    path('', lambda request: redirect('upload_expenditure', permanent=False)),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

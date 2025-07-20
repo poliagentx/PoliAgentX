@@ -22,7 +22,7 @@ def run_simulation(
     R = df_indis.instrumental
     qm = df_indis.qm.values
     rl = df_indis.rl.values
-    indis_index = dict([(code, i) for i, code in enumerate(df_indis.seriesCode)])
+    indis_index = dict([(code, i) for i, code in enumerate(df_indis.indicator_label)])
     Imax = df_indis.maxVals.values
     Imin = df_indis.minVals.values
 
@@ -46,7 +46,7 @@ def run_simulation(
     df_rela = pd.read_csv(relational_table_path)
     B_dict = {}
     for index, row in df_rela.iterrows():
-        B_dict[indis_index[row.seriesCode]] = [
+        B_dict[indis_index[row.indicator_label]] = [
             programme for programme in row.values[1::][row.values[1::].astype(str) != 'nan']
         ]
 
@@ -65,9 +65,9 @@ def run_simulation(
 
     new_rows = []
     for i, serie in enumerate(tsI_hat):
-        new_row = [df_indis.iloc[i].seriesCode, df_indis.iloc[i].sdg, df_indis.iloc[i].color] + serie.tolist()
+        new_row = [df_indis.iloc[i].indicator_label, df_indis.iloc[i].sdg, df_indis.iloc[i].color] + serie.tolist()
         new_rows.append(new_row)
-    df_output = pd.DataFrame(new_rows, columns=['seriesCode', 'sdg', 'color'] + list(range(T)))
+    df_output = pd.DataFrame(new_rows, columns=['indicator_label', 'sdg', 'color'] + list(range(T)))
     df_output['goal'] = goals
 
     os.makedirs(output_dir, exist_ok=True)
