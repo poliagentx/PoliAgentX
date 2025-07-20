@@ -85,7 +85,7 @@ def analyze_structural_bottlenecks(
     df_rela = pd.read_csv(relational_table_path)
     B_dict = {}
     for index, row in df_rela.iterrows():
-        B_dict[indis_index[row.seriesCode]] = [
+        B_dict[indis_index[row.indicator_label]] = [
             programme for programme in row.values[1::][row.values[1::].astype(str) != 'nan']
         ]
 
@@ -148,7 +148,7 @@ def analyze_structural_bottlenecks(
             gap_base = goal - tsI_baseline[index, T-1]
             gap_frontier = np.max([0, goal - tsI_frontier[index, T-1]])
             gap_reduction = (gap_base - gap_frontier) / gap_base
-            txt = plt.text(hist_performance, gap_reduction, row.seriesCode, color='black',
+            txt = plt.text(hist_performance, gap_reduction, row.indicator_label, color='black',
                            horizontalalignment='center')
             txt.set_bbox(dict(facecolor='white', alpha=0.25, edgecolor='white'))
     
@@ -180,7 +180,7 @@ def analyze_structural_bottlenecks(
             gap_reduction = 0
         
         results_data.append({
-            'seriesCode': row.seriesCode,
+            'indicator_label': row.indicator_label,
             'sdg': row.sdg,
             'goal': goal,
             'baseline_final': baseline_final,

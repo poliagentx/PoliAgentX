@@ -3,26 +3,41 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Roboto+Serif:ital,opsz,wght@0,8..144,100..900;1,8..144,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
     <meta charset="UTF-8">
     <meta name="keywords" content="PPI-KENYA, Poliagentx">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Poliagentx{% endblock %}</title>
     
-    {% tailwind_css %}  {# ✅ Includes Tailwind-generated CSS #}
+    {% tailwind_css %}
 </head>
-<body class="bg-[#fffffff] text-[#000000]/90">
+<body style="font-family: Poppins;" class="bg-white text-black/90">
 
   <header class="sticky top-0 left-0 w-full bg-[#f2f2f2] shadow-md z-50">
-    <nav class="flex justify-start items-center w-[90%] mx-auto py-2">
-      <button class="bg-[#6969BF]/90 text-[#ffffff] font-semibold px-4 py-2 rounded flex items-center space-x-2">
-        <span>LOGO</span>
-      </button>
+    <nav class="flex justify-between items-center w-[90%] mx-auto py-2">
+      <div class="flex items-center">
+        <img src="{% static 'Images/flag.jpg' %}" alt="Flag" class="h-6 mr-4 object-contain">
+
+      </div>
+      <div class="justify-between text-center text-sm text-gray-500 space-x-1">
+        <a href="{% url 'upload_indicators' %}" class="text-black font-semibold hover:underline">Indicators</a>
+        &gt;
+        {# <a href="{% url 'upload_budget' %}" class="hover:text-black hover:underline">Budget</a> #}
+        &gt;
+       {# <a href="{% url 'upload_network' %}" class="hover:text-black hover:underline">Network (optional)</a> #}
+       {# &gt;#}
+        {# <a href="{% url 'calibration' %}" class="hover:text-black hover:underline">Calibration</a>#}
+        &gt;
+        {# <a href="{% url 'simulation' %}" class="hover:text-black hover:underline">Simulation</a> #}
+      </div>
+      
     </nav>
   </header>
 
   <main class="flex-grow w-[90%] mx-auto pt-[40px] pb-[40px] z-40">
     {% block content %}
-    <!-- Your page content goes here -->
     {% endblock %}
   </main>
 
