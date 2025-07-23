@@ -66,14 +66,14 @@ def upload_expenditure(request):
 
 from django.contrib.staticfiles import finders
 
-def download_template(request):
+def download_indicator_template(request):
     filepath = finders.find('templates/template_indicators.xlsx')
     if filepath and os.path.exists(filepath):
         return FileResponse(open(filepath, 'rb'), as_attachment=True, filename='template_indicators.xlsx')
     else:
         return HttpResponse("Template file not found.", status=404)
 
-def download_budget(request):
+def download_budget_template(request):
     filepath = finders.find('templates/template_budget.xlsx')
     if filepath and os.path.exists(filepath):
         return FileResponse(open(filepath, 'rb'), as_attachment=True, filename='template_budget.xlsx')
