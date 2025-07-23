@@ -143,6 +143,6 @@ def process_default_expenditure():
 def uploaded_expenditure_form():
     pass  # Placeholder for future implementation
 
-def whole_budget_form():
-    pass  # Placeholder for future implementation
+# def whole_budget_form():
+#     pass  # Placeholder for future implementation
 

@@ -13,7 +13,10 @@ from .views import (
     upload_expenditure,
     upload_indicators,
     download_indicator_template,
-   download_budget_template,
+   download_budget_template
+)
+from .forms import(
+    process_default_expenditure
 )
 
 urlpatterns = [
@@ -24,6 +27,7 @@ urlpatterns = [
     path('', lambda request: redirect('upload_indicators', permanent=False)),
     path('download_indicator_template/', download_indicator_template, name='download_indicator_template'),
     path('download_budget_template/', download_budget_template, name='download_budget_template'),
+    path('process_default_expenditure/', process_default_expenditure, name='process_default_expenditure'),
     path('upload-expenditure/', upload_expenditure, name='upload_expenditure'),
     path('', lambda request: redirect('upload_expenditure', permanent=False)),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
