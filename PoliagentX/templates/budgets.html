@@ -35,7 +35,7 @@
                     The second option is to provide a file with the budget disaggregated into expenditure 
                     programmes using the template provided below. <br />
                </p>
-              <button>HELP</button>
+              <a class="button" href="{%   'download_budget_template'    %}">download template</a>
             </div>
         </div>
 
@@ -51,30 +51,41 @@
                             budget figure. It allows limited analysis focused <br>
                             on changes in total budget size.<br>
                         </li>
-                        <li>
-                            <span>Option 2: Upload Disaggregated Budget File:</span><br>
-                            Use the provided template to 
-                            upload a file with detailed expenditure broken down by programmes. 
-                            This enables more detailed analysis.
-                        </li>
                     </ol>
-               </div> 
-                <form action="" method="post" enctype="multipart/form-data">
+                 <form action="{% 'process_default_expenditure' %}" method="post" enctype="multipart/form-data">
                     <!-- <ol> -->
                         <!-- <li> -->
                           <!-- <label for="total-budget">total-budget</label> -->
                            <input type="number" name="total-budget" id="total-budget">                            
                         <!-- </li> -->
+                    <div id="button">
+                        <button type="submit">Next</button>
+                    </div>
+                 </form>                    
+               </div> 
+
+               <div class="lower">
+                    <ol>    
+                        <li>
+                            <span>Option 2: Upload Disaggregated Budget File:</span><br>
+                            Use the provided template to <br/>
+                            upload a file with detailed expenditure broken down by programmes.<br/> 
+                            This enables more detailed analysis.
+                        </li>
+                    </ol>
+
+                    <form action="{% 'upload-expenditure' %}" method="post" enctype="multipart/form-data">
                         <!-- <li> -->
                             <label class="file-drop-area" for="indicator-file">drop your files
                                 <input  type="file" name="indicator-file" id="indicator-file" accept=".xlsxl, .xlsx, .csv".>
                             </label>
                         <!-- </li> -->
-                    <!-- </ol> -->
-                    <div id="button">
-                        <button type="submit">Next</button>
-                    </div>
-                </form>
+                        <!-- </ol> -->
+                       <div id="button">
+                         <button type="submit">Next</button>
+                      </div>
+                    </form>                        
+               </div>
             </div>
         </div>
      </section>

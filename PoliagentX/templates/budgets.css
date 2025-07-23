@@ -47,7 +47,7 @@
     margin-bottom: 10px;
 }
 /* button styling */
-.l2text button, .logo button{
+.button, .logo button{
     background-color: rgb(19, 152, 235);
     color: beige;
     border: 2px;
@@ -58,6 +58,7 @@
     margin-left: 20px;
     font-size: 18px;
     box-shadow: 10px 10px 20px 5px black;
+    text-decoration: none;
 
 } 
 
@@ -72,7 +73,7 @@
 }
 .right-sect-items{
     display: flex;
-    height: 550px;
+    height: 620px;
     flex-direction:column ;
     align-items: center;
     justify-content: space-around;
@@ -80,7 +81,7 @@
     border-radius: 10px;
     background-color: rgb(167, 157, 157);
     margin-top: 100px;
-    width: 90%;
+    width: 95%;
 }
 
 .right-section h2{
@@ -92,20 +93,20 @@
     text-align: center;
     margin-bottom: 10px;
 }
-#upper {
+#upper, .lower {
     font-family: Arial, Helvetica, sans-serif;
     display: flex;
     flex-direction: column;
     /* justify-content: space-evenly; */
     margin-left: 25px;
 }
-#upper li{
+#upper li, .lower li{
     list-style: none;
 }
-#upper ol li{
+#upper ol li,.lower ol li{
     font-size: 19px;
 }
-#upper span{
+#upper span, .lower span{
     text-decoration: underline;
     font-weight: 300;
     color: white;
@@ -115,8 +116,8 @@
 
 .right-section form {
     display: grid;
-    grid-template-rows: 60px 40px;
-    gap: 30px;
+    grid-template-rows: 60px ;
+    gap: 10px;
     /* gap: 20px; */
     font-family: Arial, Helvetica, sans-serif;
     font-weight: 200;
