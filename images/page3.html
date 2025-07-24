@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="page3.css" rel="stylesheet">
+    <title>INTERDEPENDENCIES</title>
+</head>
+<body>
+    <!-- navigation bar -->
+    <nav id="nav">
+        <div class="logo">
+           <!-- <button>logo</button> -->
+        </div>
+    </nav>
+    <!-- main content -->
+     <section id="main3">
+        <div class="left_sect3">
+            <div class="heading">
+                <h1>
+                    STEP3<br />
+                    network<br />
+                    interdependencies<br />
+                </h1>
+            </div>
+            <div class="l3text">
+                <p>
+                    One of the most important discussions in the sustainable
+                    development community<br /> is accounting for the complex structure 
+                    of interdependencies between policy<br /> dimensions. This is why 
+                    the model was built with the capability of taking such<br /> 
+                    structure into consideration. In other words, one of the 
+                    model’s inputs is a network<br /> of conditional dependencies 
+                    between all the indicators in the data. The user can<br />
+                    provide a file containing a matrix that captures such network.<br />
+                </p>
+              <button>HELP</button>
+            </div>
+        </div>
+        <div class="right_sect3">
+            <div class="wrapper3">
+                 <h1>ADD THE FILES BELOW</h1>     
+                   <form action="{% url 'upload_files' %}" method="post" enctype="multipart/form-data">
+                    <!-- {% csrf_token %} -->
+                     <div>
+                       <input type="file" name="files" class="file-input">
+                     </div>
+                    <div class="button-group">
+                      <button type="submit" name="action" value="skip" class="skip-btn">Skip</button>
+                      <button type="submit" name="action" value="submit" class="submit-btn">Submit</button>
+                    </div>
+                   </form>
+            </div>         
+        </div>
+     </section>
+</body>
+</html>
