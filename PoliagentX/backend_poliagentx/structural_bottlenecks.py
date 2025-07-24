@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-import policy_priority_inference as ppi
+from .policy_priority_inference import run_ppi_parallel
 
 def analyze_structural_bottlenecks(
     indicators_path,
@@ -90,7 +90,7 @@ def analyze_structural_bottlenecks(
         ]
 
     # Run baseline simulation
-    outputs_baseline = ppi.run_ppi_parallel(
+    outputs_baseline = run_ppi_parallel(
         I0, alphas, alphas_prime, betas, A=A, R=R, qm=qm, rl=rl,
         Imax=Imax, Imin=Imin, Bs=Bs, B_dict=B_dict, T=T, G=goals,
         parallel_processes=parallel_processes, sample_size=sample_size
@@ -98,7 +98,7 @@ def analyze_structural_bottlenecks(
 
     # Run frontier simulation
     frontier = np.ones(N)
-    outputs_frontier = ppi.run_ppi_parallel(
+    outputs_frontier = run_ppi_parallel(
         I0, alphas, alphas_prime, betas, A=A, R=R, qm=qm, rl=rl,
         Imax=Imax, Imin=Imin, Bs=Bs, B_dict=B_dict, T=T, G=goals, frontier=frontier,
         parallel_processes=parallel_processes, sample_size=sample_size

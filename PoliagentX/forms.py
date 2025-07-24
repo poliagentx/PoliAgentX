@@ -137,12 +137,27 @@ class Uploaded_indicators(forms.Form):
 #             )
 #         )
 
-def process_default_expenditure():
-    pass  # Placeholder for future implementation
-
-def uploaded_expenditure_form():
-    pass  # Placeholder for future implementation
+# def process_default_expenditure():
+#     pass  # Placeholder for future implementation
 
 # def whole_budget_form():
 #     pass  # Placeholder for future implementation
 
+class BudgetForm(forms.Form):
+    budget = forms.IntegerField(label="Enter Budget (in local currency)", min_value=0)
+    inflation_rate = forms.FloatField(label="Inflation Rate (%)", min_value=0)
+    
+
+
+class Uploaded_Budget(forms.Form):
+    government_indicators = forms.FileField(
+        label='Upload file',
+        required=True,
+        widget=forms.ClearableFileInput(attrs={
+            'id': 'file-upload',  
+            'class': 'hidden'
+        }),
+        validators=[
+            validate_extension
+        ]
+    )

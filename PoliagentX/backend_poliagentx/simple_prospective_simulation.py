@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-import policy_priority_inference as ppi  # Make sure this file is present in your project
+from .policy_priority_inference import run_ppi  # Make sure this file is present in your project
 
 def run_simulation(
     indicators_path,
@@ -54,7 +54,7 @@ def run_simulation(
 
     outputs = []
     for sample in range(sample_size):
-        output = ppi.run_ppi(
+        output = run_ppi(
             I0, alphas, alphas_prime, betas, A=A, R=R, qm=qm, rl=rl,
             Imax=Imax, Imin=Imin, Bs=Bs, B_dict=B_dict, T=T, G=goals
         )
