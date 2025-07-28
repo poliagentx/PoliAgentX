@@ -52,16 +52,16 @@ def upload_expenditure(request):
         form = Uploaded_Budget(request.POST, request.FILES)
         if form.is_valid():
             messages.success(request, "☑️ File validation successful!")
-            return render(request, 'expenditure.html', {
+            return render(request, 'budgets.html', {
                 'form': Uploaded_Budget(),  # reset form
             })
 
         # messages.error(request, " Please correct the highlighted errors below.")
-        return render(request, 'expenditure.html', {'form': form})
+        return render(request, 'budgets.html', {'form': form})
 
 
 
-    return render(request, 'expenditure.html', {'form': Uploaded_Budget()})
+    return render(request, 'budgets.html', {'form': Uploaded_Budget()})
 
 
 

@@ -1,9 +1,11 @@
+
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="budgets.css" rel="stylesheet">
+    <link href="{% static 'budgets.css' %}" rel="stylesheet">
     <title>Document</title>
 </head>
 <body>
@@ -35,7 +37,7 @@
                     The second option is to provide a file with the budget disaggregated into expenditure 
                     programmes using the template provided below. <br />
                </p>
-              <a class="button" href="{%   'download_budget_template'    %}">download template</a>
+              <a class="button" href="{% url  'download_budget_template'    %}">download template</a>
             </div>
         </div>
 
@@ -52,7 +54,9 @@
                             on changes in total budget size.<br>
                         </li>
                     </ol>
-                 <form action="{% 'process_default_expenditure' %}" method="post" enctype="multipart/form-data">
+                 <form action="{% url 'process_whole_budget' %}" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
                     <!-- <ol> -->
                         <!-- <li> -->
                           <!-- <label for="total-budget">total-budget</label> -->
@@ -74,7 +78,8 @@
                         </li>
                     </ol>
 
-                    <form action="{% 'upload-expenditure' %}" method="post" enctype="multipart/form-data">
+                    <form action="{% url 'upload_expenditure' %}" method="post" enctype="multipart/form-data">
+                     {% csrf_token %}
                         <!-- <li> -->
                             <label class="file-drop-area" for="indicator-file">drop your files
                                 <input  type="file" name="indicator-file" id="indicator-file" accept=".xlsxl, .xlsx, .csv".>
