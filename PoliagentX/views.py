@@ -1,34 +1,18 @@
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
+import tempfile
+import io
 import os
 from django.conf import settings
-from datetime import datetime
-import uuid
-from rest_framework.parsers import MultiPartParser, FormParser
 from django.contrib import messages
 from django.http import FileResponse, HttpResponse
-
 from PoliagentX.backend_poliagentx.model_calibration import calibrate_model
 from PoliagentX.backend_poliagentx.simple_prospective_simulation import run_simulation
 from PoliagentX.backend_poliagentx.structural_bottlenecks import analyze_structural_bottlenecks
-from .forms import BudgetForm
-import io
 from openpyxl import Workbook
-
 from .forms import Uploaded_indicators,BudgetForm,Uploaded_Budget
-
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.conf import settings
-from .forms import Uploaded_indicators
 from django.core.exceptions import ValidationError
 
-import os
-import tempfile
-from django.conf import settings
-from django.shortcuts import render
-from django.contrib import messages
 
 
 
@@ -109,41 +93,37 @@ def process_whole_budget(request):
             budget = form.cleaned_data['budget']
             inflation = form.cleaned_data['inflation_rate']
 
-            # Adjusting for inflation
+            # Adjust for inflation
             adjusted_budget = budget / (1 + (inflation / 100))
 
-            # Prepare SDG allocation rows: [program_ID, expenditure]
+            # Prepare SDG allocation rows
             expenditure_rows = [
                 [i + 1, round(adjusted_budget * sdg["percent"] / 100, 2)]
                 for i, sdg in enumerate(SDG_ALLOCATION)
             ]
 
-            # Create Excel file
+            # Create Excel workbook
             wb = Workbook()
             ws = wb.active
             ws.title = "template_expenditure"
-
-            # Header
             ws.append(["program_ID", "expenditure"])
-
-            # Data rows
             for row in expenditure_rows:
                 ws.append(row)
 
-            # Create response
-            response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-            response['Content-Disposition'] = 'attachment; filename=kenya_adjusted_budget.xlsx'
+            # Save to a temporary file on disk
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
+                wb.save(tmp.name)
+                temp_file_path = tmp.name
 
-            # Save workbook to response
-            with io.BytesIO() as buffer:
-                wb.save(buffer)
-                response.write(buffer.getvalue())
+            # Store the temp file path in the session
+            request.session['temp_excel_path'] = temp_file_path
 
-            return response
+            # Redirect to display the file (or whatever processing is next)
+            return redirect('Network.html')  # Make sure to define this view and URL
     else:
         form = BudgetForm()
 
-    return render(request, 'your_app/budget_form.html', {'form': form})
+    return render(request, 'budgets.html', {'form': form})
 
 # def process_expenditure_template(request):
 #     if request.method == 'POST':
