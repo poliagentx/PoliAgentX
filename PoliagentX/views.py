@@ -12,6 +12,9 @@ from .forms import Uploaded_indicators,BudgetForm,Uploaded_Budget, Uploaded_netw
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.contrib.staticfiles import finders
+import pandas as pd
+import numpy as np
 
 
 
@@ -51,22 +54,30 @@ def upload_expenditure(request):
     if request.method == 'POST':
         form = Uploaded_Budget(request.POST, request.FILES)
         if form.is_valid():
+            # Handle uploaded file
+            uploaded_file = request.FILES['government_expenditure']
+
+            # Save to a temporary file on disk
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
+                for chunk in uploaded_file.chunks():
+                    tmp.write(chunk)
+                temp_file_path = tmp.name
+
+            # Store the temp file path in the session
+            request.session['temp_budget_path'] = temp_file_path
+
+            # Show success message and reset form
             messages.success(request, "☑️ File validation successful!")
             return render(request, 'budgets.html', {
                 'form': Uploaded_Budget(),  # reset form
             })
 
-        # messages.error(request, " Please correct the highlighted errors below.")
+        # If form is invalid
         return render(request, 'budgets.html', {'form': form})
 
-
-
+    # GET request
     return render(request, 'budgets.html', {'form': Uploaded_Budget()})
 
-
-
-
-from django.contrib.staticfiles import finders
 
 def download_indicator_template(request):
     filepath = finders.find('templates/template_indicators.xlsx')
@@ -81,7 +92,7 @@ def download_budget_template(request):
         return FileResponse(open(filepath, 'rb'), as_attachment=True, filename='template_budget.xlsx')
     else:
         return HttpResponse("Template file not found.", status=404)
-    
+
 def download_network_template(request):
     filepath = finders.find('templates/template_network.xlsx')
     if filepath and os.path.exists(filepath):
@@ -119,71 +130,98 @@ def process_whole_budget(request):
             # Adjust for inflation
             adjusted_budget = budget / (1 + (inflation / 100))
 
-            # Prepare SDG allocation rows
-            expenditure_rows = [
-                [i + 1, round(adjusted_budget * sdg["percent"] / 100, 2)]
-                for i, sdg in enumerate(SDG_ALLOCATION)
-            ]
-
-            # Create Excel workbook
+            # Create workbook with two sheets
             wb = Workbook()
-            ws = wb.active
-            ws.title = "template_expenditure"
-            ws.append(["program_ID", "expenditure"])
-            for row in expenditure_rows:
-                ws.append(row)
 
-            # Save to a temporary file on disk
+            # Sheet 1: Expenditure
+            ws1 = wb.active
+            ws1.title = "template_expenditure"
+            ws1.append(["program_ID", "expenditure"])
+            for i, sdg in enumerate(SDG_ALLOCATION):
+                amount = round(adjusted_budget * sdg["percent"] / 100, 2)
+                ws1.append([i + 1, amount])
+
+            # Sheet 2: Relational Table
+            ws2 = wb.create_sheet(title="relational_table")
+            ws2.append(["program_ID", "program_name", "goal"])
+            for i, sdg in enumerate(SDG_ALLOCATION):
+                ws2.append([i + 1, f"Program {i + 1}", sdg["goal"]])
+
+            # Save to a single temporary file
             with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
                 wb.save(tmp.name)
-                temp_file_path = tmp.name
+                request.session['temp_excel_path'] = tmp.name
 
-            # Store the temp file path in the session
-            request.session['temp_excel_path'] = temp_file_path
-
-            # Redirect to display the file (or whatever processing is next)
-            return redirect('Network.html')  # Make sure to define this view and URL
+            messages.success(request, "☑️ Budget processed successfully with two sheets.")
+            return redirect('upload_network')  
     else:
         form = BudgetForm()
 
     return render(request, 'budgets.html', {'form': form})
 
 
-def download_budget_template(request):
-    filepath = finders.find('templates/template_network.xlsx')
-    if filepath and os.path.exists(filepath):
-        return FileResponse(open(filepath, 'rb'), as_attachment=True, filename='template_network.xlsx')
-    else:
-        return HttpResponse("Template file not found.", status=404)
-    
-
 def upload_network(request):
     if request.method == 'POST':
+        temp_file_path = request.session.get('temp_excel_path')  # Make sure this key matches upload_indicators()
+
+        if not temp_file_path or not os.path.exists(temp_file_path):
+            return HttpResponse("File not found.", status=404)
+
         form = Uploaded_networks(request.POST, request.FILES)
         if form.is_valid():
-            messages.success(request, "☑️ File validation successful!")
+            # Load Excel data
+            try:
+                data = pd.read_excel(temp_file_path)
+            except Exception as e:
+                return HttpResponse(f"Failed to read Excel file: {e}", status=400)
+
+            # Begin matrix processing
+            N = len(data)
+            M = np.zeros((N, N))
+
+            # Find year columns
+            years = [col for col in data.columns if str(col).isnumeric()]
+
+            for i, rowi in data.iterrows():
+                for j, rowj in data.iterrows():
+                    if i != j:
+                        serie1 = rowi[years].values.astype(float)[1:]
+                        serie2 = rowj[years].values.astype(float)[:-1]
+
+                        change_serie1 = serie1[1:] - serie1[:-1]
+                        change_serie2 = serie2[1:] - serie2[:-1]
+
+                        if not np.all(change_serie1 == change_serie1[0]) and not np.all(change_serie2 == change_serie2[0]):
+                            corr = np.corrcoef(change_serie1, change_serie2)[0, 1]
+                            if not np.isnan(corr):
+                                M[i, j] = corr
+
+            M[np.abs(M) < 0.5] = 0
+
+            # Build edge list
+            ids = data['seriesCode'].values
+            edge_list = []
+            for i, j in zip(*np.where(M != 0)):
+                edge_list.append([ids[i], ids[j], M[i, j]])
+
+            # Save result to CSV
+            df = pd.DataFrame(edge_list, columns=['origin', 'destination', 'weight'])
+            os.makedirs('clean_data', exist_ok=True)
+            df.to_csv('clean_data/data_network.csv', index=False)
+
+            # Success feedback
+            messages.success(request, "☑️ File processed and network created.")
             return render(request, 'Network.html', {
-                'form': Uploaded_networks(),  # reset form
+                'form': Uploaded_networks()  # Reset form
             })
 
-        # messages.error(request, " Please correct the highlighted errors below.")
+        # Form invalid
         return render(request, 'Network.html', {'form': form})
 
-    return render(request, 'Network.html', {'form': Uploaded_indicators()})
+    # GET request
+    return render(request, 'Network.html', {'form': Uploaded_networks()})
 
 
-# def process_expenditure_template(request):
-#     if request.method == 'POST':
-#         form = Uploaded_Budget(request.POST, request.FILES)
-#         if form.is_valid():
-#             messages.success(request, "☑️ File validation successful!")
-#             return render(request, 'expenditure.html', {
-#                 'form': Uploaded_Budget(),  # reset form
-#             })
 
-#         # messages.error(request, " Please correct the highlighted errors below.")
-#         return render(request, 'expenditure.html', {'form': form})
-
-#     return render(request, 'expenditure.html', {'form': Uploaded_Budget()})
 
 
