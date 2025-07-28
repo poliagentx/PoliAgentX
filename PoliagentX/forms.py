@@ -158,6 +158,22 @@ class Uploaded_Budget(forms.Form):
             'class': 'hidden'
         }),
         validators=[
+            validate_extension,
+            lambda f: validate_contains_sheet(f, 'template_budget'),
+            lambda f: validate_contains_sheet(f, 'template_relation_table')
+        ]
+    )
+
+
+class Uploaded_networks(forms.Form):
+    government_indicators = forms.FileField(
+        label='Upload file',
+        required=True,
+        widget=forms.ClearableFileInput(attrs={
+            'id': 'file-upload',  
+            'class': 'hidden'
+        }),
+        validators=[
             validate_extension
         ]
     )

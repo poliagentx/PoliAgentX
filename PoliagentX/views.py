@@ -8,7 +8,7 @@ from PoliagentX.backend_poliagentx.model_calibration import calibrate_model
 from PoliagentX.backend_poliagentx.simple_prospective_simulation import run_simulation
 from PoliagentX.backend_poliagentx.structural_bottlenecks import analyze_structural_bottlenecks
 from openpyxl import Workbook
-from .forms import Uploaded_indicators,BudgetForm,Uploaded_Budget
+from .forms import Uploaded_indicators,BudgetForm,Uploaded_Budget, Uploaded_networks
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -20,15 +20,31 @@ def upload_indicators(request):
     if request.method == 'POST':
         form = Uploaded_indicators(request.POST, request.FILES)
         if form.is_valid():
+            # Handle uploaded file
+            uploaded_file = request.FILES['government_indicators']
+
+            # Save file to a temporary location on disk
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
+                for chunk in uploaded_file.chunks():
+                    tmp.write(chunk)
+                temp_file_path = tmp.name
+
+            # Store path in session
+            request.session['temp_excel_path'] = temp_file_path
+
+            # Optional: show success message
             messages.success(request, "☑️ File validation successful!")
+
+            # Reset the form for new upload
             return render(request, 'indicators.html', {
-                'form': Uploaded_indicators(),  # reset form
+                'form': Uploaded_indicators()
             })
 
-        # messages.error(request, " Please correct the highlighted errors below.")
+        # Form is invalid: show errors
+        # messages.error(request, "Please correct the highlighted errors below.")
         return render(request, 'indicators.html', {'form': form})
 
-    
+    # GET request
     return render(request, 'indicators.html', {'form': Uploaded_indicators()})
 
 def upload_expenditure(request):
@@ -63,6 +79,13 @@ def download_budget_template(request):
     filepath = finders.find('templates/template_budget.xlsx')
     if filepath and os.path.exists(filepath):
         return FileResponse(open(filepath, 'rb'), as_attachment=True, filename='template_budget.xlsx')
+    else:
+        return HttpResponse("Template file not found.", status=404)
+    
+def download_network_template(request):
+    filepath = finders.find('templates/template_network.xlsx')
+    if filepath and os.path.exists(filepath):
+        return FileResponse(open(filepath, 'rb'), as_attachment=True, filename='template_network.xlsx')
     else:
         return HttpResponse("Template file not found.", status=404)
     
@@ -124,6 +147,30 @@ def process_whole_budget(request):
         form = BudgetForm()
 
     return render(request, 'budgets.html', {'form': form})
+
+
+def download_budget_template(request):
+    filepath = finders.find('templates/template_network.xlsx')
+    if filepath and os.path.exists(filepath):
+        return FileResponse(open(filepath, 'rb'), as_attachment=True, filename='template_network.xlsx')
+    else:
+        return HttpResponse("Template file not found.", status=404)
+    
+
+def upload_network(request):
+    if request.method == 'POST':
+        form = Uploaded_networks(request.POST, request.FILES)
+        if form.is_valid():
+            messages.success(request, "☑️ File validation successful!")
+            return render(request, 'Network.html', {
+                'form': Uploaded_networks(),  # reset form
+            })
+
+        # messages.error(request, " Please correct the highlighted errors below.")
+        return render(request, 'Network.html', {'form': form})
+
+    return render(request, 'Network.html', {'form': Uploaded_indicators()})
+
 
 # def process_expenditure_template(request):
 #     if request.method == 'POST':
