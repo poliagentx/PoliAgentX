@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
-import policy_priority_inference as ppi
+# import policy_priority_inference as ppi
+from PoliagentX.backend_poliagentx.policy_priority_inference import calibrate
 
 def calibrate_model(indicators_path,relational_table_path, network_path,expenditure_path,output_path,threshold=0.7,parallel_processes=4,low_precision_counts=50):
     df_indis = pd.read_excel(indicators_path)
@@ -30,7 +31,7 @@ def calibrate_model(indicators_path,relational_table_path, network_path,expendit
 
     T = Bs.shape[1]
 
-    parameters = ppi.calibrate(
+    parameters = calibrate(
         I0, IF, success_rates, A=A, R=R, qm=qm, rl=rl, Bs=Bs, B_dict=B_dict,
         T=T, threshold=threshold, parallel_processes=parallel_processes, verbose=True,
         low_precision_counts=low_precision_counts
