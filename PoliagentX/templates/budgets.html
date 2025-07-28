@@ -1,9 +1,10 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="budgets.css" rel="stylesheet">
+    <link href="  { % static 'budgets.css' % }" rel="stylesheet">
     <title>Document</title>
 </head>
 <body>
@@ -51,12 +52,19 @@
                             budget figure. It allows limited analysis focused <br>
                             on changes in total budget size.<br>
                         </li>
+                        <li>
+                           <span>inflation rate</span><br>
+                           Add the inflation rate for the period of intrest<br>
+                       </li>   
+                           <!-- client-side: browsers will enforce numeric format -->
+                           <!-- server-side: always validate and convert(in django or flask) to float manually  -->                     
                     </ol>
                  <form action="{% 'process_default_expenditure' %}" method="post" enctype="multipart/form-data">
                     <!-- <ol> -->
                         <!-- <li> -->
                           <!-- <label for="total-budget">total-budget</label> -->
-                           <input type="number" name="total-budget" id="total-budget">                            
+                           <input type="number" name="total-budget" id="total-budget">  
+                           <input type="number" step="any" name="inflation" id="inflation">                            
                         <!-- </li> -->
                     <div id="button">
                         <button type="submit">Next</button>
@@ -68,8 +76,9 @@
                     <ol>    
                         <li>
                             <span>Option 2: Upload Disaggregated Budget File:</span><br>
-                            Use the provided template to <br/>
-                            upload a file with detailed expenditure broken down by programmes.<br/> 
+                            Use the provided template to upload <br>
+                            a file with detailed expenditure broken <br>
+                            down by programmes.<br/> 
                             This enables more detailed analysis.
                         </li>
                     </ol>

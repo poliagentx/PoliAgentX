@@ -73,15 +73,15 @@
 }
 .right-sect-items{
     display: flex;
-    height: 620px;
+    height: fit-content;
     flex-direction:column ;
-    align-items: center;
-    justify-content: space-around;
+    align-items:center;
+    /* justify-content: space-around; */
     /* border: 2px black solid; */
     border-radius: 10px;
     background-color: rgb(167, 157, 157);
-    margin-top: 100px;
-    width: 95%;
+    margin-top: 90px;
+    width: 70%;
 }
 
 .right-section h2{
@@ -106,8 +106,9 @@
 #upper ol li,.lower ol li{
     font-size: 19px;
 }
-#upper span, .lower span{
+#upper span, .lower span {
     text-decoration: underline;
+    text-align: center;
     font-weight: 300;
     color: white;
     margin-bottom: 10px;
@@ -157,14 +158,13 @@
 .right-section button:hover{
     cursor: pointer;
 }
-/* input budget number style */
 #total-budget{
     height: 50px;
     border-radius: 5px;
 }
 
 .file-drop-area {
-      width: 450px;
+      width: 300px;
       /* height: 40px; */
       /* max-width: 500px; */
       padding: 20px;
@@ -181,7 +181,7 @@
 
 .file-drop-area input[type="file"] {
       opacity: 0;
-      width: max-content;
+      width: 300px;
       height: 100%;
       position: absolute;
       top: 0;
@@ -193,6 +193,12 @@
       border-color: #333;
       background-color: #e0e0e0;
       color: #333;
+}
+#upper input{
+    width: 300px;
+    height: 50px;
+    border-radius: 10px;
+    border: 2px solid black ;
 }
 
 #button{
