@@ -1,27 +1,12 @@
-<<<<<<< HEAD
-
-import os
-from django.conf import settings
-from datetime import datetime
-import uuid
-import tempfile
-from django.shortcuts import render, redirect
-=======
 import tempfile
 import io
 import os
 from django.conf import settings
->>>>>>> 26a294202ddf180ce84b253328241de9d403923c
 from django.contrib import messages
 from django.http import FileResponse, HttpResponse
 from PoliagentX.backend_poliagentx.model_calibration import calibrate_model
 from PoliagentX.backend_poliagentx.simple_prospective_simulation import run_simulation
 from PoliagentX.backend_poliagentx.structural_bottlenecks import analyze_structural_bottlenecks
-<<<<<<< HEAD
-from .forms import Uploaded_indicators,Uploaded_expenditure,Uploaded_interdepenency
-from django.core.exceptions import ValidationError
-from django.contrib.staticfiles import finders
-=======
 from openpyxl import Workbook
 from .forms import Uploaded_indicators,BudgetForm,Uploaded_Budget, Uploaded_networks
 from django.shortcuts import render, redirect
@@ -29,7 +14,6 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 
 
->>>>>>> 26a294202ddf180ce84b253328241de9d403923c
 
 
 def upload_indicators(request):
@@ -56,34 +40,13 @@ def upload_indicators(request):
                 'form': Uploaded_indicators()
             })
 
-<<<<<<< HEAD
-     
-=======
         # Form is invalid: show errors
         # messages.error(request, "Please correct the highlighted errors below.")
->>>>>>> 26a294202ddf180ce84b253328241de9d403923c
         return render(request, 'indicators.html', {'form': form})
 
     # GET request
     return render(request, 'indicators.html', {'form': Uploaded_indicators()})
 
-<<<<<<< HEAD
-# def upload_expenditure(request):
-#     if request.method == 'POST':
-#         form = Uploaded_indicators(request.POST, request.FILES)
-#         if form.is_valid():
-#             messages.success(request, "☑️ File validation successful!")
-#             return render(request, 'expenditure.html', {
-#                 'form': Uploaded_expenditure(),  # reset form
-#             })
-
-#         # messages.error(request, " Please correct the highlighted errors below.")
-#         return render(request, 'expenditure.html', {'form': form})
-
-    
-#     return render(request, 'expenditure.html', {'form': Uploaded_expenditure()})
-
-=======
 def upload_expenditure(request):
     if request.method == 'POST':
         form = Uploaded_Budget(request.POST, request.FILES)
@@ -99,11 +62,11 @@ def upload_expenditure(request):
 
 
     return render(request, 'budgets.html', {'form': Uploaded_Budget()})
->>>>>>> 26a294202ddf180ce84b253328241de9d403923c
 
 
 
 
+from django.contrib.staticfiles import finders
 
 def download_indicator_template(request):
     filepath = finders.find('templates/template_indicators.xlsx')
