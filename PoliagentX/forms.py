@@ -108,6 +108,7 @@ class Uploaded_interdepenency(forms.Form):
         required=False
     )
 
+<<<<<<< HEAD
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
@@ -130,3 +131,101 @@ class Uploaded_interdepenency(forms.Form):
                 css_class='bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded mt-4'
             )
         )
+=======
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.helper = FormHelper()
+#         self.helper.form_method = 'post'
+#         self.helper.layout = Layout(
+#             Field(
+#                 'government_expenditure',
+#                 css_class=(
+#                     'block w-full text-sm text-gray-500 '
+#                     'file:mr-4 file:py-2 file:px-4 '
+#                     'file:rounded-full file:border-0 '
+#                     'file:text-sm file:font-semibold '
+#                     'file:bg-violet-50 file:text-violet-700 '
+#                     'hover:file:bg-violet-100'
+#                 )
+#             ),
+#             Submit(
+#                 'submit',
+#                 'Upload',
+#                 css_class='bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded mt-4'
+#             )
+#         )
+# class Uploaded_interdepenency(forms.Form):
+#     interdependency_network = forms.FileField(
+#         label='Drag and drop your file here (Optional)',
+#         validators=[
+#             validate_extension,
+#             lambda f: validate_contains_sheet(f, 'template_expenditure'),
+#             lambda f: validate_contains_sheet(f, 'template_network')
+#         ],
+#         required=False
+#     )
+
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.helper = FormHelper()
+#         self.helper.form_method = 'post'
+#         self.helper.layout = Layout(
+#             Field(
+#                 'interdependency_network',
+#                 css_class=(
+#                     'block w-full text-sm text-gray-500 '
+#                     'file:mr-4 file:py-2 file:px-4 '
+#                     'file:rounded-full file:border-0 '
+#                     'file:text-sm file:font-semibold '
+#                     'file:bg-violet-50 file:text-violet-700 '
+#                     'hover:file:bg-violet-100'
+#                 )
+#             ),
+#             Submit(
+#                 'submit',
+#                 'Upload',
+#                 css_class='bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded mt-4'
+#             )
+#         )
+
+# def process_default_expenditure():
+#     pass  # Placeholder for future implementation
+
+# def whole_budget_form():
+#     pass  # Placeholder for future implementation
+
+class BudgetForm(forms.Form):
+    budget = forms.IntegerField(label="Enter Budget (in local currency)", min_value=0)
+    inflation_rate = forms.FloatField(label="Inflation Rate (%)", min_value=0)
+    
+
+
+class Uploaded_Budget(forms.Form):
+    government_indicators = forms.FileField(
+        label='Upload file',
+        required=True,
+        widget=forms.ClearableFileInput(attrs={
+            'id': 'file-upload',  
+            'class': 'hidden'
+        }),
+        validators=[
+            validate_extension,
+            lambda f: validate_contains_sheet(f, 'template_budget'),
+            lambda f: validate_contains_sheet(f, 'template_relation_table')
+        ]
+    )
+
+
+class Uploaded_networks(forms.Form):
+    government_indicators = forms.FileField(
+        label='Upload file',
+        required=True,
+        widget=forms.ClearableFileInput(attrs={
+            'id': 'file-upload',  
+            'class': 'hidden'
+        }),
+        validators=[
+            validate_extension
+        ]
+    )
+>>>>>>> 26a294202ddf180ce84b253328241de9d403923c

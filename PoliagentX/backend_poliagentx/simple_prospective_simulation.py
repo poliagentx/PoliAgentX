@@ -3,7 +3,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
+<<<<<<< HEAD
 from PoliagentX.backend_poliagentx.policy_priority_inference import run_ppi,run_ppi_parallel
+=======
+from .policy_priority_inference import run_ppi  # Make sure this file is present in your project
+>>>>>>> 26a294202ddf180ce84b253328241de9d403923c
 
 def run_simulation(
     indicators_path,
@@ -54,7 +58,11 @@ def run_simulation(
 
     outputs = []
     for sample in range(sample_size):
+<<<<<<< HEAD
         output =run_ppi(
+=======
+        output = run_ppi(
+>>>>>>> 26a294202ddf180ce84b253328241de9d403923c
             I0, alphas, alphas_prime, betas, A=A, R=R, qm=qm, rl=rl,
             Imax=Imax, Imin=Imin, Bs=Bs, B_dict=B_dict, T=T, G=goals
         )

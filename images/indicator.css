@@ -1,0 +1,164 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+nav{
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: space-around;
+    background-color: rgb(167, 157, 157);
+    height: 8vh;    
+}
+
+.wrapper{
+    display:flex;
+    height: 80vh;
+    justify-content: space-around;
+    margin: 0px 20px;
+    gap: 15px;
+    /* align-items: center; */
+}
+
+/* style of the left page */
+.left-section{
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin-left: 30px;
+}
+.left-section h1{
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 50px;
+    font-weight: 600;
+    margin: 30px 0px 30px 0px;
+}
+.left-section p{
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 19px;
+    font-weight: 300px;
+    margin: 30px 0px 30px 0px;
+}
+.left-section button{
+    background-color: rgb(19, 152, 235);
+    height: 50px;
+    padding: 20px;
+    border-radius: 10px;
+    color: azure;
+    font-size: 19px;
+    font-weight: 400;
+    box-shadow:  10px 20px 30px 2px black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+}
+.left-section button:hover{
+    cursor: pointer;
+}
+
+
+
+/* styling the right side of the page */
+.right-section{
+    flex: 1;
+    display: flex;
+    justify-content: flex-start;
+    /* align-items: center; */
+
+
+}
+.right-sect-items{
+    display: flex;
+    height: 380px;
+    flex-direction:column ;
+    align-items: center;
+    justify-content: space-around;
+    border: 2px black solid;
+    border-radius: 10px;
+    background-color: rgb(167, 157, 157);
+    margin-top: 100px;
+    width: 90%;
+}
+
+.right-section h2{
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: 300;
+    font-size: 30px;
+    margin: 30px 0px 0px 0px;
+    text-decoration: underline;
+    text-align: center;
+}
+.right-section form {
+    display: grid;
+    grid-template-rows: 60px 40px;
+    gap: 30px;
+    /* gap: 20px; */
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: 200;
+    font-size: 20px;
+    color: black;
+    padding: 30px;
+    
+}
+
+
+.right-section button{
+    background-color: rgb(19, 152, 235);
+    height: 50px;
+    width: 90px;
+    padding: 20px;
+    border-radius: 10px;
+    color: azure;
+    font-size: 19px;
+    font-weight: 400;
+    box-shadow:  10px 20px 30px 2px black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+}
+.right-section button:hover{
+    cursor: pointer;
+}
+
+.file-drop-area {
+      width: 450px;
+      /* max-width: 500px; */
+      padding: 20px;
+      border: 2px dashed black;
+      border-radius: 8px;
+      background-color: beige;
+      font-family: Arial, sans-serif;
+      font-size: 16px;
+      color:black ;
+      text-align: center;
+      position: relative;
+      cursor: pointer;
+}
+
+.file-drop-area input[type="file"] {
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      cursor: pointer;
+}
+
+.file-drop-area.dragover {
+      border-color: #333;
+      background-color: #e0e0e0;
+      color: #333;
+}
+
+#button{
+    display: flex;
+    justify-content: flex-end;
+}
+#button button{
+    margin-right: 30px;
+}

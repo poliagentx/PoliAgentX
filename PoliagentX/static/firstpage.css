@@ -1,0 +1,130 @@
+*{
+    padding: 0px;
+    margin: 0px;
+    box-sizing: border-box;
+}
+
+/* navigation bar styling */
+.nav{
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: space-around;
+    background-color: rgb(167, 157, 157);
+    height: 8vh;
+}
+.main-content{
+    width: 100%;
+    height: 70vh;
+    display: flex;
+    /* flex-direction: row; */
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+
+
+/* styling the left side of the page */
+.left-cont{
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    justify-items: center;
+    margin-left: 30px;
+
+}
+.left-cont h1{
+    font-size: 30px;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 15px;
+}
+.wrap{
+    display: flex;
+    flex-direction: column;
+    justify-items: center;
+    justify-content: space-around;
+}
+.wrap p{
+    font-size: 18px;
+    font-weight: 300;
+    text-align:center;
+}
+
+
+/* styling the right side of the page */
+.right-cont{
+    flex: 1;
+    display: grid;
+    grid-template-columns: 460px;
+    /* justify-content: flex-start; */
+
+
+}
+.wrapper{
+    display: grid;
+    grid-template-rows: auto auto auto auto auto auto auto;
+    /* flex-direction: column; */
+    justify-content: center;
+    /* align-items: center; */
+    /* justify-items: flex-start; */
+    /* align-content: center; */
+    background-color: rgb(167, 157, 157);
+    height: 550px;
+    width: 100%;
+    margin-top: 150px;
+    border-radius: 10px;
+    border: 2px solid black;
+    margin-right: 60px;
+
+}
+.right-cont h2{
+    text-decoration: underline;
+    font-size: 25px;
+    font-weight: 300;
+    margin-bottom: 10px;
+}
+.wrapper li  {
+    list-style: none;
+    /* display: flex; */
+    /* flex-direction: column; */
+    /* justify-content: flex-start; */
+    /* justify-items: center; */
+}
+/* .wrapper p{
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    justify-items: center;  
+} */
+.wrapper span{
+    text-decoration: underline;
+    font-style: italic;
+    font-weight: 400;
+    color: azure;
+    margin-bottom: 10px;
+}
+/* button styling */
+.start-button{
+    display: flex;
+    justify-content: flex-end;
+}
+#start-button{
+    background-color: aqua;
+    height: 50px;
+    width: 90px;
+    padding: 20px;
+    border-radius: 10px;
+    color: azure;
+    font-size: 19px;
+    font-weight: 400;
+    box-shadow:  10px 20px 30px 2px black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 20px;
+
+}
+.right-cont #start-button:hover{
+    cursor: pointer;
+}
+

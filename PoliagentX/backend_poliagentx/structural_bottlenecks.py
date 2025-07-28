@@ -3,8 +3,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
+<<<<<<< HEAD
 from PoliagentX.backend_poliagentx.policy_priority_inference import run_ppi,run_ppi_parallel
 
+=======
+from .policy_priority_inference import run_ppi_parallel
+>>>>>>> 26a294202ddf180ce84b253328241de9d403923c
 
 def analyze_structural_bottlenecks(
     indicators_path,
