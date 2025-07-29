@@ -1,0 +1,76 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="{% static 'network.css' %}"
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>network</title>
+</head>
+<body>
+    <!-- header with navbar -->
+     <header>
+        <nav>
+
+        </nav>
+     </header>
+
+     <section id="main-content">
+        <div class="left-section">
+            <div class="inside">
+                <h1>
+                    STEP 3<br>
+                    NETWORK<br>
+                    INTERDEPENDENCIES<br>
+                </h1><br>
+                <p>
+                  One of the most important discussions in the sustainable development community <br>
+                  is accounting for the complex structure of interdependencies between policy <br>
+                  dimensions. This is why the PPI model was built with the capability of taking such <br>
+                  structure into consideration. In other words, one of the model’s inputs is a network <br>
+                  of conditional dependencies between all the indicators in the data. In the online <br>
+                  app, the user can provide a file containing a matrix that captures such network.<br>
+                </p><br><br>
+                <p>
+                    The template provided in this step of the workflow is organised in three sheets. The <br>
+                    first sheet (labelled template_network) is where you must put the information about <br>
+                    the interdependencies. The second sheet (labelled metadata) explains each column <br>
+                    in the template. The third sheet (labelled example_network) provides an example <br>
+                    network corresponding to the example synthetic data from the other two templates. <br>
+                </p><br><br>
+                <a href="" class="button">Download template</a>
+            </div>
+        </div>
+        <div class="right-section">
+            <div class="inner">
+                <h2>add your network files below</h2>
+                <form>
+                  <label class="file-drop-area" for="network-file">drop your files
+                    <input  type="file" name="network-file" id="network-file" accept=".xlsxl, .xlsx, .csv".>
+                  </label>
+                  <div>
+                    <a href="" class="button">skip</a> 
+                    <button>next</button>
+                  </div>
+                </form>
+            </div>
+        </div>
+     </section>
+     <script>
+        const fileDropArea = document.querySelector('.file-drop-area');
+
+        fileDropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileDropArea.classList.add('dragover');
+        });
+
+        fileDropArea.addEventListener('dragleave', () => {
+            fileDropArea.classList.remove('dragover');
+        });
+
+        fileDropArea.addEventListener('drop', () => {
+            fileDropArea.classList.remove('dragover');
+        });
+     </script>     
+</body>
+</html>
