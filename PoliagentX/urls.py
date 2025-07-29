@@ -11,11 +11,11 @@ from .views import (
     # ExcelToTableView,
     upload_expenditure,
     upload_indicators,
+    upload_network,
     download_indicator_template,
-   download_budget_template,
-   process_whole_budget,
-   upload_network,
-   download_network_template
+    download_budget_template,
+    download_network_template,
+    process_whole_budget,
 )
 
 
