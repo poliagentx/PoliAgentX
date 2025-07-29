@@ -6,9 +6,11 @@ import pandas as pd
 import os
 
 def validate_extension(file):
+    print("Validating:", file.name)
     ext = os.path.splitext(file.name)[1].lower()
     if ext not in ['.xlsx', '.xls']:
         raise ValidationError("Only Excel files (.xlsx, .xls) are allowed.")
+
 
 
 def validate_contains_sheet(required_sheet):
@@ -108,7 +110,6 @@ class Uploaded_interdepenency(forms.Form):
         required=False
     )
 
-<<<<<<< HEAD
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
@@ -131,7 +132,7 @@ class Uploaded_interdepenency(forms.Form):
                 css_class='bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded mt-4'
             )
         )
-=======
+
 #     def __init__(self, *args, **kwargs):
 #         super().__init__(*args, **kwargs)
 #         self.helper = FormHelper()
@@ -201,7 +202,7 @@ class BudgetForm(forms.Form):
 
 
 class Uploaded_Budget(forms.Form):
-    government_indicators = forms.FileField(
+    government_expenditure = forms.FileField(
         label='Upload file',
         required=True,
         widget=forms.ClearableFileInput(attrs={
@@ -228,4 +229,3 @@ class Uploaded_networks(forms.Form):
             validate_extension
         ]
     )
->>>>>>> 26a294202ddf180ce84b253328241de9d403923c

@@ -14,14 +14,12 @@ from django.contrib import messages
 from django.core.exceptions import ValidationError
 
 
-
-
 def upload_indicators(request):
     if request.method == 'POST':
         form = Uploaded_indicators(request.POST, request.FILES)
         if form.is_valid():
             # Handle uploaded file
-            uploaded_file = request.FILES['government_indicators']
+            uploaded_file = form.cleaned_data['government_indicators']
 
             # Save file to a temporary location on disk
             with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
