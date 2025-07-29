@@ -4,47 +4,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="{% static 'css/budgets.css' %}" rel="stylesheet">
-    <title>Budgets Page</title>
+    <link href="{% static './css/budgets.css' %}" rel="stylesheet">
+    <title>Document</title>
 </head>
 <body>
-    <!-- Navigation bar -->
+    <!--navigation bar-->
     <nav id="nav">
         <div class="logo">
-            <!-- Optional logo button or image here -->
+           <!-- <button>logo</button> -->
         </div>  
     </nav>
+    <!-- main content -->
+     <section id="main">
 
-    <!-- Main content -->
-    <section id="main">
-        <!-- Left section -->
+        <!-- left section of the page -->
         <div class="left_sect2">
             <div class="l2heading">
                 <h1>
-                    STEP 2<br />
+                    STEP2<br />
                     BUDGETS<br />
                 </h1>
             </div>
             <div class="l2text">
-                <p> 
+               <p> 
                     There are two ways in which you can provide information about government expenditure.<br />
                     The first is by entering a total budget amount. This is useful when you do not have <br />
                     information about how the government expenditure is disaggregated. With this level of<br />
                     aggregation, the types of inferences that you can make will be limited to changes in <br />
-                    the overall budget size.<br /><br />
+                    the overall budget size.<br />
+
                     The second option is to provide a file with the budget disaggregated into expenditure 
                     programmes using the template provided below. <br />
-                </p>
-                <a class="button" href="{% url 'download_budget_template' %}">Download Template</a>
+               </p>
+              <a class="button" href="{% url  'download_budget_template'    %}">download template</a>
             </div>
         </div>
 
-        <!-- Right section -->
+        <!-- right section of the page -->
         <div class="right-section">
-            <div class="right-sect-items">
-                <!-- Option 1: Total Budget -->
-                <div id="upper">
-                    <h2>Add Required Files</h2>
+           <div class="right-sect-items">
+               <div  id="upper">
+                    <h2>add required files</h2>
                     <ol>
                         <li>
                             <span>Option 1: Enter Total Budget Amount</span><br>
@@ -52,42 +52,52 @@
                             budget figure. It allows limited analysis focused <br>
                             on changes in total budget size.<br>
                         </li>
+                        <li>
+                           <span>inflation rate</span><br>
+                           Add the inflation rate for the period of intrest<br>
+                       </li>   
+                           <!-- client-side: browsers will enforce numeric format -->
+                           <!-- server-side: always validate and convert(in django or flask) to float manually  -->                     
                     </ol>
-                    <form action="{% url 'process_whole_budget' %}" method="post">
-                        {% csrf_token %}
-                        <input type="number" name="budget" id="budget" placeholder="Enter total budget" required>
-                        <input type="number" name="inflation_rate" id="inflation_rate" placeholder="Inflation rate (%)" step="0.01" required>
-                        <div id="button">
-                            <button type="submit">Next</button>
-                        </div>
-                    </form>                    
-                </div>
+                 <form action="{% url 'process_whole_budget' %}" method="post" enctype="multipart/form-data">
+                    <!-- <ol> -->
+                        <!-- <li> -->
+                          <!-- <label for="total-budget">total-budget</label> -->
+                           <input type="number" name="total-budget" id="total-budget">  
+                           <input type="number" step="any" name="inflation" id="inflation">                            
+                        <!-- </li> -->
+                    <div id="button">
+                        <button type="submit">Next</button>
+                    </div>
+                 </form>                    
+               </div> 
 
-                <!-- Option 2: File Upload -->
-                <div class="lower">
+               <div class="lower">
                     <ol>    
                         <li>
-                            <span>Option 2: Upload Disaggregated Budget File</span><br>
-                            Use the provided template to <br/>
-                            upload a file with detailed expenditure broken down by programmes.<br/> 
+                            <span>Option 2: Upload Disaggregated Budget File:</span><br>
+                            Use the provided template to upload <br>
+                            a file with detailed expenditure broken <br>
+                            down by programmes.<br/> 
                             This enables more detailed analysis.
                         </li>
                     </ol>
+
                     <form action="{% url 'upload_expenditure' %}" method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        <label class="file-drop-area" for="file-upload">Drop your files
-                            <input type="file" name="government_indicators" id="file-upload" accept=".xls, .xlsx, .csv" required>
-                        </label>
-                        <div id="button">
-                            <button type="submit">Next</button>
-                        </div>
+                        <!-- <li> -->
+                            <label class="file-drop-area" for="indicator-file">drop your files
+                                <input  type="file" name="indicator-file" id="indicator-file" accept=".xlsxl, .xlsx, .csv".>
+                            </label>
+                        <!-- </li> -->
+                        <!-- </ol> -->
+                       <div id="button">
+                         <button type="submit">Next</button>
+                      </div>
                     </form>                        
-                </div>
+               </div>
             </div>
         </div>
-    </section>
-
-    <!-- Optional drag-and-drop effect -->
+     </section>
     <script>
         const fileDropArea = document.querySelector('.file-drop-area');
 
@@ -103,6 +113,6 @@
         fileDropArea.addEventListener('drop', () => {
             fileDropArea.classList.remove('dragover');
         });
-    </script>
+    </script>     
 </body>
 </html>

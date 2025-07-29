@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-+s=4l(dq#andq)$$brkj4a@55czpe4w5f)t&5hwn=-p#8$%s3c
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -56,6 +56,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
      "django_browser_reload.middleware.BrowserReloadMiddleware",
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+
 ]
 
 ROOT_URLCONF = 'Poliagent.urls'
@@ -126,14 +128,28 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
-STATIC_FILES=[
-"static_src"
-]
-# settings.py
 
-# Path where static files are collected (for compressor to use)
-COMPRESS_ROOT = BASE_DIR / 'static'
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Static files URL
+STATIC_URL = '/static/'
+
+# Where collectstatic dumps all files (for production)
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Include custom app-level static folders
+STATICFILES_DIRS = [
+    BASE_DIR / 'theme' / 'static',              # theme app static
+    BASE_DIR / 'PoliagentX' / 'static_files',   # PoliagentX app static
+]
+
+# Required for django-compressor to find static files
+COMPRESS_ROOT = STATIC_ROOT
+
+# Optional: Where compressed files should be stored (can reuse STATIC_ROOT)
+COMPRESS_OUTPUT_DIR = ''  # default, or set to 'CACHE' or other subdir
+
 
 # Enable compression
 COMPRESS_ENABLED = True

@@ -71,6 +71,7 @@ urllib3 = "*"
 wcwidth = "*"
 xlrd = "*"
 django-crispy-forms = "*"
+whitenoise = "*"
 
 [dev-packages]
 
