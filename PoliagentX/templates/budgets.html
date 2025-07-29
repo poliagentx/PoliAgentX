@@ -4,8 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="  { % static 'budgets.css' % }" rel="stylesheet">
-    <title>Document</title>
+    <link href="{% static 'budgets.css' %}" rel="stylesheet">
+    <title>Budgets</title>
 </head>
 <body>
     <!--navigation bar-->
@@ -36,7 +36,7 @@
                     The second option is to provide a file with the budget disaggregated into expenditure 
                     programmes using the template provided below. <br />
                </p>
-              <a class="button" href="{%   'download_budget_template'    %}">download template</a>
+              <a class="button" href="{% url  'download_budget_template'    %}">download template</a>
             </div>
         </div>
 
@@ -59,7 +59,7 @@
                            <!-- client-side: browsers will enforce numeric format -->
                            <!-- server-side: always validate and convert(in django or flask) to float manually  -->                     
                     </ol>
-                 <form action="{% 'process_default_expenditure' %}" method="post" enctype="multipart/form-data">
+                 <form action="{% url 'process_whole_budget' %}" method="post" enctype="multipart/form-data">
                     <!-- <ol> -->
                         <!-- <li> -->
                           <!-- <label for="total-budget">total-budget</label> -->
@@ -83,7 +83,7 @@
                         </li>
                     </ol>
 
-                    <form action="{% 'upload-expenditure' %}" method="post" enctype="multipart/form-data">
+                    <form action="{% url 'upload_expenditure' %}" method="post" enctype="multipart/form-data">
                         <!-- <li> -->
                             <label class="file-drop-area" for="indicator-file">drop your files
                                 <input  type="file" name="indicator-file" id="indicator-file" accept=".xlsxl, .xlsx, .csv".>

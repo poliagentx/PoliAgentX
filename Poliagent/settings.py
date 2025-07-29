@@ -55,7 +55,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-     "django_browser_reload.middleware.BrowserReloadMiddleware",
+    "django_browser_reload.middleware.BrowserReloadMiddleware",
     'whitenoise.middleware.WhiteNoiseMiddleware',
 
 ]
@@ -131,13 +131,16 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 STATIC_ROOT = BASE_DIR/ 'staticfiles'
-# STATIC_FILES=[
-# "static_src"
-# ]
+STATICFILES_DIRS = [
+    BASE_DIR / 'theme' / 'static',
+    BASE_DIR / 'PoliagentX' / 'static_files',
+]
 # settings.py
 
 # Path where static files are collected (for compressor to use)
-COMPRESS_ROOT = BASE_DIR / 'static'
+COMPRESS_ROOT = STATIC_ROOT
+
+COMPRESS_OUTPUT_DIR = ''
 
 # Enable compression
 COMPRESS_ENABLED = True
