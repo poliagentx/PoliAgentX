@@ -18,36 +18,81 @@ import numpy as np
 
 
 
-
 def upload_indicators(request):
     if request.method == 'POST':
         form = Uploaded_indicators(request.POST, request.FILES)
         if form.is_valid():
-            # Handle uploaded file
             uploaded_file = request.FILES['government_indicators']
 
-            # Save file to a temporary location on disk
+            # Save file to temporary location
             with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
                 for chunk in uploaded_file.chunks():
                     tmp.write(chunk)
                 temp_file_path = tmp.name
 
-            # Store path in session
-            request.session['temp_excel_path'] = temp_file_path
+            # Load Excel data
+            try:
+                data = pd.read_excel(temp_file_path)
+            except Exception as e:
+                messages.error(request, f"❌ Failed to read Excel file: {str(e)}")
+                return render(request, 'indicators.html', {'form': form})
 
-            # Optional: show success message
-            messages.success(request, "☑️ File validation successful!")
+            # Identify year columns
+            years = [col for col in data.columns if str(col).isdigit()]
+            
+            # Normalize and invert indicators
+            normalised_series = []
+            for index, row in data.iterrows():
+                try:
+                    time_series = row[years].values.astype(float)
+                    norm = (time_series - row['worstBound']) / (row['bestBound'] - row['worstBound'])
+                    if row['invert'] == 1:
+                        norm = 1 - norm
+                    normalised_series.append(norm)
+                except Exception as e:
+                    messages.error(request, f"❌ Error processing row {index}: {str(e)}")
+                    return render(request, 'indicators.html', {'form': form})
 
-            # Reset the form for new upload
-            return render(request, 'indicators.html', {
-                'form': Uploaded_indicators()
-            })
+            # Create DataFrame with normalized values
+            df = pd.DataFrame(normalised_series, columns=years)
+            df['seriesCode'] = data['seriesCode']
+            df['sdg'] = data['sdg']
+            df['minVals'] = 0
+            df['maxVals'] = 1
+            df['instrumental'] = data['instrumental']
+            df['seriesName'] = data['seriesName']
+            df['color'] = data['color']
 
-        # Form is invalid: show errors
-        # messages.error(request, "Please correct the highlighted errors below.")
+            # Add I0, IF
+            df['I0'] = df[years[0]]
+            df['IF'] = df[years[-1]]
+
+            # Success Rates
+            diff = df[years].diff(axis=1).iloc[:, 1:]
+            successRates = (diff > 0).sum(axis=1) / (len(years) - 1)
+            successRates = successRates.clip(lower=0.05, upper=0.95)
+            df['successRates'] = successRates
+
+            # Assure development gaps
+            df.loc[df['I0'] == df['IF'], 'IF'] *= 1.05
+
+            # Governance parameters
+            df['qm'] = -0.33
+            df['rl'] = -0.33
+
+            # Save to cleaned CSV
+            os.makedirs('clean_data', exist_ok=True)
+            output_path = os.path.join('clean_data', 'data_indicators.csv')
+            df.to_csv(output_path, index=False)
+
+            # Store cleaned path in session
+            request.session['cleaned_indicator_path'] = output_path
+
+            messages.success(request, "☑️ File uploaded and processed successfully.")
+            return render(request, 'indicators.html', {'form': Uploaded_indicators()})
+
         return render(request, 'indicators.html', {'form': form})
 
-    # GET request
     return render(request, 'indicators.html', {'form': Uploaded_indicators()})
 
 def upload_expenditure(request):
@@ -153,7 +198,9 @@ def process_whole_budget(request):
                 request.session['temp_excel_path'] = tmp.name
 
             messages.success(request, "☑️ Budget processed successfully with two sheets.")
-            return redirect('upload_network')  
+            return render(request, 'budgets.html', {
+                'form': Uploaded_Budget()  # Reset form
+            }) 
     else:
         form = BudgetForm()
 
@@ -221,6 +268,9 @@ def upload_network(request):
     # GET request
     return render(request, 'Network.html', {'form': Uploaded_networks()})
 
+
+def calibration(request):
+    return render(request, 'calibration.html')
 
 
 

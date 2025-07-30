@@ -16,7 +16,8 @@ from .views import (
     download_budget_template,
     process_whole_budget,
     upload_network,
-    download_network_template
+    download_network_template,
+    calibration
 )
 
 
@@ -30,7 +31,10 @@ urlpatterns = [
     path('', lambda request: redirect('upload_expenditure', permanent=False)),
     path('download_budget_template/', download_budget_template, name='download_budget_template'),
     path('process_whole_budget/', process_whole_budget, name='process_whole_budget'),
+    path('', lambda request: redirect('process_whole_budget', permanent=False)),
     path('download_network_template/', download_network_template, name='download_network_template'),
     path('upload-network/', upload_network, name='upload_network'),
+    path('', lambda request: redirect('upload_network', permanent=False)),
+    path('calibration/', calibration, name='calibration'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

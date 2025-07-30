@@ -174,6 +174,7 @@ class Uploaded_networks(forms.Form):
             'class': 'hidden'
         }),
         validators=[
-            validate_extension
+            validate_extension,
+            lambda f: validate_contains_sheet(f, 'example_network')
         ]
     )

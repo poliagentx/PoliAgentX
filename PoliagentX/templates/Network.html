@@ -28,7 +28,7 @@
 
       <!-- Right Upload Form -->
       <div>
-        <form method="post" enctype="multipart/form-data" class="bg-gray-100 rounded-lg p-6 shadow-md" id="upload-form">
+        <form method="post" action="{% url 'upload_network' %}" enctype="multipart/form-data" class="bg-gray-100 rounded-lg p-6 shadow-md" id="upload-form">
           {% csrf_token %}
 
           <!-- Message area -->
@@ -98,7 +98,7 @@
     <!-- NEXT Button -->
     <div class="mt-6 text-right">
       <div id="next-button-container" class="hidden">
-        {#<a href="{% url 'calibration' %}" class="inline-block px-6 py-2 bg-green-600 text-white font-semibold rounded hover:bg-green-700">#}
+        <a href="{% url 'calibration' %}" class="inline-block px-6 py-2 bg-green-600 text-white font-semibold rounded hover:bg-green-700">
           NEXT →
         </a>
       </div>

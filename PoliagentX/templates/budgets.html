@@ -60,15 +60,26 @@
                            <!-- server-side: always validate and convert(in django or flask) to float manually  -->                     
                     </ol>
                  <form action="{% url 'process_whole_budget' %}" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
                     <!-- <ol> -->
                         <!-- <li> -->
                           <!-- <label for="total-budget">total-budget</label> -->
                            <input type="number" name="total-budget" id="total-budget">  
                            <input type="number" step="any" name="inflation" id="inflation">                            
                         <!-- </li> -->
-                    <div id="button">
-                        <button type="submit">Next</button>
-                    </div>
+                    </ol>
+                    <div class="mt-6 text-right">
+                        <div id="next-button-container" class="hidden">
+                            <a href="{% url 'upload_network' %}" class="inline-block px-6 py-2 bg-green-600 text-white font-semibold rounded hover:bg-green-700">
+                                NEXT →
+                            </a>
+                        </div>
+                        <div id="next-disabled">
+                            <button disabled class="inline-block px-6 py-2 bg-gray-400 text-white font-semibold rounded cursor-not-allowed">
+                            NEXT →
+                            </button>
+                        </div>
+                     </div>
                  </form>                    
                </div> 
 
@@ -84,6 +95,7 @@
                     </ol>
 
                     <form action="{% url 'upload_expenditure' %}" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
                         <!-- <li> -->
                             <label class="file-drop-area" for="indicator-file">drop your files
                                 <input  type="file" name="indicator-file" id="indicator-file" accept=".xlsxl, .xlsx, .csv".>
