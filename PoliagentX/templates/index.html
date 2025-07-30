@@ -1,8 +1,9 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link href="static/firstpage.css" rel="stylesheet">
+    <link href="{% static 'firstpage.css' %}" rel="stylesheet">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Poliagentx</title>
 </head>
@@ -18,13 +19,13 @@
         <!-- left side  of the page -->
         <div class="left-cont">
           <div class="wrap">  
-            <h1>Welcome to poliagent x</h1>
+            <h1>Welcome to poliagent x</h1><br>
             <p>
                 PPI is an artificial intelligence framework that <br>
                 models the relationship between government spending <br>
                 and development outcomes in a multidimensional and<br> 
                 highly interconnected environment.<br>
-            </p><br><br>
+            </p><br>
             <p>
                 To use the app, you need to go through five steps.<br>
                 Each step provides instructions and a spreadsheet <br>

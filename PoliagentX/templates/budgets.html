@@ -1,11 +1,12 @@
-{% load static %}
+<!-- {% load static %} -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="  { % static 'budgets.css' % }" rel="stylesheet">
-    <title>Document</title>
+    <link href="  {% static 'budgets.css' %}" rel="stylesheet">
+    <!-- <link href="budgets.css" rel="stylesheet"> -->
+    <title>budgets</title>
 </head>
 <body>
     <!--navigation bar-->
@@ -19,13 +20,11 @@
 
         <!-- left section of the page -->
         <div class="left_sect2">
-            <div class="l2heading">
+            <div class="l2text">
                 <h1>
                     STEP2<br />
                     BUDGETS<br />
-                </h1>
-            </div>
-            <div class="l2text">
+                </h1><br>
                <p> 
                     There are two ways in which you can provide information about government expenditure.<br />
                     The first is by entering a total budget amount. This is useful when you do not have <br />
@@ -35,7 +34,7 @@
 
                     The second option is to provide a file with the budget disaggregated into expenditure 
                     programmes using the template provided below. <br />
-               </p>
+               </p><br><br>
               <a class="button" href="{%   'download_budget_template'    %}">download template</a>
             </div>
         </div>
@@ -44,13 +43,13 @@
         <div class="right-section">
            <div class="right-sect-items">
                <div  id="upper">
-                    <h2>add required files</h2>
+                    <h2>Required Files</h2>
                     <ol>
                         <li>
                             <span>Option 1: Enter Total Budget Amount</span><br>
                             Use this option if you only have overall<br> 
                             budget figure. It allows limited analysis focused <br>
-                            on changes in total budget size.<br>
+                            on changes in total budget size.<br><br>
                         </li>
                         <li>
                            <span>inflation rate</span><br>
