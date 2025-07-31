@@ -16,25 +16,45 @@
 <body style="font-family: Poppins;" class="bg-white text-black/90">
 
   <header class="sticky top-0 left-0 w-full bg-[#f2f2f2] shadow-md z-50">
-    <nav class="flex justify-between items-center w-[90%] mx-auto py-2">
-      <div class="flex items-center">
-        <img src="{% static 'Images/flag.jpg' %}" alt="Flag" class="h-6 mr-4 object-contain">
+  <nav class="flex justify-between items-center w-[90%] mx-auto py-2">
+    <div class="flex items-center">
+      <img src="{% static 'Images/flag.jpg' %}" alt="Flag" class="h-6 mr-4 object-contain">
+    </div>
 
-      </div>
-      <div class="justify-between text-center text-sm text-gray-500 space-x-1">
-        <a href="{% url 'upload_indicators' %}" class="text-black font-semibold hover:underline">Indicators</a>
-        &gt;
-        {# <a href="{% url 'upload_budget' %}" class="hover:text-black hover:underline">Budget</a> #}
-        &gt;
-       {# <a href="{% url 'upload_network' %}" class="hover:text-black hover:underline">Network (optional)</a> #}
-       {# &gt;#}
-        {# <a href="{% url 'calibration' %}" class="hover:text-black hover:underline">Calibration</a>#}
-        &gt;
-        {# <a href="{% url 'simulation' %}" class="hover:text-black hover:underline">Simulation</a> #}
-      </div>
+    <div class="justify-between text-center text-sm text-gray-500 space-x-1">
+      <a href=""
+         class="{% if request.resolver_match.url_name == 'upload_indicators' %}text-black font-bold underline{% else %}text-gray-600 hover:text-black hover:underline{% endif %}">
+         Indicators
+      </a>
+      &gt;
+
+      <a href=""
+         class="{% if request.resolver_match.url_name == 'budgets_page' %}text-black font-bold underline{% else %}text-gray-600 hover:text-black hover:underline{% endif %}">
+         Budget
+      </a>
+      &gt;
+
+      <a href=""
+         class="{% if request.resolver_match.url_name == 'upload_network' %}text-black font-bold underline{% else %}text-gray-600 hover:text-black hover:underline{% endif %}">
+         Network (optional)
+      </a>
+      &gt;
+
+      <a href=""
+         class="{% if request.resolver_match.url_name == 'calibration' %}text-black font-bold underline{% else %}text-gray-600 hover:text-black hover:underline{% endif %}">
+         Calibration
+      </a>
+      &gt;
+  
+      <a href=""
+         class="{% if request.resolver_match.url_name == 'simulation' %}text-black font-bold underline{% else %}text-gray-600 hover:text-black hover:underline{% endif %}">
+         Simulation
+      </a>
       
-    </nav>
-  </header>
+    </div>
+  </nav>
+</header>
+
 
   <main class="flex-grow w-[90%] mx-auto pt-[40px] pb-[40px] z-40">
     {% block content %}
