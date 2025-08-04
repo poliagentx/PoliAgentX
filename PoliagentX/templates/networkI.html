@@ -4,7 +4,7 @@
 <head>
     <link rel="stylesheet" href="{% static 'network.css' %}">
     <!-- <link rel="stylesheet" href="network.css"> -->
-
+    <script src="{% static 'indicators-validation.js' %}"></script>     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>network</title>
@@ -48,7 +48,7 @@
                 <h2>add your network files below</h2>
                 <form>
                   <label class="file-drop-area" for="network-file">
-                    <input  type="file" name="network-file" id="network-file" accept=".xlsxl, .xlsx, .csv".>
+                    <input  type="file" name="network-file" id="network-file" accept=".xlsx, .xls, .csv".>
                   </label>
                   <div>
                     <a href="" class="button">skip</a> 
@@ -73,6 +73,7 @@
         fileDropArea.addEventListener('drop', () => {
             fileDropArea.classList.remove('dragover');
         });
-     </script>     
+     </script>
+
 </body>
 </html>

@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="  {% static 'budgets.css' %}" rel="stylesheet">
+    <script src="{% static 'budgetsvalidation.js' %}"></script>
     <!-- <link href="budgets.css" rel="stylesheet"> -->
     <title>budgets</title>
 </head>
@@ -82,10 +83,11 @@
                         </li>
                     </ol>
 
-                    <form action="{% 'upload-expenditure' %}" method="post" enctype="multipart/form-data">
+                    <form action="{% url 'upload-expenditure' %}" method="post" enctype="multipart/form-data">
+                        <div id="message-container"></div>
                         <!-- <li> -->
-                            <label class="file-drop-area" for="indicator-file">drop your files
-                                <input  type="file" name="indicator-file" id="indicator-file" accept=".xlsxl, .xlsx, .csv".>
+                            <label class="file-drop-area" for="budget-file">drop your files
+                                <input  type="file" name="budget-file" id="budget-file" accept=".xlsx, .xls, .csv".>
                             </label>
                         <!-- </li> -->
                         <!-- </ol> -->
