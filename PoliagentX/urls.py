@@ -17,7 +17,8 @@ from .views import (
     process_whole_budget,
     upload_network,
     download_network_template,
-    calibration
+    calibration,
+    simulation
 )
 
 
@@ -36,5 +37,8 @@ urlpatterns = [
     path('upload-network/', upload_network, name='upload_network'),
     path('', lambda request: redirect('upload_network', permanent=False)),
     path('calibration/', calibration, name='calibration'),
+    path('', lambda request: redirect('calibration', permanent=False)),
+    path('simulation/', simulation, name='simulation'),
+    path('', lambda request: redirect('simulation', permanent=False)),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

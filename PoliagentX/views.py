@@ -209,13 +209,32 @@ def process_whole_budget(request):
 
 def upload_network(request):
     if request.method == 'POST':
-        temp_file_path = request.session.get('temp_excel_path')  # Make sure this key matches upload_indicators()
-
-        if not temp_file_path or not os.path.exists(temp_file_path):
-            return HttpResponse("File not found.", status=404)
-
+        skip_indicators = request.POST.get('skip_indicators', 'off') == 'on'
         form = Uploaded_networks(request.POST, request.FILES)
-        if form.is_valid():
+
+        # Determine the file path to use
+        temp_file_path = request.session.get('temp_excel_path')  # From previous indicator upload
+        uploaded_file = request.FILES.get('file')  # Assuming your form has a 'file' field
+
+        # Case 1: Skip indicators
+        if skip_indicators:
+            if not os.path.exists('clean_data/data_network.csv'):
+                return HttpResponse("Skipping indicators failed: no cleaned network file found.", status=404)
+
+            messages.success(request, "☑️ Skipped indicator processing. Using existing network data.")
+            return render(request, 'Network.html', {
+                'form': Uploaded_networks()
+            })
+
+        # Case 2: User uploads a new file for network processing
+        if form.is_valid() and uploaded_file:
+            # Save uploaded file temporarily
+            temp_file_path = f'temp/{uploaded_file.name}'
+            os.makedirs('temp', exist_ok=True)
+            with open(temp_file_path, 'wb+') as destination:
+                for chunk in uploaded_file.chunks():
+                    destination.write(chunk)
+
             # Load Excel data
             try:
                 data = pd.read_excel(temp_file_path)
@@ -252,25 +271,27 @@ def upload_network(request):
                 edge_list.append([ids[i], ids[j], M[i, j]])
 
             # Save result to CSV
-            df = pd.DataFrame(edge_list, columns=['origin', 'destination', 'weight'])
             os.makedirs('clean_data', exist_ok=True)
-            df.to_csv('clean_data/data_network.csv', index=False)
+            pd.DataFrame(edge_list, columns=['origin', 'destination', 'weight']) \
+                .to_csv('clean_data/data_network.csv', index=False)
 
-            # Success feedback
             messages.success(request, "☑️ File processed and network created.")
             return render(request, 'Network.html', {
                 'form': Uploaded_networks()  # Reset form
             })
 
-        # Form invalid
+        # If we reach here, either no file was uploaded or the form is invalid
+        messages.error(request, "Please upload a valid network file or check 'Skip Indicators'.")
         return render(request, 'Network.html', {'form': form})
 
     # GET request
     return render(request, 'Network.html', {'form': Uploaded_networks()})
 
-
 def calibration(request):
     return render(request, 'calibration.html')
+
+def simulation(request):
+    return render(request, 'simulation.html')
 
 
 

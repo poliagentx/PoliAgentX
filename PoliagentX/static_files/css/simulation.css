@@ -1,0 +1,173 @@
+ * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #ffffff;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background-color: #e8e8e8;
+            padding: 20px 40px;
+            flex-shrink: 0;
+        }
+
+        .logo {
+            background: #60a5fa;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .logo:hover{
+            background-color:  #3b82f6;
+            transition: background-color 0/3s ease-in;
+        }
+        .main-content {
+            flex: 1;
+            display: flex;
+            padding: 60px 80px;
+            gap: 80px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .left-section {
+            flex: 1;
+            max-width: 500px;
+        }
+
+        .step-title {
+            font-size: 42px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 40px;
+            line-height: 1.1;
+            letter-spacing: -0.5px;
+        }
+
+        .simulation-area {
+            background: #e8e8e8;
+            border-radius: 8px;
+            height: 280px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .right-section {
+            flex: 1;
+            background: #e8e8e8;
+            padding: 40px;
+            border-radius: 8px;
+            max-width: 500px;
+            height:410px;
+        }
+
+        .description {
+            font-size: 13px;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            line-height: 1.5;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+
+        .input-container {
+            background: white;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid #d1d5db;
+            text-align: center;
+        }
+
+        .input-field {
+            width: 100%;
+            border: none;
+            outline: none;
+            font-size: 28px;
+            font-weight: 600;
+            color: #2c3e50;
+            text-align: center;
+            background: transparent;
+        }
+
+        .input-field::placeholder {
+            color: #9ca3af;
+        }
+
+        .start-button {
+            background: #60a5fa;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 0.5px;
+            width: 100%;
+            text-transform: uppercase;
+        }
+
+        .start-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .start-button:active {
+            transform: translateY(0);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 1200px) {
+            .main-content {
+                padding: 40px 60px;
+                gap: 60px;
+            }
+            
+            .step-title {
+                font-size: 36px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+                padding: 40px 20px;
+                gap: 40px;
+            }
+            
+            .left-section,
+            .right-section {
+                max-width: 100%;
+            }
+            
+            .step-title {
+                font-size: 32px;
+            }
+            
+            .simulation-area {
+                height: 200px;
+            }
+        }
