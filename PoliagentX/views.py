@@ -95,33 +95,34 @@ def upload_indicators(request):
 
     return render(request, 'indicators.html', {'form': Uploaded_indicators()})
 
-def upload_expenditure(request):
-    if request.method == 'POST':
-        form = Uploaded_Budget(request.POST, request.FILES)
-        if form.is_valid():
-            # Handle uploaded file
-            uploaded_file = request.FILES['government_expenditure']
+# def upload_expenditure(request):
+#     if request.method == 'POST':
+#         form_exp = Uploaded_Budget(request.POST, request.FILES)
+#         if form_exp.is_valid():
+#             # Handle uploaded file
+#             uploaded_file = request.FILES['government_expenditure']
 
-            # Save to a temporary file on disk
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
-                for chunk in uploaded_file.chunks():
-                    tmp.write(chunk)
-                temp_file_path = tmp.name
+#             # Save to a temporary file on disk
+#             with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
+#                 for chunk in uploaded_file.chunks():
+#                     tmp.write(chunk)
+#                 temp_file_path = tmp.name
 
-            # Store the temp file path in the session
-            request.session['temp_budget_path'] = temp_file_path
+#             # Store the temp file path in the session
+#             request.session['temp_budget_path'] = temp_file_path
 
-            # Show success message and reset form
-            messages.success(request, "☑️ File validation successful!")
-            return render(request, 'budgets.html', {
-                'form': Uploaded_Budget(),  # reset form
-            })
+#             # Show success message and reset form
+#             messages.success(request, "☑️ File validation successful!")
+#             return render(request, 'budgets.html', {
+#                 'form': Uploaded_Budget(),  # reset form
+#             })
 
-        # If form is invalid
-        return render(request, 'budgets.html', {'form': form})
+#         # If form is invalid
+#         return render(request, 'budgets.html', {'form': form_exp})
 
-    # GET request
-    return render(request, 'budgets.html', {'form': Uploaded_Budget()})
+#     # GET request
+#     return render(request, 'budgets.html', {'form': Uploaded_Budget()})
+
 
 
 def download_indicator_template(request):
@@ -165,46 +166,93 @@ SDG_ALLOCATION = [
     {"goal": "Partnerships for the Goals", "percent": 6},
 ]
 
-def process_whole_budget(request):
+def budgets_page(request):
+    budget_form = BudgetForm()
+    upload_form = Uploaded_Budget()
+
     if request.method == 'POST':
-        form = BudgetForm(request.POST)
-        if form.is_valid():
-            budget = form.cleaned_data['budget']
-            inflation = form.cleaned_data['inflation_rate']
+        if 'process_budget' in request.POST:
+            budget_form = BudgetForm(request.POST)
+            if budget_form.is_valid():
+                budget = budget_form.cleaned_data['budget']
+                inflation = budget_form.cleaned_data['inflation_rate']
+                adjusted_budget = budget / (1 + (inflation / 100))
 
-            # Adjust for inflation
-            adjusted_budget = budget / (1 + (inflation / 100))
+                wb = Workbook()
+                ws1 = wb.active
+                ws1.title = "template_expenditure"
+                ws1.append(["program_ID", "expenditure"])
+                for i, sdg in enumerate(SDG_ALLOCATION):
+                    amount = round(adjusted_budget * sdg["percent"] / 100, 2)
+                    ws1.append([i + 1, amount])
 
-            # Create workbook with two sheets
-            wb = Workbook()
+                ws2 = wb.create_sheet(title="relational_table")
+                ws2.append(["program_ID", "program_name", "goal"])
+                for i, sdg in enumerate(SDG_ALLOCATION):
+                    ws2.append([i + 1, f"Program {i + 1}", sdg["goal"]])
 
-            # Sheet 1: Expenditure
-            ws1 = wb.active
-            ws1.title = "template_expenditure"
-            ws1.append(["program_ID", "expenditure"])
-            for i, sdg in enumerate(SDG_ALLOCATION):
-                amount = round(adjusted_budget * sdg["percent"] / 100, 2)
-                ws1.append([i + 1, amount])
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
+                    wb.save(tmp.name)
+                    request.session['temp_excel_path'] = tmp.name
 
-            # Sheet 2: Relational Table
-            ws2 = wb.create_sheet(title="relational_table")
-            ws2.append(["program_ID", "program_name", "goal"])
-            for i, sdg in enumerate(SDG_ALLOCATION):
-                ws2.append([i + 1, f"Program {i + 1}", sdg["goal"]])
+                messages.success(request, "☑️ Budget processed successfully with two sheets.")
+                return redirect('upload_network')
 
-            # Save to a single temporary file
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
-                wb.save(tmp.name)
-                request.session['temp_excel_path'] = tmp.name
+        elif 'upload_budget' in request.POST:
+            upload_form = Uploaded_Budget(request.POST, request.FILES)
+            if upload_form.is_valid():
+                uploaded_file = request.FILES['government_expenditure']
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
+                    for chunk in uploaded_file.chunks():
+                        tmp.write(chunk)
+                    request.session['temp_budget_path'] = tmp.name
 
-            messages.success(request, "☑️ Budget processed successfully with two sheets.")
-            return render(request, 'budgets.html', {
-                'form': Uploaded_Budget()  # Reset form
-            }) 
-    else:
-        form = BudgetForm()
+                messages.success(request, "☑️ File validation successful!")
+                return redirect('upload_network')  # or re-render same page
 
-    return render(request, 'budgets.html', {'form': form})
+    return render(request, 'budgets.html', {
+        'budget_form': budget_form,
+        'upload_form': upload_form,
+    })
+
+# def process_whole_budget(request):
+#     if request.method == 'POST':
+#         form_whole = BudgetForm(request.POST)
+#         if form_whole.is_valid():
+#             budget = form_whole.cleaned_data['budget']
+#             inflation = form_whole.cleaned_data['inflation_rate']
+
+#             # Adjust for inflation
+#             adjusted_budget = budget / (1 + (inflation / 100))
+
+#             # Create workbook with two sheets
+#             wb = Workbook()
+
+#             # Sheet 1: Expenditure
+#             ws1 = wb.active
+#             ws1.title = "template_expenditure"
+#             ws1.append(["program_ID", "expenditure"])
+#             for i, sdg in enumerate(SDG_ALLOCATION):
+#                 amount = round(adjusted_budget * sdg["percent"] / 100, 2)
+#                 ws1.append([i + 1, amount])
+
+#             # Sheet 2: Relational Table
+#             ws2 = wb.create_sheet(title="relational_table")
+#             ws2.append(["program_ID", "program_name", "goal"])
+#             for i, sdg in enumerate(SDG_ALLOCATION):
+#                 ws2.append([i + 1, f"Program {i + 1}", sdg["goal"]])
+
+#             # Save to a single temporary file
+#             with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
+#                 wb.save(tmp.name)
+#                 request.session['temp_excel_path'] = tmp.name
+
+#             messages.success(request, "☑️ Budget processed successfully with two sheets.")
+#             return redirect('upload_network')  
+#     else:
+#         form = BudgetForm()
+
+#     return render(request, 'budgets.html', {'form': form})
 
 
 def upload_network(request):

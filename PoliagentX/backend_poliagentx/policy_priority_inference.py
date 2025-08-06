@@ -1,21 +1,4 @@
-"""Policy Priority Inference (PPI) source code
 
-Author: Omar A. Guerrero
-Written in Python 3.7
-
-
-Example
--------
-
-
-
-Dependencies
---------------------------
-- Numpy
-- Joblib (optional, for parallel computing)
-
-
-"""
 
 # import necessary libraries
 import numpy as np
@@ -181,10 +164,7 @@ def run_ppi(I0, alphas, alphas_prime, betas, A=None, R=None, bs=None, qm=None, r
             Matrix with the time series of the simulated growth probabilities. 
             Each row corresponds to an indicator and each column to a simulation step.
     """
-    
-    
-    
-    
+
     ## SET DEFAULT PARAMETERS & CHECK INPUT INTEGRITY 
     
     # Number of indicators
@@ -474,18 +454,6 @@ def run_ppi(I0, alphas, alphas_prime, betas, A=None, R=None, bs=None, qm=None, r
     return tsI, tsC, tsF, tsP, tsS, tsG
 
 
-
-    
-
-
-
-
-
-
-
-
-
-
 ## Calibrates PPI automatically and return a Pandas DataFrame with the parameters, errors, and goodness of fit
 def calibrate(I0, IF, success_rates, A=None, R=None, bs=None, qm=None, rl=None,  Bs=None, B_dict=None, 
               T=None, threshold=.8, parallel_processes=None, 
@@ -672,15 +640,6 @@ def calibrate(I0, IF, success_rates, A=None, R=None, bs=None, qm=None, rl=None, 
     return output
     
 
-
-
-
-
-
-
-
-
-
 ## Computes a set of Monte Carlo simulations of PPI, obtains their average statistics, 
 ## and computes the error with respect to IF and success_rates. 
 ## Called by the calibrate function.
@@ -755,14 +714,6 @@ def compute_error(I0, IF, success_rates, alphas, alphas_prime, betas, A=None,
     TF = tsI[0].shape[1]
     
     return errors, TF
-
-
-
-
-
-
-
-
 
 
 def run_ppi_parallel(I0, alphas, alphas_prime, betas, A=None, R=None, bs=None, qm=None, rl=None,

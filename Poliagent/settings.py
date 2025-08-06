@@ -128,19 +128,28 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = 'static/'
 
-STATIC_ROOT = BASE_DIR/ 'staticfiles'
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Static files URL
+STATIC_URL = '/static/'
+
+# Where collectstatic dumps all files (for production)
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Include custom app-level static folders
 STATICFILES_DIRS = [
-    BASE_DIR / 'theme' / 'static',
-    BASE_DIR / 'PoliagentX' / 'static_files',
+    BASE_DIR / 'theme' / 'static',              # theme app static
+    BASE_DIR / 'PoliagentX' / 'static_files',   # PoliagentX app static
 ]
-# settings.py
 
-# Path where static files are collected (for compressor to use)
+# Required for django-compressor to find static files
 COMPRESS_ROOT = STATIC_ROOT
 
-COMPRESS_OUTPUT_DIR = ''
+# Optional: Where compressed files should be stored (can reuse STATIC_ROOT)
+COMPRESS_OUTPUT_DIR = ''  # default, or set to 'CACHE' or other subdir
+
 
 # Enable compression
 COMPRESS_ENABLED = True

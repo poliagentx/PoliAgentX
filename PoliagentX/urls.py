@@ -9,16 +9,18 @@ from .views import (
     # DownloadResultView,
     # BottleneckAnalysisView,
     # ExcelToTableView,
+    # upload_expenditure,
+    budgets_page,
     
-    upload_expenditure,
     upload_indicators,
     download_indicator_template,
-    download_budget_template,
-    process_whole_budget,
-    upload_network,
-    download_network_template,
-    calibration,
-    simulation
+   download_budget_template,
+#    process_whole_budget,
+   upload_network,
+   download_network_template,
+
+   calibration,
+   simulation
 )
 
 
@@ -31,14 +33,12 @@ urlpatterns = [
     path('upload-expenditure/', upload_expenditure, name='upload_expenditure'),
     path('', lambda request: redirect('upload_expenditure', permanent=False)),
     path('download_budget_template/', download_budget_template, name='download_budget_template'),
-    path('process_whole_budget/', process_whole_budget, name='process_whole_budget'),
-    path('', lambda request: redirect('process_whole_budget', permanent=False)),
+    # path('process_whole_budget/', process_whole_budget, name='process_whole_budget'),
+    # path('upload-expenditure/', upload_expenditure, name='upload_expenditure'),
+    path('', lambda request: redirect('upload_expenditure', permanent=False)),
+    path('upload_network/', upload_network, name='upload_network'),
     path('download_network_template/', download_network_template, name='download_network_template'),
-    path('upload-network/', upload_network, name='upload_network'),
-    path('', lambda request: redirect('upload_network', permanent=False)),
-    path('calibration/', calibration, name='calibration'),
-    path('', lambda request: redirect('calibration', permanent=False)),
+    path('budgets/', budgets_page, name='budgets_page'),
+    path('calibration/',calibration,name='calibration'),
     path('simulation/', simulation, name='simulation'),
-    path('', lambda request: redirect('simulation', permanent=False)),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-

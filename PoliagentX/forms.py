@@ -159,8 +159,8 @@ class Uploaded_Budget(forms.Form):
         }),
         validators=[
             validate_extension,
-            lambda f: validate_contains_sheet(f, 'template_budget'),
-            lambda f: validate_contains_sheet(f, 'template_relation_table')
+            lambda e: validate_contains_sheet(e, 'template_budget'),
+            lambda e: validate_contains_sheet(e, 'template_relation_table')
         ]
     )
 

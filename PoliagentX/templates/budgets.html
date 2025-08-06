@@ -1,343 +1,208 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <title>Budgets</title>
-</head>
-<body>
+{% block content %}
+<style>
+    /* (Same styling remains unchanged) */
+</style>
 
-    <style> 
-        *{
-    padding: 0;
-    margin: 0;
-    box-sizing: border-box;
-}
+<div class="min-h-screen bg-white py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+        <div class="grid md:grid-cols-2 gap-8 items-start">
 
-
-
-/* navigation bar styling */
-#nav{
-    display: flex;
-    flex-direction: column-reverse;
-    justify-content: space-around;
-    background-color: rgb(167, 157, 157);
-    height: 8vh;
-}
-
-/* main section styling*/
-#main{
-    display: flex;
-    height: 80vh;
-}
-
-/*section one styling*/
-/* left side of the main page */
-.left_sect2{
-    flex: 1;
-    /* background-color: lightskyblue; */
-    
-}
-/* styling the head */
-.l2heading{
-    font-size: 30px;
-    font-weight: 300;
-    font-family: Arial, Helvetica, sans-serif;
-    color: black;
-    padding: 30px;
-    margin-bottom: 40px;
-}
-/* styling the paragraph area */
-.l2text p{
-    font-family: Arial, Helvetica, sans-serif;
-    font-weight: 200;
-    font-size: 20px;
-    color: black;
-    padding: 30px;
-    margin-bottom: 10px;
-}
-/* button styling */
-.button, .logo button{
-    background-color: rgb(19, 152, 235);
-    color: beige;
-    border: 2px;
-    border-radius: 20px;
-    width: 90px;
-    padding: 20px;
-    height: 60px;
-    margin-left: 20px;
-    font-size: 18px;
-    box-shadow: 10px 10px 20px 5px black;
-    text-decoration: none;
-
-} 
-
-/* styling the right side of the page */
-.right-section{
-    flex: 1;
-    display: flex;
-    justify-content: flex-start;
-    /* align-items: center; */
-
-
-}
-.right-sect-items{
-    display: flex;
-    height: fit-content;
-    flex-direction:column ;
-    align-items:center;
-    /* justify-content: space-around; */
-    /* border: 2px black solid; */
-    border-radius: 10px;
-    background-color: rgb(167, 157, 157);
-    margin-top: 90px;
-    width: 70%;
-}
-
-.right-section h2{
-    font-family: Arial, Helvetica, sans-serif;
-    font-weight: 300;
-    font-size: 30px;
-    margin: 30px 0px 0px 0px;
-    text-decoration: underline;
-    text-align: center;
-    margin-bottom: 10px;
-}
-#upper, .lower {
-    font-family: Arial, Helvetica, sans-serif;
-    display: flex;
-    flex-direction: column;
-    /* justify-content: space-evenly; */
-    margin-left: 25px;
-}
-#upper li, .lower li{
-    list-style: none;
-}
-#upper ol li,.lower ol li{
-    font-size: 19px;
-}
-#upper span, .lower span {
-    text-decoration: underline;
-    text-align: center;
-    font-weight: 300;
-    color: white;
-    margin-bottom: 10px;
-}
-
-
-.right-section form {
-    display: grid;
-    grid-template-rows: 60px ;
-    gap: 10px;
-    /* gap: 20px; */
-    font-family: Arial, Helvetica, sans-serif;
-    font-weight: 200;
-    font-size: 20px;
-    color: black;
-    padding: 30px;
-    /* height: 200px; */
-    
-}
-/* .right-section form ol {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 40px;
-    width: 100px;
-}
-.right-section form ol li {
-    width: 400px;
-} */
-
-
-.right-section button{
-    background-color: aqua;
-    height: 50px;
-    width: 90px;
-    padding: 20px;
-    border-radius: 10px;
-    color: azure;
-    font-size: 19px;
-    font-weight: 400;
-    box-shadow:  10px 20px 30px 2px black;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-}
-.right-section button:hover{
-    cursor: pointer;
-}
-#total-budget{
-    height: 50px;
-    border-radius: 5px;
-}
-
-.file-drop-area {
-      width: 300px;
-      /* height: 40px; */
-      /* max-width: 500px; */
-      padding: 20px;
-      border: 2px solid black;
-      border-radius: 8px;
-      background-color: beige;
-      font-family: Arial, sans-serif;
-      font-size: 16px;
-      color:black ;
-      text-align: center;
-      position: relative;
-      cursor: pointer;
-}
-
-.file-drop-area input[type="file"] {
-      opacity: 0;
-      width: 300px;
-      height: 100%;
-      position: absolute;
-      top: 0;
-      left: 0;
-      cursor: pointer;
-}
-
-.file-drop-area.dragover {
-      border-color: #333;
-      background-color: #e0e0e0;
-      color: #333;
-}
-#upper input{
-    width: 300px;
-    height: 50px;
-    border-radius: 10px;
-    border: 2px solid black ;
-}
-
-#button{
-    display: flex;
-    justify-content: flex-end;
-}
-#button button{
-    margin-right: 30px;
-}
-    </style>
-    <!--navigation bar-->
-    <nav id="nav">
-        <div class="logo">
-           <!-- <button>logo</button> -->
-        </div>  
-    </nav>
-    <!-- main content -->
-     <section id="main">
-
-        <!-- left section of the page -->
-        <div class="left_sect2">
-            <div class="l2heading">
-                <h1>
-                    STEP2<br />
-                    BUDGETS<br />
-                </h1>
+            <div>
+                <h1 class="text-4xl font-bold text-black mb-4">Budget</h1>
+                <p class="text-gray-700 mb-4">
+If you have data on how the government spends across different development categories, you can upload it here. If you do not have disaggregated expenditure data, you can simply declare a total budget to be used by the model. The more disaggregate the data are, the more nuanced inferences you will be able to make. To learn about the format and other requirements of the budget dataset, you should download the associated spreadsheet template and consult its "metadata" tab.
+                </p>
+                <a href="{% url 'download_budget_template' %}" class="inline-block mt-4 px-4 py-2 border border-gray-700 text-black font-semibold rounded hover:bg-green-700 hover:text-white transition duration-300 ease-in-out">
+                    Download Template
+                </a>
             </div>
-            <div class="l2text">
-               <p> 
-                    There are two ways in which you can provide information about government expenditure.<br />
-                    The first is by entering a total budget amount. This is useful when you do not have <br />
-                    information about how the government expenditure is disaggregated. With this level of<br />
-                    aggregation, the types of inferences that you can make will be limited to changes in <br />
-                    the overall budget size.<br />
 
-                    The second option is to provide a file with the budget disaggregated into expenditure 
-                    programmes using the template provided below. <br />
-               </p>
-              <a class="button" href="{% url  'download_budget_template'    %}">download template</a>
+            <div>
+                <div class="bg-gray-100 rounded-lg p-6 shadow-md">
+                    <div class="mb-6">
+                     
+
+                        <label class="input-option flex items-start mb-4 cursor-pointer" for="radio-manual">
+                            <input type="radio" name="input_method" value="manual" id="radio-manual" checked class="form-radio mt-1">
+                            <div>
+                                <span class="text-lg font-medium text-gray-900 m-3">Specify the total budget</span>
+                                <p class="text-sm text-gray-600 mt-1 mb-2">Enter the average total budget exercised during the sample period of the indicators.</p>
+                                 <!-- Manual Input Section -->
+                    <div id="manual-input-section" class="input-section">
+                     <form method="post" class="space-y-4" enctype="multipart/form-data">
+                       {% csrf_token %}
+                       {{ budget_form.media }}
+
+                            <div class="form-group">
+                                <label for="{{ budget_form.budget.id_for_label }}" class="block text-sm font-medium text-gray-700">Total budget</label>
+                                {{ budget_form.budget }}
+                                {% if budget_form.budget.errors %}
+                                    <p class="text-red-600 text-xs mt-1">{{ budget_form.budget.errors }}</p>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group">
+                                <label for="{{ budget_form.inflation_rate.id_for_label }}" class="block text-sm font-medium text-gray-700">Inflation Rate</label>
+                                {{ budget_form.inflation_rate }}
+                                {% if budget_form.inflation_rate.errors %}
+                                    <p class="text-red-600 text-xs mt-1">{{ budget_form.inflation_rate.errors }}</p>
+                                {% endif %}
+                            </div>
+<hr>
+                           
+                    
+                        </form>
+                    </div>
+                            </div>
+                            
+                        </label>
+
+                        <label class="input-option flex items-start cursor-pointer" for="radio-upload">
+                            <input type="radio" name="input_method" value="upload" id="radio-upload" class="form-radio mt-1">
+                            <div>
+                                <span class="text-lg font-medium text-gray-900">Upload the disaggregated budget</span>
+                                <p class="text-sm text-gray-600 mt-1 mb-5">Provide a file with government expenditure data disaggregated into development categories. All the development categories uploaded in this file should be linked to at least one indicator from the dataset uploaded in the previous step (download the expenditure data template for more information).</p>
+                            </div>
+                        </label>
+                    </div>
+
+                   
+
+                    <!-- Upload File Section -->
+                    <div id="file-upload-section" class="input-section hidden">
+                        <form method="post" enctype="multipart/form-data" id="upload-form" class="space-y-4">
+                           {% csrf_token %}
+                           {{ upload_form.media }}
+
+                            
+
+                    
+
+                            {% if upload_form.errors or messages %}
+                                <div class="mb-4">
+                                    {% if upload_form.errors %}
+                                        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                                            {% for field in upload_form %}
+                                                {% for error in field.errors %}
+                                                    <p class="text-sm font-semibold">{{ error }}</p>
+                                                {% endfor %}
+                                            {% endfor %}
+                                            {% for error in upload_form.non_field_errors %}
+                                                <p class="text-sm font-semibold">{{ error }}</p>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+
+                                    {% if messages %}
+                                        {% for message in messages %}
+                                            <div id="{% if message.tags == 'success' %}upload-success-message{% endif %}"
+                                                 class="mt-2 p-3 rounded text-sm text-black bg-{% if message.tags == 'success' %}white{% else %}red{% endif %}-600">
+                                                {{ message }}
+                                            </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+
+                            <div id="drop-zone" class="border-2 border-dashed border-gray-300 p-6 rounded-lg bg-white text-center transition-all duration-300 hover:border-gray-500">
+                                <div class="mb-4">
+                                    <svg class="mx-auto h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M7 16V4h10v12m-5 4l-4-4h8l-4 4z" />
+                                    </svg>
+                                </div>
+                                <p class="text-gray-700">Drag and drop your file here</p>
+                                <p class="text-sm text-gray-500 mb-4">Supported formats: xlsx, xls</p>
+
+                                <label for="{{ upload_form.government_expenditure.id_for_label }}" class="cursor-pointer inline-block bg-black text-white px-4 py-2 rounded hover:bg-gray-800 mt-2">
+                                    Choose File
+                                </label>
+                            </div>
+
+                            <div class="hidden">
+                                {{ upload_form.government_expenditure }}
+                            </div>
+
+                            
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- right section of the page -->
-        <div class="right-section">
-           <div class="right-sect-items">
-               <div  id="upper">
-                    <h2>add required files</h2>
-                    <ol>
-                        <li>
-                            <span>Option 1: Enter Total Budget Amount</span><br>
-                            Use this option if you only have overall<br> 
-                            budget figure. It allows limited analysis focused <br>
-                            on changes in total budget size.<br>
-                        </li>
-                        <li>
-                           <span>inflation rate</span><br>
-                           Add the inflation rate for the period of intrest<br>
-                       </li>   
-                           <!-- client-side: browsers will enforce numeric format -->
-                           <!-- server-side: always validate and convert(in django or flask) to float manually  -->                     
-                    </ol>
-                 <form action="{% url 'process_whole_budget' %}" method="post" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <!-- <ol> -->
-                        <!-- <li> -->
-                          <!-- <label for="total-budget">total-budget</label> -->
-                           <input type="number" name="total-budget" id="total-budget">  
-                           <input type="number" step="any" name="inflation" id="inflation">                            
-                        <!-- </li> -->
-                    </ol>
-                    <div class="mt-6 text-right">
-                        <div id="next-button-container" class="hidden">
-                            <a href="{% url 'upload_network' %}" class="inline-block px-6 py-2 bg-green-600 text-white font-semibold rounded hover:bg-green-700">
-                                NEXT →
-                            </a>
-                        </div>
-                        <div id="next-disabled">
-                            <!-- <button disabled class="inline-block px-6 py-2 bg-gray-400 text-white font-semibold rounded cursor-not-allowed">
-                            NEXT →
-                            </button> -->
-                        </div>
-                     </div>
-                 </form>                    
-               </div> 
-
-               <div class="lower">
-                    <ol>    
-                        <li>
-                            <span>Option 2: Upload Disaggregated Budget File:</span><br>
-                            Use the provided template to upload <br>
-                            a file with detailed expenditure broken <br>
-                            down by programmes.<br/> 
-                            This enables more detailed analysis.
-                        </li>
-                    </ol>
-
-                    <form action="{% url 'upload_expenditure' %}" method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        <!-- <li> -->
-                            <label class="file-drop-area" for="indicator-file">drop your files
-                                <input  type="file" name="indicator-file" id="indicator-file" accept=".xlsxl, .xlsx, .csv".>
-                            </label>
-                        <!-- </li> -->
-                        <!-- </ol> -->
-                       <div id="button">
-                         <button type="submit">Next</button>
-                      </div>
-                    </form>                        
-               </div>
+        <!-- NEXT Button -->
+        <div class="mt-6 text-right">
+            <div id="next-button-container" class="hidden">
+                <a href="{% url 'upload_network' %}" class="inline-block px-6 py-2 bg-green-600 text-white font-semibold rounded hover:bg-green-700">
+                    NEXT →
+                </a>
+            </div>
+            <div id="next-disabled">
+                <button disabled class="inline-block px-6 py-2 bg-gray-400 text-white font-semibold rounded cursor-not-allowed">
+                    NEXT →
+                </button>
             </div>
         </div>
-     </section>
-    <script>
-        const fileDropArea = document.querySelector('.file-drop-area');
+    </div>
+</div>
 
-        fileDropArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            fileDropArea.classList.add('dragover');
-        });
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const manualRadio = document.getElementById('radio-manual');
+        const uploadRadio = document.getElementById('radio-upload');
+        const manualSection = document.getElementById('manual-input-section');
+        const uploadSection = document.getElementById('file-upload-section');
+        const fileUploadInput = document.getElementById('id_government_expenditure');
+        const dropZone = document.getElementById('drop-zone');
 
-        fileDropArea.addEventListener('dragleave', () => {
-            fileDropArea.classList.remove('dragover');
-        });
+        function toggleSections() {
+            if (manualRadio.checked) {
+                manualSection.classList.remove('hidden');
+                uploadSection.classList.add('hidden');
+            } else {
+                manualSection.classList.add('hidden');
+                uploadSection.classList.remove('hidden');
+            }
+        }
 
-        fileDropArea.addEventListener('drop', () => {
-            fileDropArea.classList.remove('dragover');
-        });
-    </script>     
-</body>
-</html>
+        toggleSections();
+        manualRadio.addEventListener('change', toggleSections);
+        uploadRadio.addEventListener('change', toggleSections);
+
+        if (dropZone && fileUploadInput) {
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('border-blue-500', 'bg-blue-50');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    fileUploadInput.files = files;
+                }
+            });
+
+            const chooseFileLabel = document.querySelector('label[for="' + fileUploadInput.id + '"]');
+            if (chooseFileLabel) {
+                chooseFileLabel.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    fileUploadInput.click();
+                });
+            }
+        }
+    });
+</script>
+
+
+<script src="{% static 'Js/Button.js' %}"></script>
+{% endblock %}
