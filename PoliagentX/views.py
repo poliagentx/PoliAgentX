@@ -213,8 +213,8 @@ def upload_network(request):
         form = Uploaded_networks(request.POST, request.FILES)
 
         # Determine the file path to use
-        temp_file_path = request.session.get('temp_excel_path')  # From previous indicator upload
-        uploaded_file = request.FILES.get('file')  # Assuming your form has a 'file' field
+        temp_file_path = request.session.get('temp_excel_path') 
+        uploaded_file = request.FILES.get('file')
 
         # Case 1: Skip indicators
         if skip_indicators:
