@@ -38,3 +38,7 @@ const dropZone = document.getElementById('drop-zone');
       disabledButton.classList.add("hidden");
     }
   });
+  
+
+
+  

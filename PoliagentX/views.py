@@ -1,10 +1,13 @@
 import tempfile
 import io
 import os
+# from .model_calibration import load_uploaded_data
 from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
+from PoliagentX.backend_poliagentx.policy_priority_inference import calibrate
 from django.contrib import messages
 from django.http import FileResponse, HttpResponse
-from PoliagentX.backend_poliagentx.model_calibration import calibrate_model
+# from PoliagentX.backend_poliagentx.model_calibration import load_uploaded_data
 from PoliagentX.backend_poliagentx.simple_prospective_simulation import run_simulation
 from PoliagentX.backend_poliagentx.structural_bottlenecks import analyze_structural_bottlenecks
 from openpyxl import Workbook
@@ -15,7 +18,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.staticfiles import finders
 import pandas as pd
 import numpy as np
-
+import tempfile
 
 
 def upload_indicators(request):
@@ -33,16 +36,17 @@ def upload_indicators(request):
             # Load Excel data
             try:
                 data = pd.read_excel(temp_file_path)
+                data_filtered = data.drop(['monitoring', 'rule_of_law'], axis=1)
             except Exception as e:
                 messages.error(request, f"❌ Failed to read Excel file: {str(e)}")
                 return render(request, 'indicators.html', {'form': form})
 
             # Identify year columns
-            years = [col for col in data.columns if str(col).isdigit()]
+            years = [col for col in data_filtered.columns if str(col).isdigit()]
             
             # Normalize and invert indicators
             normalised_series = []
-            for index, row in data.iterrows():
+            for index, row in data_filtered.iterrows():
                 try:
                     time_series = row[years].values.astype(float)
                     norm = (time_series - row['worstBound']) / (row['bestBound'] - row['worstBound'])
@@ -55,12 +59,12 @@ def upload_indicators(request):
 
             # Create DataFrame with normalized values
             df = pd.DataFrame(normalised_series, columns=years)
-            df['seriesCode'] = data['seriesCode']
+            df['indicator_label'] = data['indicator_label']
             df['sdg'] = data['sdg']
-            df['minVals'] = 0
-            df['maxVals'] = 1
+            df['min_value'] = 0
+            df['max_value'] = 1
             df['instrumental'] = data['instrumental']
-            df['seriesName'] = data['seriesName']
+            df['indicator_name'] = data['indicator_name']
             df['color'] = data['color']
 
             # Add I0, IF
@@ -69,24 +73,25 @@ def upload_indicators(request):
 
             # Success Rates
             diff = df[years].diff(axis=1).iloc[:, 1:]
-            successRates = (diff > 0).sum(axis=1) / (len(years) - 1)
-            successRates = successRates.clip(lower=0.05, upper=0.95)
-            df['successRates'] = successRates
+            success_rates = (diff > 0).sum(axis=1) / (len(years) - 1)
+            success_rates = success_rates.clip(lower=0.05, upper=0.95)
+            df['success_rates'] = success_rates
 
             # Assure development gaps
             df.loc[df['I0'] == df['IF'], 'IF'] *= 1.05
 
             # Governance parameters
-            df['qm'] = -0.33
-            df['rl'] = -0.33
+            df['qm'] = data['monitoring']
+            df['rl'] = data['rule_of_law']
+            
 
-            # Save to cleaned CSV
+            # Save to cleaned Excel
             os.makedirs('clean_data', exist_ok=True)
-            output_path = os.path.join('clean_data', 'data_indicators.csv')
-            df.to_csv(output_path, index=False)
+            output_path = os.path.join('clean_data', 'data_indicators.xlsx')
+            df.to_excel(output_path, index=False)
 
             # Store cleaned path in session
-            request.session['cleaned_indicator_path'] = output_path
+            request.session['indicators_path'] = output_path
 
             messages.success(request, "☑️ File uploaded and processed successfully.")
             return render(request, 'indicators.html', {'form': Uploaded_indicators()})
@@ -94,6 +99,8 @@ def upload_indicators(request):
         return render(request, 'indicators.html', {'form': form})
 
     return render(request, 'indicators.html', {'form': Uploaded_indicators()})
+
+
 
 
 def download_indicator_template(request):
@@ -137,7 +144,7 @@ SDG_ALLOCATION = [
     {"goal": "Partnerships for the Goals", "percent": 6},
 ]
 
-import os  # Add this if not already imported
+# make sure this is defined
 
 def budgets_page(request):
     budget_form = BudgetForm()
@@ -234,6 +241,12 @@ def budgets_page(request):
 
                 messages.success(request, "☑️ Budget processed successfully.")
                 return redirect('upload_network')
+                messages.success(request, "☑️ Budget processed successfully.")
+                return redirect('upload_network')
+
+            except Exception as e:
+                messages.error(request, f"❌ Failed to generate workbook: {e}")
+                return redirect('budgets_page')
 
             except Exception as e:
                 messages.error(request, f"❌ Failed to generate workbook: {e}")
@@ -245,6 +258,7 @@ def budgets_page(request):
     })
 
 def upload_network(request):
+    
     if request.method == 'POST':
         skip_indicators = request.POST.get('skip_indicators', 'off') == 'on'
         form = Uploaded_networks(request.POST, request.FILES)
@@ -274,9 +288,16 @@ def upload_network(request):
 
             # Load Excel data
             try:
-                data = pd.read_excel(temp_file_path)
+                data = pd.read_excel(file_to_process_path)
             except Exception as e:
-                return HttpResponse(f"Failed to read Excel file: {e}", status=400)
+                messages.error(request, f"❌ Failed to read Excel file from '{file_to_process_path}': {str(e)}")
+                if delete_temp_after_use and os.path.exists(file_to_process_path):
+                    os.remove(file_to_process_path)
+                return render(request, 'Network.html', {'form': form})
+            finally:
+                # Clean up the temporary file if it was created in this function
+                if delete_temp_after_use and os.path.exists(file_to_process_path):
+                    os.remove(file_to_process_path)
 
             # Begin matrix processing
             N = len(data)
@@ -285,16 +306,28 @@ def upload_network(request):
             # Find year columns
             years = [col for col in data.columns if str(col).isnumeric()]
 
+            # Ensure there are enough years for calculating changes
+            if len(years) < 2:
+                # messages.error(request, "❌ Not enough year columns to calculate network correlations. Need at least two years.")
+                return render(request, 'Network.html', {'form': form})
+
+
             for i, rowi in data.iterrows():
                 for j, rowj in data.iterrows():
                     if i != j:
-                        serie1 = rowi[years].values.astype(float)[1:]
-                        serie2 = rowj[years].values.astype(float)[:-1]
+                        # Ensure the series have enough data points for change calculation
+                        if len(rowi[years].values) < 2 or len(rowj[years].values) < 2:
+                            continue # Skip if not enough data points
+
+                        serie1 = rowi[years].values.astype(float)
+                        serie2 = rowj[years].values.astype(float)
 
                         change_serie1 = serie1[1:] - serie1[:-1]
                         change_serie2 = serie2[1:] - serie2[:-1]
 
-                        if not np.all(change_serie1 == change_serie1[0]) and not np.all(change_serie2 == change_serie2[0]):
+                        # Check if there's any variation in the change series
+                        # np.all(change_serie == change_serie[0]) checks if all elements are the same
+                        if not (np.all(change_serie1 == change_serie1[0]) or np.all(change_serie2 == change_serie2[0])):
                             corr = np.corrcoef(change_serie1, change_serie2)[0, 1]
                             if not np.isnan(corr):
                                 M[i, j] = corr
@@ -302,24 +335,26 @@ def upload_network(request):
             M[np.abs(M) < 0.5] = 0
 
             # Build edge list
-            ids = data['seriesCode'].values
+            # Ensure 'indicator_label' column exists in the DataFrame
+            if 'indicator_label' not in data.columns:
+                messages.error(request, "❌ Missing 'indicator_label' column in the uploaded data. Cannot build network.")
+                return render(request, 'Network.html', {'form': form})
+
+            ids = data['indicator_label'].values
             edge_list = []
             for i, j in zip(*np.where(M != 0)):
                 edge_list.append([ids[i], ids[j], M[i, j]])
 
-            # Save result to CSV
+            # Save result to Excel
             os.makedirs('clean_data', exist_ok=True)
+            output_path = os.path.join('clean_data', 'data_network.xlsx')
             pd.DataFrame(edge_list, columns=['origin', 'destination', 'weight']) \
-                .to_csv('clean_data/data_network.csv', index=False)
+                .to_excel(output_path, index=False)
+                
+            request.session['network_path'] = output_path
 
-            messages.success(request, "☑️ File processed and network created.")
-            return render(request, 'network.html', {
-                'form': Uploaded_networks()  # Reset form
-            })
-
-        # If we reach here, either no file was uploaded or the form is invalid
-        messages.error(request, "Please upload a valid network file or check 'Skip Indicators'.")
-        return render(request, 'network.html', {'form': form})
+            # messages.success(request, "☑️ File processed and network created.")
+            return render(request, 'Network.html', {'form': Uploaded_networks()})
 
     # GET request
     return render(request, 'network.html', {'form': Uploaded_networks()})
