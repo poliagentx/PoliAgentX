@@ -15,28 +15,110 @@
 </head>
 <body style="font-family: Poppins;" class="bg-white text-black/90">
 
-  <header class="sticky top-0 left-0 w-full bg-[#f2f2f2] shadow-md z-50">
-    <nav class="flex justify-between items-center w-[90%] mx-auto py-2">
-      <div class="flex items-center">
-        <img src="{% static 'Images/flag.jpg' %}" alt="Flag" class="h-6 mr-4 object-contain">
+<header class="sticky top-0 left-0 w-full bg-[#f2f2f2] shadow-md z-50">
+  <nav class="flex justify-between items-center w-[90%] mx-auto py-2">
+    <div class="flex items-center">
+      <img src="{% static 'Images/flag.jpg' %}" alt="Flag" class="h-6 mr-4 object-contain">
+    </div>
 
-      </div>
-      <div class="justify-between text-center text-sm text-gray-500 space-x-1">
-        <a href="{% url 'upload_indicators' %}" class="text-black font-semibold hover:underline">Indicators</a>
-        &gt;
-        {# <a href="{% url 'upload_budget' %}" class="hover:text-black hover:underline">Budget</a> #}
-        &gt;
-       {# <a href="{% url 'upload_network' %}" class="hover:text-black hover:underline">Network (optional)</a> #}
-       {# &gt;#}
-        {# <a href="{% url 'calibration' %}" class="hover:text-black hover:underline">Calibration</a>#}
-        &gt;
-        {# <a href="{% url 'simulation' %}" class="hover:text-black hover:underline">Simulation</a> #}
-      </div>
-      
-    </nav>
-  </header>
+    <div class="workflow-progress-container">
+      <a class="workflow-step {% if request.resolver_match.url_name == 'upload_indicators' %}current{% elif 'indicators_completed' in request.session %}completed{% endif %}">
+        Indicators
+      </a>
+      <span class="separator">&gt;</span>
 
-  <main class="flex-grow w-[90%] mx-auto pt-[40px] pb-[40px] z-40">
+      <a class="workflow-step {% if request.resolver_match.url_name == 'budgets_page' %}current{% elif 'budget_completed' in request.session %}completed{% endif %}">
+        Budget
+      </a>
+      <span class="separator">&gt;</span>
+
+      <a  class="workflow-step {% if request.resolver_match.url_name == 'upload_network' %}current{% elif 'network_completed' in request.session %}completed{% endif %}">
+        Network (optional)
+      </a>
+      <span class="separator">&gt;</span>
+
+      <a  class="workflow-step {% if request.resolver_match.url_name == 'calibration' %}current{% elif 'calibration_completed' in request.session %}completed{% endif %}">
+        Calibration
+      </a>
+      <span class="separator">&gt;</span>
+  
+      <a  class="workflow-step {% if request.resolver_match.url_name == 'simulation' %}current{% elif 'simulation_completed' in request.session %}completed{% endif %}">
+        Simulation
+      </a>
+    </div>
+  </nav>
+</header>
+
+<style>
+/* Add these styles to your CSS file */
+.workflow-progress-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem; /* Space between steps and separators */
+}
+
+.workflow-step {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    color: #6b7280; /* Default gray */
+    font-weight: normal;
+    transition: all 0.3s ease;
+    position: relative; /* For potential future indicators like checkmarks */
+}
+
+.workflow-step:hover {
+    color: #000;
+    text-decoration: underline;
+}
+
+.workflow-step.current {
+    color: #000;
+    font-weight: bold;
+    {% comment %} text-decoration: underline; {% endcomment %}
+    {% comment %} background-color: #e0e0e0; /* Light background for current step */ {% endcomment %}
+}
+
+.workflow-step.completed {
+    color: #4CAF50; /* Green for completed steps */
+    font-weight: bold;
+    /* You could add a background, border, or icon here */
+}
+
+.separator {
+    color: #9ca3af; /* Gray for separators */
+    font-weight: bold;
+}
+
+/* Example of a connecting line (more complex CSS/JS might be needed for dynamic fill) */
+/* .workflow-progress-container {
+    position: relative;
+    padding-bottom: 5px;
+}
+.workflow-progress-container::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background-color: #ccc;
+    width: 100%;
+    z-index: -1;
+}
+.workflow-step.completed + .separator::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background-color: #4CAF50;
+    width: 100%;
+    z-index: -1;
+} */
+</style>
+
+
+  <main class="flex-grow w-[95%] mx-auto pt-[40px] pb-[40px] z-40">
     {% block content %}
     {% endblock %}
   </main>

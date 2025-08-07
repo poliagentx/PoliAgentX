@@ -23,7 +23,7 @@ def validate_contains_sheet(file, required_sheet):
         elif ext == '.xlsx':
             xl = pd.ExcelFile(file, engine='openpyxl')
         else:
-            raise ValidationError("Unsupported file extension.")
+            raise ValidationError("Unsupported file")
 
         # Sheet existence check
         if required_sheet not in xl.sheet_names:
@@ -150,7 +150,40 @@ class BudgetForm(forms.Form):
 
 
 class Uploaded_Budget(forms.Form):
-    government_indicators = forms.FileField(
+    government_expenditure = forms.FileField(
+        label='Upload file',
+        required=True,
+        widget=forms.ClearableFileInput(attrs={
+            'id': 'id_government_expenditure',
+            'class': 'hidden'
+        }),
+        validators=[
+            validate_extension,
+            lambda e: validate_contains_sheet(e, 'template_budget'),
+            lambda e: validate_contains_sheet(e, 'template_relation')
+        ]
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.layout = Layout(
+            Field(
+                'government_expenditure',
+                id='file-upload',  
+                css_class='hidden'
+            ),
+            Submit(
+                'submit',
+                'Upload',
+                css_class='bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded mt-4'
+            )
+        )
+
+
+class Uploaded_networks(forms.Form):
+    interdependency_network = forms.FileField(
         label='Upload file',
         required=True,
         widget=forms.ClearableFileInput(attrs={
@@ -159,21 +192,23 @@ class Uploaded_Budget(forms.Form):
         }),
         validators=[
             validate_extension,
-            lambda e: validate_contains_sheet(e, 'template_budget'),
-            lambda e: validate_contains_sheet(e, 'template_relation_table')
+            lambda g: validate_contains_sheet(g, 'template_network'),
         ]
     )
 
-
-class Uploaded_networks(forms.Form):
-    government_indicators = forms.FileField(
-        label='Upload file',
-        required=True,
-        widget=forms.ClearableFileInput(attrs={
-            'id': 'file-upload',  
-            'class': 'hidden'
-        }),
-        validators=[
-            validate_extension
-        ]
-    )
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.layout = Layout(
+            Field(
+                'interdependency_network',
+                id='file-upload',  
+                css_class='hidden'
+            ),
+            Submit(
+                'submit',
+                'Upload',
+                css_class='bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded mt-4'
+            )
+        )

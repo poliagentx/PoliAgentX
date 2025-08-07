@@ -1,41 +1,50 @@
-import pandas as pd
-import numpy as np
-# import policy_priority_inference as ppi
-from PoliagentX.backend_poliagentx.policy_priority_inference import calibrate
+# import pandas as pd
+# import numpy as np
+# # import policy_priority_inference as ppi
+# from PoliagentX.backend_poliagentx.policy_priority_inference import calibrate
+# with open('indicator_path.txt', 'r') as f:
+#     path_indicator = f.read().strip()
 
-def calibrate_model(indicators_path,relational_table_path, network_path,expenditure_path,output_path,threshold=0.7,parallel_processes=4,low_precision_counts=50):
-    df_indis = pd.read_excel(indicators_path)
-    N = len(df_indis)
-    I0 = df_indis.I0.values
-    IF = df_indis.IF.values
-    success_rates = df_indis.successRates.values
-    R = df_indis.instrumental
-    qm = df_indis.qm.values
-    rl = df_indis.rl.values
-    indis_index = dict([(code, i) for i, code in enumerate(df_indis.indicator_label)])
+# with open('network_path.txt', 'r') as f:
+#     path_network = f.read().strip()
 
-    df_net = pd.read_excel(network_path)
-    A = np.zeros((N, N))
-    for index, row in df_net.iterrows():
-        i = indis_index[row.origin]
-        j = indis_index[row.destination]
-        w = row.weight
-        A[i, j] = w
+# with open('generated_budget_path.txt', 'r') as f:
+#     path_generated_budget = f.read().strip()
 
-    df_exp = pd.read_excel(expenditure_path)
-    Bs = df_exp.values[:, 1::]
-    df_rela = pd.read_excel(relational_table_path)
-    B_dict = {}
-    for index, row in df_rela.iterrows():
-        B_dict[indis_index[row.indicator_label]] = [programme for programme in row.values[1::][row.values[1::].astype(str) != 'nan']]
 
-    T = Bs.shape[1]
+# #indicators before calibration
+# df_indis = pd.read_excel(path_indicator,sheet_name='template')
+# N = len(df_indis) # number of indicators
+# I0 = df_indis.initial_value.values # initial values
+# IF = df_indis.final_value.values # final values
+# success_rates = df_indis.success_rate.values # success rates
+# R = df_indis.instrumental # instrumental indicators
+# qm = df_indis.monitoring.values # quality of monitoring
+# rl = df_indis.rule_of_law.values # quality of the rule of law
+# indis_index = dict([(code, i) for i, code in enumerate(df_indis.indicator_label)]) 
 
-    parameters = calibrate(
-        I0, IF, success_rates, A=A, R=R, qm=qm, rl=rl, Bs=Bs, B_dict=B_dict,
-        T=T, threshold=threshold, parallel_processes=parallel_processes, verbose=True,
-        low_precision_counts=low_precision_counts
-    )
-    df_params = pd.DataFrame(parameters[1::], columns=parameters[0])
-    df_params.to_excel(output_path, index=False)
-    return output_path
+# # network matrix
+# df_net = pd.read_excel( path_network,sheet_name='template_network')
+# A = df_net.values[:,1::]
+
+# # Bs disbursement schedule
+# df_exp = pd.read_excel(path_generated_budget,sheet_name='template_budget')
+# Bs = df_exp.values[:,1::] # disbursement schedule (assumes that the expenditure programmes are properly sorted)
+
+
+
+# #budget indicator mapping
+# df_rela = df_rela = pd.read_excel(path_generated_budget, sheet_name='template_relation_table')
+# B_dict = {} # PPI needs the relational table in the form of a Python dictionary
+# for index, row in df_rela.iterrows():
+#  B_dict[indis_index[row.indicator_label]] = [programme for programme in row.values[1::][row.values[1::].astype(str)!='nan']]
+ 
+ 
+#  T = Bs.shape[1]
+# parallel_processes = 4 # number of cores to use
+# threshold = 0.7 # the quality of the calibration (I choose a medium quality for illustration purposes)
+# low_precision_counts = 50 # number of low-quality iterations to accelerate the calibration
+
+# parameters = calibrate(I0, IF, success_rates, A=A, R=R, qm=qm, rl=rl, Bs=Bs, B_dict=B_dict,
+#               T=T, threshold=threshold, parallel_processes=parallel_processes, verbose=True,
+#              low_precision_counts=low_precision_counts)
