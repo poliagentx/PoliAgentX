@@ -137,6 +137,8 @@ SDG_ALLOCATION = [
     {"goal": "Partnerships for the Goals", "percent": 6},
 ]
 
+import os  # Add this if not already imported
+
 def budgets_page(request):
     budget_form = BudgetForm()
     upload_form = Uploaded_Budget()
@@ -172,7 +174,7 @@ def budgets_page(request):
                 uploaded_file = request.FILES['government_expenditure']
                 try:
                     # Save and read uploaded Excel file
-                    with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx', prefix='uploaded_budget_') as tmp:
                         for chunk in uploaded_file.chunks():
                             tmp.write(chunk)
                         tmp_path = tmp.name
@@ -192,7 +194,7 @@ def budgets_page(request):
 
         # If data_exp was generated from either source, continue processing
         if data_exp is not None:
-            T=69  # Total time periods (e.g., 69 months)
+            T = 69  # Total time periods (e.g., 69 months)
             try:
                 # Generate disbursement schedule
                 years = [col for col in data_exp.columns if str(col).isnumeric()]
@@ -225,8 +227,8 @@ def budgets_page(request):
                 for i, sdg in enumerate(SDG_ALLOCATION):
                     ws2.append([i + 1, f"Program {i + 1}", sdg["goal"]])
 
-                # Save to session
-                with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp_out:
+                # Save to distinct file path
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx', prefix='disbursement_schedule_') as tmp_out:
                     wb.save(tmp_out.name)
                     request.session['temp_excel_path'] = tmp_out.name
 
