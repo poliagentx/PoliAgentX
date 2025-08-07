@@ -95,35 +95,6 @@ def upload_indicators(request):
 
     return render(request, 'indicators.html', {'form': Uploaded_indicators()})
 
-# def upload_expenditure(request):
-#     if request.method == 'POST':
-#         form_exp = Uploaded_Budget(request.POST, request.FILES)
-#         if form_exp.is_valid():
-#             # Handle uploaded file
-#             uploaded_file = request.FILES['government_expenditure']
-
-#             # Save to a temporary file on disk
-#             with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
-#                 for chunk in uploaded_file.chunks():
-#                     tmp.write(chunk)
-#                 temp_file_path = tmp.name
-
-#             # Store the temp file path in the session
-#             request.session['temp_budget_path'] = temp_file_path
-
-#             # Show success message and reset form
-#             messages.success(request, "☑️ File validation successful!")
-#             return render(request, 'budgets.html', {
-#                 'form': Uploaded_Budget(),  # reset form
-#             })
-
-#         # If form is invalid
-#         return render(request, 'budgets.html', {'form': form_exp})
-
-#     # GET request
-#     return render(request, 'budgets.html', {'form': Uploaded_Budget()})
-
-
 
 def download_indicator_template(request):
     filepath = finders.find('templates/template_indicators.xlsx')
@@ -171,6 +142,9 @@ def budgets_page(request):
     upload_form = Uploaded_Budget()
 
     if request.method == 'POST':
+        data_exp = None
+
+        # Handle manual budget input
         if 'process_budget' in request.POST:
             budget_form = BudgetForm(request.POST)
             if budget_form.is_valid():
@@ -178,82 +152,95 @@ def budgets_page(request):
                 inflation = budget_form.cleaned_data['inflation_rate']
                 adjusted_budget = budget / (1 + (inflation / 100))
 
+                # Generate fake yearly data for each SDG
+                periods = 3  # Default number of years
+                data_exp = pd.DataFrame([
+                    {'sdg': i + 1, **{
+                        str(2023 + j): round(adjusted_budget * sdg['percent'] / 100 / periods, 2)
+                        for j in range(periods)
+                    }}
+                    for i, sdg in enumerate(SDG_ALLOCATION)
+                ])
+            else:
+                messages.error(request, "❌ Invalid manual budget input.")
+                return redirect('budgets_page')
+
+        # Handle uploaded Excel file
+        elif 'upload_budget' in request.POST:
+            upload_form = Uploaded_Budget(request.POST, request.FILES)
+            if upload_form.is_valid():
+                uploaded_file = request.FILES['government_expenditure']
+                try:
+                    # Save and read uploaded Excel file
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
+                        for chunk in uploaded_file.chunks():
+                            tmp.write(chunk)
+                        tmp_path = tmp.name
+
+                    data_exp = pd.read_excel(tmp_path)
+
+                    if 'sdg' not in data_exp.columns:
+                        messages.error(request, "❌ Uploaded file must have an 'sdg' column.")
+                        return redirect('budgets_page')
+
+                except Exception as e:
+                    messages.error(request, f"❌ Failed to read uploaded file: {e}")
+                    return redirect('budgets_page')
+            else:
+                messages.error(request, "❌ Invalid file upload.")
+                return redirect('budgets_page')
+
+        # If data_exp was generated from either source, continue processing
+        if data_exp is not None:
+            T=69  # Total time periods (e.g., 69 months)
+            try:
+                # Generate disbursement schedule
+                years = [col for col in data_exp.columns if str(col).isnumeric()]
+                periods = len(years)
+                t = int(T / periods)
+
+                disbursement_rows = []
+                for _, row in data_exp.iterrows():
+                    new_row = [row['sdg']]
+                    for year in years:
+                        value = int(row[year])
+                        new_row.extend([value] * t)
+                    disbursement_rows.append(new_row)
+
+                df_disbursement = pd.DataFrame(disbursement_rows, columns=['sdg'] + list(range(T)))
+
+                # Create Excel workbook
                 wb = Workbook()
+
+                # Sheet 1: template_expenditure
                 ws1 = wb.active
                 ws1.title = "template_expenditure"
-                ws1.append(["program_ID", "expenditure"])
-                for i, sdg in enumerate(SDG_ALLOCATION):
-                    amount = round(adjusted_budget * sdg["percent"] / 100, 2)
-                    ws1.append([i + 1, amount])
+                ws1.append(df_disbursement.columns.tolist())
+                for row in df_disbursement.itertuples(index=False):
+                    ws1.append(list(row))
 
+                # Sheet 2: relational_table
                 ws2 = wb.create_sheet(title="relational_table")
                 ws2.append(["program_ID", "program_name", "goal"])
                 for i, sdg in enumerate(SDG_ALLOCATION):
                     ws2.append([i + 1, f"Program {i + 1}", sdg["goal"]])
 
-                with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
-                    wb.save(tmp.name)
-                    request.session['temp_excel_path'] = tmp.name
+                # Save to session
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp_out:
+                    wb.save(tmp_out.name)
+                    request.session['temp_excel_path'] = tmp_out.name
 
-                messages.success(request, "☑️ Budget processed successfully with two sheets.")
+                messages.success(request, "☑️ Budget processed successfully.")
                 return redirect('upload_network')
 
-        elif 'upload_budget' in request.POST:
-            upload_form = Uploaded_Budget(request.POST, request.FILES)
-            if upload_form.is_valid():
-                uploaded_file = request.FILES['government_expenditure']
-                with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
-                    for chunk in uploaded_file.chunks():
-                        tmp.write(chunk)
-                    request.session['temp_budget_path'] = tmp.name
-
-                messages.success(request, "☑️ File validation successful!")
-                return redirect('upload_network')  # or re-render same page
+            except Exception as e:
+                messages.error(request, f"❌ Failed to generate workbook: {e}")
+                return redirect('budgets_page')
 
     return render(request, 'budgets.html', {
         'budget_form': budget_form,
         'upload_form': upload_form,
     })
-
-# def process_whole_budget(request):
-#     if request.method == 'POST':
-#         form_whole = BudgetForm(request.POST)
-#         if form_whole.is_valid():
-#             budget = form_whole.cleaned_data['budget']
-#             inflation = form_whole.cleaned_data['inflation_rate']
-
-#             # Adjust for inflation
-#             adjusted_budget = budget / (1 + (inflation / 100))
-
-#             # Create workbook with two sheets
-#             wb = Workbook()
-
-#             # Sheet 1: Expenditure
-#             ws1 = wb.active
-#             ws1.title = "template_expenditure"
-#             ws1.append(["program_ID", "expenditure"])
-#             for i, sdg in enumerate(SDG_ALLOCATION):
-#                 amount = round(adjusted_budget * sdg["percent"] / 100, 2)
-#                 ws1.append([i + 1, amount])
-
-#             # Sheet 2: Relational Table
-#             ws2 = wb.create_sheet(title="relational_table")
-#             ws2.append(["program_ID", "program_name", "goal"])
-#             for i, sdg in enumerate(SDG_ALLOCATION):
-#                 ws2.append([i + 1, f"Program {i + 1}", sdg["goal"]])
-
-#             # Save to a single temporary file
-#             with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
-#                 wb.save(tmp.name)
-#                 request.session['temp_excel_path'] = tmp.name
-
-#             messages.success(request, "☑️ Budget processed successfully with two sheets.")
-#             return redirect('upload_network')  
-#     else:
-#         form = BudgetForm()
-
-#     return render(request, 'budgets.html', {'form': form})
-
 
 def upload_network(request):
     if request.method == 'POST':
@@ -270,7 +257,7 @@ def upload_network(request):
                 return HttpResponse("Skipping indicators failed: no cleaned network file found.", status=404)
 
             messages.success(request, "☑️ Skipped indicator processing. Using existing network data.")
-            return render(request, 'Network.html', {
+            return render(request, 'network.html', {
                 'form': Uploaded_networks()
             })
 
@@ -324,16 +311,16 @@ def upload_network(request):
                 .to_csv('clean_data/data_network.csv', index=False)
 
             messages.success(request, "☑️ File processed and network created.")
-            return render(request, 'Network.html', {
+            return render(request, 'network.html', {
                 'form': Uploaded_networks()  # Reset form
             })
 
         # If we reach here, either no file was uploaded or the form is invalid
         messages.error(request, "Please upload a valid network file or check 'Skip Indicators'.")
-        return render(request, 'Network.html', {'form': form})
+        return render(request, 'network.html', {'form': form})
 
     # GET request
-    return render(request, 'Network.html', {'form': Uploaded_networks()})
+    return render(request, 'network.html', {'form': Uploaded_networks()})
 
 def calibration(request):
     return render(request, 'calibration.html')

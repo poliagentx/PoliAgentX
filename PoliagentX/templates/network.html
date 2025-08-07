@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section id="main-content">
+    <div class="left-section">
+        <div class="inner">
+            <h1>
+                STEP 3<br>
+                NETWORK<br>
+                INTERDEPENDENCIES<br>
+            </h1>
+            <p>
+                One of the most important discussions in the sustainable development community
+                is accounting for the complex structure of interdependencies between policy
+                dimensions...
+            </p>
+            <p>
+                The template provided in this step of the workflow is organised in three sheets...
+            </p>
+            <a href="" class="button">Download template</a>
+        </div>
+    </div>
+    <div class="right-section">
+        <div class="inner">
+            <h2>add your network files below</h2>
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <label class="file-drop-area" for="network-file">drop your files
+                    <input type="file" name="network-file" id="network-file" accept=".xls, .xlsx, .csv">
+                </label>
+                <div>
+                    <a href="" class="button">skip</a>
+                    <button type="submit">next</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}
