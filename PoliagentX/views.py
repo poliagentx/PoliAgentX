@@ -1,17 +1,19 @@
 import tempfile
 import io
 import os
-# from .model_calibration import load_uploaded_data
 from django.conf import settings
+import uuid
 from django.views.decorators.csrf import csrf_exempt
 from PoliagentX.backend_poliagentx.policy_priority_inference import calibrate
+from PoliagentX.backend_poliagentx.relational_table import build_relational_table
+from PoliagentX.backend_poliagentx.allocation import get_sdg_allocation_from_file,SDG_ALLOCATION
+from PoliagentX.backend_poliagentx.budget import expand_budget
 from django.contrib import messages
 from django.http import FileResponse, HttpResponse
-# from PoliagentX.backend_poliagentx.model_calibration import load_uploaded_data
 from PoliagentX.backend_poliagentx.simple_prospective_simulation import run_simulation
 from PoliagentX.backend_poliagentx.structural_bottlenecks import analyze_structural_bottlenecks
 from openpyxl import Workbook
-from .forms import Uploaded_indicators,BudgetForm,Uploaded_Budget, Uploaded_networks
+from .forms import *
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -19,6 +21,7 @@ from django.contrib.staticfiles import finders
 import pandas as pd
 import numpy as np
 import tempfile
+from openpyxl.utils.dataframe import dataframe_to_rows
 
 
 def upload_indicators(request):
@@ -101,96 +104,43 @@ def upload_indicators(request):
     return render(request, 'indicators.html', {'form': Uploaded_indicators()})
 
 
-
-
-def download_indicator_template(request):
-    filepath = finders.find('templates/template_indicators.xlsx')
-    if filepath and os.path.exists(filepath):
-        return FileResponse(open(filepath, 'rb'), as_attachment=True, filename='template_indicators.xlsx')
-    else:
-        return HttpResponse("Template file not found.", status=404)
-
-def download_budget_template(request):
-    filepath = finders.find('templates/template_budget.xlsx')
-    if filepath and os.path.exists(filepath):
-        return FileResponse(open(filepath, 'rb'), as_attachment=True, filename='template_budget.xlsx')
-    else:
-        return HttpResponse("Template file not found.", status=404)
-
-def download_network_template(request):
-    filepath = finders.find('templates/template_network.xlsx')
-    if filepath and os.path.exists(filepath):
-        return FileResponse(open(filepath, 'rb'), as_attachment=True, filename='template_network.xlsx')
-    else:
-        return HttpResponse("Template file not found.", status=404)
-    
-SDG_ALLOCATION = [
-    {"goal": "No Poverty", "percent": 10},
-    {"goal": "Zero Hunger", "percent": 8},
-    {"goal": "Good Health and Well-being", "percent": 12},
-    {"goal": "Quality Education", "percent": 10},
-    {"goal": "Gender Equality", "percent": 5},
-    {"goal": "Clean Water and Sanitation", "percent": 6},
-    {"goal": "Affordable and Clean Energy", "percent": 6},
-    {"goal": "Decent Work and Economic Growth", "percent": 7},
-    {"goal": "Industry, Innovation, and Infrastructure", "percent": 5},
-    {"goal": "Reduced Inequality", "percent": 4},
-    {"goal": "Sustainable Cities and Communities", "percent": 5},
-    {"goal": "Responsible Consumption and Production", "percent": 3},
-    {"goal": "Climate Action", "percent": 3},
-    {"goal": "Life Below Water", "percent": 2},
-    {"goal": "Life on Land", "percent": 2},
-    {"goal": "Peace, Justice, and Strong Institutions", "percent": 6},
-    {"goal": "Partnerships for the Goals", "percent": 6},
-]
-
-# make sure this is defined
-
 def budgets_page(request):
+    indicators_path = request.session.get('indicators_path')
+    if not indicators_path:
+        messages.error(request, "Indicators file is missing. Please upload it first.")
+        return redirect('upload_indicators')
+
+    allocation = get_sdg_allocation_from_file(indicators_path)
     budget_form = BudgetForm()
     upload_form = Uploaded_Budget()
+    data_exp = None
 
     if request.method == 'POST':
-        data_exp = None
-
-        # Handle manual budget input
-        if 'process_budget' in request.POST:
-            budget_form = BudgetForm(request.POST)
-            if budget_form.is_valid():
-                budget = budget_form.cleaned_data['budget']
-                inflation = budget_form.cleaned_data['inflation_rate']
-                adjusted_budget = budget / (1 + (inflation / 100))
-
-                # Generate fake yearly data for each SDG
-                periods = 3  # Default number of years
-                data_exp = pd.DataFrame([
-                    {'sdg': i + 1, **{
-                        str(2023 + j): round(adjusted_budget * sdg['percent'] / 100 / periods, 2)
-                        for j in range(periods)
-                    }}
-                    for i, sdg in enumerate(SDG_ALLOCATION)
-                ])
-            else:
-                messages.error(request, "❌ Invalid manual budget input.")
-                return redirect('budgets_page')
-
-        # Handle uploaded Excel file
-        elif 'upload_budget' in request.POST:
+        
+        # 1️⃣ Handle uploaded Excel file first
+        if 'government_expenditure' in request.FILES:
             upload_form = Uploaded_Budget(request.POST, request.FILES)
             if upload_form.is_valid():
                 uploaded_file = request.FILES['government_expenditure']
                 try:
-                    # Save and read uploaded Excel file
                     with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
                         for chunk in uploaded_file.chunks():
                             tmp.write(chunk)
                         tmp_path = tmp.name
 
                     data_exp = pd.read_excel(tmp_path)
+                    data_indi = pd.read_excel(indicators_path)
+
+                    # Filter for matching & instrumental SDGs
+                    data_exp = data_exp[data_exp.sdg.isin(data_indi.sdg.values)]
+                    data_exp = data_exp[data_exp.sdg.isin(data_indi[data_indi.instrumental == 1].sdg.values)]
 
                     if 'sdg' not in data_exp.columns:
                         messages.error(request, "❌ Uploaded file must have an 'sdg' column.")
                         return redirect('budgets_page')
+
+            
+                    df_exp = expand_budget(data_exp)
 
                 except Exception as e:
                     messages.error(request, f"❌ Failed to read uploaded file: {e}")
@@ -198,64 +148,77 @@ def budgets_page(request):
             else:
                 messages.error(request, "❌ Invalid file upload.")
                 return redirect('budgets_page')
+            
+            df_rel = build_relational_table(data_indi)
+           
 
-        # If data_exp was generated from either source, continue processing
-        if data_exp is not None:
-            T=69  # Total time periods (e.g., 69 months)
-            try:
-                # Generate disbursement schedule
-                years = [col for col in data_exp.columns if str(col).isnumeric()]
+        # 2️⃣ If no file, handle manual budget input
+        elif 'budget' in request.POST:
+            budget_form = BudgetForm(request.POST)
+            if budget_form.is_valid():
+                budget = budget_form.cleaned_data['budget']
+                inflation = budget_form.cleaned_data['inflation_rate']
+                adjusted_budget = budget / (1 + (inflation / 100))
+                data_indi = pd.read_excel(indicators_path)
+
+                years = sorted([int(col) for col in data_indi.columns if str(col).isdigit()])
                 periods = len(years)
-                t = int(T / periods)
 
-                disbursement_rows = []
-                for _, row in data_exp.iterrows():
-                    new_row = [row['sdg']]
-                    for year in years:
-                        value = int(row[year])
-                        new_row.extend([value] * t)
-                    disbursement_rows.append(new_row)
+                data_exp = pd.DataFrame([
+                    {
+                        'sdg': i + 1,
+                        **{
+                            str(years[0] + j): round(adjusted_budget * sdg['percent'] / 100 / periods, 2)
+                            for j in range(periods)
+                        }
+                    }
+                    for i, sdg in enumerate(allocation)
+                ])
+                
+                data_exp = data_exp[data_exp.sdg.isin(data_indi.sdg.values)]
+                data_exp = data_exp[data_exp.sdg.isin(data_indi[data_indi.instrumental == 1].sdg.values)]
 
-                df_disbursement = pd.DataFrame(disbursement_rows, columns=['sdg'] + list(range(T)))
+                if 'sdg' not in data_exp.columns:
+                    messages.error(request, "❌ Uploaded file must have an 'sdg' column.")
+                    return redirect('budgets_page')
 
-                # Create Excel workbook
-                wb = Workbook()
+                df_exp = expand_budget(data_exp)
 
-                # Sheet 1: template_expenditure
-                ws1 = wb.active
-                ws1.title = "template_expenditure"
-                ws1.append(df_disbursement.columns.tolist())
-                for row in df_disbursement.itertuples(index=False):
-                    ws1.append(list(row))
-
-                # Sheet 2: relational_table
-                ws2 = wb.create_sheet(title="relational_table")
-                ws2.append(["program_ID", "program_name", "goal"])
-                for i, sdg in enumerate(SDG_ALLOCATION):
-                    ws2.append([i + 1, f"Program {i + 1}", sdg["goal"]])
-
-                # Save to session
-                with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp_out:
-                    wb.save(tmp_out.name)
-                    request.session['temp_excel_path'] = tmp_out.name
-
-                messages.success(request, "☑️ Budget processed successfully.")
-                return redirect('upload_network')
-
-            except Exception as e:
-                messages.error(request, f"❌ Failed to generate workbook: {e}")
+            else:
+                messages.error(request, "❌ Invalid manual budget input.")
                 return redirect('budgets_page')
+            
+            
+            df_rel = build_relational_table(data_indi)
+           
+
+        # 3️⃣ Save results if `data_exp` exists
+        if data_exp is not None:
+    
+            # Create a new workbook
+            wb = Workbook()
+
+            # --- Sheet 1: template_budget ---
+            ws_budget = wb.active
+            ws_budget.title = "template_budget"
+            for r in dataframe_to_rows(df_exp, index=False, header=True):
+                ws_budget.append(r)
+
+            # --- Sheet 2: relational_table ---
+            ws_relation = wb.create_sheet(title="relational_table")
+            for r in dataframe_to_rows(df_rel, index=False, header=True):
+                ws_relation.append(r)
+
+            # Save to temp file and store path in session
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp_file:
+                wb.save(tmp_file.name)
+                request.session['budget_file_path'] = tmp_file.name
+            messages.success(request, "☑️ Budget processed successfully.")
 
     return render(request, 'budgets.html', {
         'budget_form': budget_form,
         'upload_form': upload_form,
     })
-
-def calibration(request):
-    return render(request,'calibration.html')
-def simulation(request):
-    return render(request,'simulation.html')
-
 
 
 def upload_network(request):
@@ -377,86 +340,83 @@ def upload_network(request):
     # GET request
     return render(request, 'Network.html', {'form': Uploaded_networks()})
 
-# def upload_network(request):
-#     if request.method == 'POST':
-#         form = Uploaded_networks(request.POST, request.FILES)
-#         if form.is_valid():
-#             uploaded_file = request.FILES['interdependency_network']
-
-#             with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
-#                 for chunk in uploaded_file.chunks():
-#                     tmp.write(chunk)
-#                 temp_file_path = tmp.name
-
-#             # ✅ Store path in Django session (no file writing)
-#             request.session['network_path'] = temp_file_path
-#             messages.success(request, "☑️ File validation successful!")
-
-#             return render(request, 'Network.html', {'form': Uploaded_networks()})
-
-#         # If form is invalid
-#         return render(request, 'Network.html', {'form': form})
-
-#     # If GET request
-#     return render(request, 'Network.html', {'form': Uploaded_networks()})
+def calibration(request):
+    return render(request,'calibration.html')
+def simulation(request):
+    return render(request,'simulation.html')
 
 
-def run_calibration(request,threshold=0.7):  # default is 0.7
-   
-    
+def download_indicator_template(request):
+    filepath = finders.find('templates/template_indicators.xlsx')
+    if filepath and os.path.exists(filepath):
+        return FileResponse(open(filepath, 'rb'), as_attachment=True, filename='template_indicators.xlsx')
+    else:
+        return HttpResponse("Template file not found.", status=404)
 
+def download_budget_template(request):
+    filepath = finders.find('templates/template_budget.xlsx')
+    if filepath and os.path.exists(filepath):
+        return FileResponse(open(filepath, 'rb'), as_attachment=True, filename='template_budget.xlsx')
+    else:
+        return HttpResponse("Template file not found.", status=404)
+
+def download_network_template(request):
+    filepath = finders.find('templates/template_network.xlsx')
+    if filepath and os.path.exists(filepath):
+        return FileResponse(open(filepath, 'rb'), as_attachment=True, filename='template_network.xlsx')
+    else:
+        return HttpResponse("Template file not found.", status=404)
+
+
+def run_calibration(request, threshold=0.7):
     indicators_path = request.session.get('indicators_path')
     network_path = request.session.get('network_path')
-    # uploaded_budget_path = request.session.get('temp_budget_path')
-    # uploaded_budget_path = request.session.get('budget_file_path')
-    uploaded_budget_path = request.session.get('temp_excel_path')
+    budget_path = request.session.get('budget_file_path')
+    relation_path = request.session.get('relation_file_path')
 
-
-    
-    
+    # --- Load indicator data ---
     df_indis = pd.read_excel(indicators_path)
-    
-    N = len(df_indis) # number of indicators
-    I0 = df_indis.I0.values # initial values
-    IF = df_indis.IF.values # final values
-    success_rates = df_indis.success_rates.values # success rates
-    R = df_indis.instrumental # instrumental indicators
-    qm = df_indis.qm.values # quality of monitoring
-    rl = df_indis.rl.values # quality of the rule of law
+    N = len(df_indis)
+    I0 = df_indis.I0.values
+    IF = df_indis.IF.values
+    success_rates = df_indis.success_rates.values
+    R = df_indis.instrumental
+    qm = df_indis.qm.values
+    rl = df_indis.rl.values
     indis_index = dict([(code, i) for i, code in enumerate(df_indis.indicator_label)])
 
-    df_net = pd.read_excel( network_path)
-    A = np.zeros((N, N)) # adjacency matrix
+    # --- Load network ---
+    df_net = pd.read_excel(network_path)
+    A = np.zeros((N, N))
     for index, row in df_net.iterrows():
-       i = indis_index[row.origin]
-       j = indis_index[row.destination]
-       w = row.weight
-       A[i,j] = w
+        i = indis_index[row.origin]
+        j = indis_index[row.destination]
+        A[i, j] = row.weight
 
-
-    df_exp = pd.read_excel(uploaded_budget_path, sheet_name='template_expenditure')
+    # --- Load budget matrix ---
+    df_exp = pd.read_excel(budget_path, sheet_name='template_budget')
     Bs = df_exp.values[:, 1:]
 
-    df_rela = pd.read_excel(uploaded_budget_path, sheet_name='relational_table')
+    # --- Load relational table ---
+    df_rela = pd.read_excel(budget_path, sheet_name='relational_table')
     B_dict = {}
     for index, row in df_rela.iterrows():
         B_dict[indis_index[row.indicator_label]] = [
             programme for programme in row.values[1:] if str(programme) != 'nan'
         ]
-    
+
     T = Bs.shape[1]
     parallel_processes = 4
     low_precision_counts = 50
-   
 
+    # --- Run calibration ---
     parameters = calibrate(
         I0, IF, success_rates, A=A, R=R, qm=qm, rl=rl, Bs=Bs, B_dict=B_dict,
-        T=T, threshold=threshold, parallel_processes=parallel_processes, verbose=True,
-        low_precision_counts=low_precision_counts
+        T=T, threshold=threshold, parallel_processes=parallel_processes,
+        verbose=True, low_precision_counts=low_precision_counts
     )
+
     return parameters
-
-
 @csrf_exempt
 def start_calibration(request):
     if request.method == 'POST':
@@ -477,6 +437,3 @@ def start_calibration(request):
             'threshold': threshold,
             'parameters': parameters
         })
-    
-    # Optional: handle non-POST requests gracefully
-    return redirect('budgets_page')
