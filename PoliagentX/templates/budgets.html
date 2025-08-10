@@ -30,7 +30,7 @@ If you have data on how the government spends across different development categ
                                 <span class="text-lg font-medium text-gray-900 m-3">Specify the total budget</span>
                                 <p class="text-sm text-gray-600 mt-1 mb-2">Enter the average total budget exercised during the sample period of the indicators.</p>
                                 <div id="manual-input-section" class="input-section">
-                                    <form method="post" class="space-y-4" enctype="multipart/form-data" id="budget-form">
+                                    <form  action="{% url 'budgets_page' %}" method="post" class="space-y-4" enctype="multipart/form-data" id="budget-form">
                                         {% csrf_token %}
                                         {{ budget_form.media }}
 
@@ -64,7 +64,7 @@ If you have data on how the government spends across different development categ
                     </div>
 
                     <div id="file-upload-section" class="input-section hidden">
-                        <form method="post" enctype="multipart/form-data" id="upload-form" class="space-y-4">
+                        <form action="{% url 'budgets_page' %}" method="post" enctype="multipart/form-data" id="upload-form" class="space-y-4">
                             {% csrf_token %}
                             {{ upload_form.media }}
 
@@ -119,140 +119,26 @@ If you have data on how the government spends across different development categ
         </div>
 
 
-        <div class="mt-6 text-right">
-            <div id="next-button-container" class="hidden">
-                 {# Initially hidden, will be shown by JS #}
-                {% comment %} <button  form="budget-form" class="inline-block px-6 py-2 bg-green-600 text-white font-semibold rounded hover:bg-green-700" id="submit-manual-form"> {% endcomment %}
-                 
-               
-                 <a  form="budget-form" href="{% url 'upload_network' %}" class="inline-block px-6 py-2 bg-green-600 text-white font-semibold rounded hover:bg-green-700">
-                    NEXT →
-                 </a>
-                {% comment %} </button> {% endcomment %}
-            </div>
-            <div id="next-disabled"> {# Initially shown, will be hidden by JS #}
-                <button disabled class="inline-block px-6 py-2 bg-gray-400 text-white font-semibold rounded cursor-not-allowed">
-                    NEXT →
-                </button>
-                 
-            </div>
-        </div>
+<div class="mt-6 text-right">
+    <div id="next-button-container" class="hidden">
+        <!-- Actual button for JS to detect and handle -->
+        <button type="button" id="next-button"
+            class="inline-block px-6 py-2 bg-green-600 text-white font-semibold rounded hover:bg-green-700">
+            NEXT →
+        </button>
+    </div>
+    <div id="next-disabled">
+        <!-- Disabled button appearance -->
+        <button disabled
+            class="inline-block px-6 py-2 bg-gray-400 text-white font-semibold rounded cursor-not-allowed">
+            NEXT →
+        </button>
     </div>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const manualRadio = document.getElementById('radio-manual');
-        const uploadRadio = document.getElementById('radio-upload');
-        const manualSection = document.getElementById('manual-input-section');
-        const uploadSection = document.getElementById('file-upload-section');
-        const fileUploadInput = document.getElementById('id_government_expenditure');
-        const dropZone = document.getElementById('drop-zone');
+    </div>
+</div>
 
-        const submitManualButton = document.getElementById('submit-manual-form');
-        const submitUploadButton = document.getElementById('submit-upload-form');
+<script src="{% static 'Js/Button.js' %}"></script>
 
-        const nextBtnContainer = document.getElementById('next-button-container');
-        const nextDisabled = document.getElementById('next-disabled');
-
-        const budgetInput = document.getElementById('id_budget');
-        const inflationInput = document.getElementById('id_inflation_rate');
-
-        function checkFormCompletion() {
-            console.log("checkFormCompletion called."); // Debugging log
-            let isFormValid = false;
-
-            if (manualRadio.checked) {
-                isFormValid = (budgetInput?.value.trim() !== '' && !isNaN(parseFloat(budgetInput?.value))) &&
-                              (inflationInput?.value.trim() !== '' && !isNaN(parseFloat(inflationInput?.value)));
-                console.log("Manual form check: budget value =", budgetInput?.value, "inflation value =", inflationInput?.value, "isFormValid =", isFormValid); // Debugging log
-            } else if (uploadRadio.checked) {
-                isFormValid = fileUploadInput?.files.length > 0;
-                console.log("Upload form check: file count =", fileUploadInput?.files.length, "isFormValid =", isFormValid); // Debugging log
-            }
-
-            if (isFormValid) {
-                enableNextButton();
-                console.log("NEXT button ENABLED."); // Debugging log
-            } else {
-                disableNextButton();
-                console.log("NEXT button DISABLED."); // Debugging log
-            }
-        }
-
-        function enableNextButton() {
-            nextBtnContainer.classList.remove('hidden');
-            nextDisabled.classList.add('hidden');
-        }
-
-        function disableNextButton() {
-            nextBtnContainer.classList.add('hidden');
-            nextDisabled.classList.remove('hidden');
-        }
-
-        function toggleSections() {
-            if (manualRadio.checked) {
-                manualSection.classList.remove('hidden');
-                uploadSection.classList.add('hidden');
-                if (submitManualButton) submitManualButton.classList.remove('hidden');
-                if (submitUploadButton) submitUploadButton.classList.add('hidden');
-            } else {
-                manualSection.classList.add('hidden');
-                uploadSection.classList.remove('hidden');
-                if (submitManualButton) submitManualButton.classList.add('hidden');
-                if (submitUploadButton) submitUploadButton.classList.remove('hidden');
-            }
-            checkFormCompletion(); // Re-check form completion whenever sections are toggled
-            console.log("Sections toggled. Current radio checked:", manualRadio.checked ? "Manual" : "Upload"); // Debugging log
-        }
-
-        // Initial call to set correct section and button visibility on page load
-        toggleSections();
-
-        manualRadio.addEventListener('change', toggleSections);
-        uploadRadio.addEventListener('change', toggleSections);
-
-        // Drag & drop functionality for the file upload
-        if (dropZone && fileUploadInput) {
-            dropZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropZone.classList.add('border-blue-500', 'bg-blue-50');
-            });
-
-            dropZone.addEventListener('dragleave', () => {
-                dropZone.classList.remove('border-blue-500', 'bg-blue-50');
-            });
-
-            dropZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('border-blue-500', 'bg-blue-50');
-                const files = e.dataTransfer.files;
-                if (files.length > 0) {
-                    fileUploadInput.files = files;
-                    console.log("File dropped. Dispatching change event. Files:", fileUploadInput.files); // Debugging log
-                    // Trigger change event to activate checkFormCompletion
-                    fileUploadInput.dispatchEvent(new Event('change'));
-                }
-            });
-
-            const chooseFileLabel = document.querySelector('label[for="' + fileUploadInput.id + '"]');
-            if (chooseFileLabel) {
-                chooseFileLabel.addEventListener('click', (e) => {
-                    e.preventDefault(); // Prevent default label click that might interfere
-                    fileUploadInput.click(); // Programmatically click the hidden file input
-                });
-            }
-        }
-
-        // Monitor manual form inputs
-        if (budgetInput) budgetInput.addEventListener('input', checkFormCompletion);
-        if (inflationInput) inflationInput.addEventListener('input', checkFormCompletion);
-
-        // Monitor file input directly for changes (both via choose file and programmatic drop)
-        if (fileUploadInput) fileUploadInput.addEventListener('change', checkFormCompletion);
-
-        // Call on page load in case of retained inputs (e.g., on form error) or initial state
-        checkFormCompletion();
-    });
-</script>
 {% endblock %}

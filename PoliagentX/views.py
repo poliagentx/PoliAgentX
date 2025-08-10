@@ -1,4 +1,5 @@
 import tempfile
+from io import BytesIO
 import io
 import os
 from django.conf import settings
@@ -37,7 +38,7 @@ def upload_indicators(request):
                 temp_file_path = tmp.name
 
             # Load Excel data
-            try:
+            try: 
                 data = pd.read_excel(temp_file_path)
                 data_filtered = data.drop(['monitoring', 'rule_of_law'], axis=1)
             except Exception as e:
@@ -89,12 +90,18 @@ def upload_indicators(request):
             
 
             # Save to cleaned Excel
-            os.makedirs('clean_data', exist_ok=True)
-            output_path = os.path.join('clean_data', 'data_indicators.xlsx')
-            df.to_excel(output_path, index=False)
+            # os.makedirs('clean_data', exist_ok=True)
+            # output_path = os.path.join('clean_data', 'data_indicators.xlsx')
+            # df.to_excel(output_path, index=False)
 
-            # Store cleaned path in session
-            request.session['indicators_path'] = output_path
+            tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx')
+            tmp_file.close()  # close it so ExcelWriter can open it by name
+
+            with pd.ExcelWriter(tmp_file.name) as writer:
+                df.to_excel(writer, sheet_name='template', index=False)
+
+            request.session['indicators_path'] = tmp_file.name
+
 
             messages.success(request, "☑️ File uploaded and processed successfully.")
             return render(request, 'indicators.html', {'form': Uploaded_indicators()})
@@ -103,6 +110,9 @@ def upload_indicators(request):
 
     return render(request, 'indicators.html', {'form': Uploaded_indicators()})
 
+
+
+ 
 
 def budgets_page(request):
     indicators_path = request.session.get('indicators_path')
@@ -116,230 +126,376 @@ def budgets_page(request):
     data_exp = None
 
     if request.method == 'POST':
-        
-        # 1️⃣ Handle uploaded Excel file first
+        data_indi = pd.read_excel(indicators_path)
+
+        # Handle uploaded Excel file
         if 'government_expenditure' in request.FILES:
             upload_form = Uploaded_Budget(request.POST, request.FILES)
-            if upload_form.is_valid():
-                uploaded_file = request.FILES['government_expenditure']
-                try:
-                    with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
-                        for chunk in uploaded_file.chunks():
-                            tmp.write(chunk)
-                        tmp_path = tmp.name
-
-                    data_exp = pd.read_excel(tmp_path)
-                    data_indi = pd.read_excel(indicators_path)
-
-                    # Filter for matching & instrumental SDGs
-                    data_exp = data_exp[data_exp.sdg.isin(data_indi.sdg.values)]
-                    data_exp = data_exp[data_exp.sdg.isin(data_indi[data_indi.instrumental == 1].sdg.values)]
-
-                    if 'sdg' not in data_exp.columns:
-                        messages.error(request, "❌ Uploaded file must have an 'sdg' column.")
-                        return redirect('budgets_page')
-
-            
-                    df_exp = expand_budget(data_exp)
-
-                except Exception as e:
-                    messages.error(request, f"❌ Failed to read uploaded file: {e}")
-                    return redirect('budgets_page')
-            else:
+            if not upload_form.is_valid():
                 messages.error(request, "❌ Invalid file upload.")
                 return redirect('budgets_page')
-            
-            df_rel = build_relational_table(data_indi)
-           
 
-        # 2️⃣ If no file, handle manual budget input
-        elif 'budget' in request.POST:
-            budget_form = BudgetForm(request.POST)
-            if budget_form.is_valid():
-                budget = budget_form.cleaned_data['budget']
-                inflation = budget_form.cleaned_data['inflation_rate']
-                adjusted_budget = budget / (1 + (inflation / 100))
-                data_indi = pd.read_excel(indicators_path)
-
-                years = sorted([int(col) for col in data_indi.columns if str(col).isdigit()])
-                periods = len(years)
-
-                data_exp = pd.DataFrame([
-                    {
-                        'sdg': i + 1,
-                        **{
-                            str(years[0] + j): round(adjusted_budget * sdg['percent'] / 100 / periods, 2)
-                            for j in range(periods)
-                        }
-                    }
-                    for i, sdg in enumerate(allocation)
-                ])
-                
-                data_exp = data_exp[data_exp.sdg.isin(data_indi.sdg.values)]
-                data_exp = data_exp[data_exp.sdg.isin(data_indi[data_indi.instrumental == 1].sdg.values)]
+            try:
+                uploaded_file = request.FILES['government_expenditure']
+                data_exp = pd.read_excel(BytesIO(uploaded_file.read()))
 
                 if 'sdg' not in data_exp.columns:
                     messages.error(request, "❌ Uploaded file must have an 'sdg' column.")
                     return redirect('budgets_page')
 
-                df_exp = expand_budget(data_exp)
+                # Filter for matching & instrumental SDGs
+                data_exp = data_exp[data_exp.sdg.isin(data_indi.sdg.values)]
+                data_exp = data_exp[data_exp.sdg.isin(data_indi[data_indi.instrumental == 1].sdg.values)]
 
-            else:
+            except Exception as e:
+                messages.error(request, f"❌ Failed to read uploaded file: {e}")
+                return redirect('budgets_page')
+
+        # Handle manual budget input
+        elif 'budget' in request.POST:
+            budget_form = BudgetForm(request.POST)
+            if not budget_form.is_valid():
                 messages.error(request, "❌ Invalid manual budget input.")
                 return redirect('budgets_page')
-            
-            
-            df_rel = build_relational_table(data_indi)
-           
 
-        # 3️⃣ Save results if `data_exp` exists
-        if data_exp is not None:
-    
-            # Create a new workbook
-            wb = Workbook()
+            budget = budget_form.cleaned_data['budget']
+            inflation = budget_form.cleaned_data['inflation_rate']
+            adjusted_budget = budget / (1 + (inflation / 100))
 
-            # --- Sheet 1: template_budget ---
-            ws_budget = wb.active
-            ws_budget.title = "template_budget"
-            for r in dataframe_to_rows(df_exp, index=False, header=True):
-                ws_budget.append(r)
+            years = sorted([int(col) for col in data_indi.columns if str(col).isdigit()])
+            periods = len(years)
 
-            # --- Sheet 2: relational_table ---
-            ws_relation = wb.create_sheet(title="relational_table")
-            for r in dataframe_to_rows(df_rel, index=False, header=True):
-                ws_relation.append(r)
+            data_exp = pd.DataFrame([
+                {
+                    'sdg': i + 1,
+                    **{str(years[0] + j): round(adjusted_budget * sdg['percent'] / 100 / periods, 2) for j in range(periods)}
+                }
+                for i, sdg in enumerate(allocation)
+            ])
 
-            # Save to temp file and store path in session
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp_file:
-                wb.save(tmp_file.name)
-                request.session['budget_file_path'] = tmp_file.name
-            messages.success(request, "☑️ Budget processed successfully.")
+            if 'sdg' not in data_exp.columns:
+                messages.error(request, "❌ Data is missing an 'sdg' column.")
+                return redirect('budgets_page')
+
+            data_exp = data_exp[data_exp.sdg.isin(data_indi.sdg.values)]
+            data_exp = data_exp[data_exp.sdg.isin(data_indi[data_indi.instrumental == 1].sdg.values)]
+
+        else:
+            # No relevant POST data, just render the form
+            return render(request, 'budgets.html', {'budget_form': budget_form, 'upload_form': upload_form})
+
+        # Expand budget and build relational table
+        df_exp = expand_budget(data_exp)
+        df_rel = build_relational_table(data_indi)
+
+        # Save results to temp file
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp_file:
+            with pd.ExcelWriter(tmp_file.name) as writer:
+                df_exp.to_excel(writer, sheet_name='template_budget', index=False)
+                df_rel.to_excel(writer, sheet_name='relational_table', index=False)
+
+            request.session['budget_file_path'] = tmp_file.name
+
+        return redirect('upload_network')
 
     return render(request, 'budgets.html', {
         'budget_form': budget_form,
         'upload_form': upload_form,
     })
 
+# from datetime import datetime
+# def budgets_page(request):
+#     indicators_path = request.session.get('indicators_path')
+
+#     if not indicators_path:
+#         messages.error(request, "Indicators file is missing. Please upload it first.")
+#         return redirect('upload_indicators')
+
+#     allocation = get_sdg_allocation_from_file(indicators_path)
+#     budget_form = BudgetForm()
+#     upload_form = Uploaded_Budget()
+#     data_exp = None
+
+#     if request.method == 'POST':
+#         data_indi = pd.read_excel(indicators_path)
+
+#         # Handle uploaded Excel file
+#         if 'government_expenditure' in request.FILES:
+#             upload_form = Uploaded_Budget(request.POST, request.FILES)
+#             if not upload_form.is_valid():
+#                 messages.error(request, "❌ Invalid file upload.")
+#                 return redirect('budgets_page')
+
+#             uploaded_file = request.FILES['government_expenditure']
+
+#             try:
+#                 data_exp = pd.read_excel(uploaded_file)
+
+#                 if 'sdg' not in data_exp.columns:
+#                     messages.error(request, "❌ Uploaded file must have an 'sdg' column.")
+#                     return redirect('budgets_page')
+
+#                 data_exp = data_exp[data_exp.sdg.isin(data_indi.sdg.values)]
+#                 data_exp = data_exp[data_exp.sdg.isin(data_indi[data_indi.instrumental == 1].sdg.values)]
+
+#             except Exception as e:
+#                 messages.error(request, f"❌ Failed to read uploaded file: {e}")
+#                 return redirect('budgets_page')
+
+#         # Handle manual budget input
+#         elif 'budget' in request.POST:
+#             budget_form = BudgetForm(request.POST)
+#             if not budget_form.is_valid():
+#                 messages.error(request, "❌ Invalid manual budget input.")
+#                 return redirect('budgets_page')
+
+#             budget = budget_form.cleaned_data['budget']
+#             inflation = budget_form.cleaned_data['inflation_rate']
+#             adjusted_budget = budget / (1 + (inflation / 100))
+
+#             years = sorted([int(col) for col in data_indi.columns if str(col).isdigit()])
+#             periods = len(years)
+
+#             data_exp = pd.DataFrame([
+#                 {
+#                     'sdg': i + 1,
+#                     **{
+#                         str(years[0] + j): round(adjusted_budget * sdg['percent'] / 100 / periods, 2)
+#                         for j in range(periods)
+#                     }
+#                 }
+#                 for i, sdg in enumerate(allocation)
+#             ])
+
+#             if 'sdg' not in data_exp.columns:
+#                 messages.error(request, "❌ Data is missing an 'sdg' column.")
+#                 return redirect('budgets_page')
+
+#             data_exp = data_exp[data_exp.sdg.isin(data_indi.sdg.values)]
+#             data_exp = data_exp[data_exp.sdg.isin(data_indi[data_indi.instrumental == 1].sdg.values)]
+
+#         else:
+#             # No file and no manual budget input
+#             return render(request, 'budgets.html', {
+#                 'budget_form': budget_form,
+#                 'upload_form': upload_form,
+#             })
+
+#         # Now expand and build relational table
+#         df_exp = expand_budget(data_exp)
+#         df_rel = build_relational_table(data_indi)
+
+#         # Save results
+#         save_dir = 'clean_data'
+#         os.makedirs(save_dir, exist_ok=True)
+
+#         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+#         filename = f"budget_allocation_{timestamp}.xlsx"
+#         file_path = os.path.join(save_dir, filename)
+
+#         with pd.ExcelWriter(file_path) as writer:
+#             df_exp.to_excel(writer, sheet_name='template_budget', index=False)
+#             df_rel.to_excel(writer, sheet_name='relational_table', index=False)
+
+#         request.session['budget_file_path'] = file_path
+#         return redirect('upload_network')
+
+#     return render(request, 'budgets.html', {
+#         'budget_form': budget_form,
+#         'upload_form': upload_form,
+#     })
+# from django.conf import settings
+# import logging
+# logger = logging.getLogger(__name__)
+# from pathlib import Path
+# def upload_network(request):
+#     indicators_path = request.session.get('indicators_path')
+#     if not indicators_path:
+#         messages.error(request, "Indicators file is missing. Please upload it first.")
+#         return redirect('upload_indicators')
+
+#     skip_form = Skip_networks()
+#     uploaded_form = Uploaded_networks()
+#     data_net = None
+
+#     if request.method == 'POST':
+#         print("POST request received")
+
+#         if 'interdependency_network' in request.FILES:
+#             print("Uploaded file detected")
+#             uploaded_form = Uploaded_networks(request.POST, request.FILES)
+#             if uploaded_form.is_valid():
+#                 uploaded_file = request.FILES['interdependency_network']
+#                 try:
+#                     data_net = pd.read_excel(uploaded_file)
+#                     print("Uploaded file read successfully")
+#                 except Exception as e:
+#                     print(f"Error reading uploaded file: {e}")
+#                     messages.error(request, f"❌ Failed to read uploaded file: {e}")
+#                     return redirect('upload_network')
+#             else:
+#                 print("Uploaded form invalid:", uploaded_form.errors)
+#                 messages.error(request, "Uploaded file form is invalid.")
+#                 return redirect('upload_network')
+
+#         elif 'skip-network' in request.POST:
+#             print("Skip network requested")
+#             skip_form = Skip_networks(request.POST)
+#             if skip_form.is_valid():
+#                 print("Skip form valid, generating synthetic network")
+#                 data_indi = pd.read_excel(indicators_path)
+#                 years = sorted([col for col in data_indi.columns if str(col).strip().isdigit()])
+#                 data_array = data_indi[years].astype(float).values
+
+#                 change_serie1_all = data_array[:, 2:] - data_array[:, 1:-1]
+#                 change_serie2_all = data_array[:, 1:-1] - data_array[:, :-2]
+
+#                 def is_not_constant(arr):
+#                     return np.any(arr != arr[0])
+
+#                 valid_c1 = np.array([is_not_constant(row) for row in change_serie1_all])
+#                 valid_c2 = np.array([is_not_constant(row) for row in change_serie2_all])
+
+#                 N = len(data_indi)
+#                 M = np.zeros((N, N))
+
+#                 valid_i = np.where(valid_c1)[0]
+#                 valid_j = np.where(valid_c2)[0]
+
+#                 for i in valid_i:
+#                     c1 = change_serie1_all[i]
+#                     for j in valid_j:
+#                         if i != j:
+#                             c2 = change_serie2_all[j]
+#                             M[i, j] = np.corrcoef(c1, c2)[0, 1]
+
+#                 M[np.abs(M) < 0.5] = 0
+
+#                 ids = data_indi.indicator_label.values
+#                 edge_list = [[ids[i], ids[j], M[i, j]] for i, j in zip(*np.where(M != 0))]
+#                 data_net = pd.DataFrame(edge_list, columns=['origin', 'destination', 'weight'])
+
+#                 print("Synthetic network generated")
+#             else:
+#                 print("Skip form invalid:", skip_form.errors)
+#                 messages.error(request, "Skip form is invalid.")
+#                 return redirect('upload_network')
+
+#         if data_net is not None:
+#             print("Saving network data to temporary file and session")
+
+#             wb = Workbook()
+#             ws_network = wb.active
+#             ws_network.title = "template_network"
+#             for r in dataframe_to_rows(data_net, index=False, header=True):
+#                 ws_network.append(r)
+
+#             with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp_file:
+#                 wb.save(tmp_file.name)
+#                 request.session['network_path'] = tmp_file.name
+#                 print(f"Temporary file saved at {tmp_file.name}")
+
+#             clean_dir = Path(settings.BASE_DIR) / 'clean_data'
+#             clean_dir.mkdir(parents=True, exist_ok=True)
+#             output_path = clean_dir / 'data_network.xlsx'
+#             data_net.to_excel(output_path, index=False)
+#             print(f"Network data saved locally at {output_path}")
+
+#         return redirect('calibration')
+
+#     return render(request, 'Network.html', {
+#         'skip_form': skip_form,
+#         'uploaded_form': uploaded_form,
+#     })
+
 
 def upload_network(request):
-    
+    indicators_path = request.session.get('indicators_path')
+    if not indicators_path:
+        messages.error(request, "Indicators file is missing. Please upload it first.")
+        return redirect('upload_indicators')
+
+    skip_form = Skip_networks()
+    uploaded_form = Uploaded_networks()
+    data_net = None
+
     if request.method == 'POST':
-        skip_indicators = request.POST.get('skip_indicators', 'off') == 'on'
-        form = Uploaded_networks(request.POST, request.FILES)
+        # User uploaded a file
+        if 'interdependency_network' in request.FILES:
+            uploaded_form = Uploaded_networks(request.POST, request.FILES)
+            if uploaded_form.is_valid():
+                uploaded_file = request.FILES['interdependency_network']
+                try:
+                    data_net = pd.read_excel(BytesIO(uploaded_file.read()))
+                except Exception as e:
+                    messages.error(request, f"❌ Failed to read uploaded file: {e}")
+                    return redirect('upload_network')
 
-        file_to_process_path = None
-        delete_temp_after_use = False
+        # User chose to skip network upload, generate default network
+        elif 'skip-network' in request.POST:
+            skip_form = Skip_networks(request.POST)
+            if skip_form.is_valid():
+                data_indi = pd.read_excel(indicators_path)
+                years = sorted([col for col in data_indi.columns if str(col).strip().isdigit()])
+                data_array = data_indi[years].astype(float).values
 
-        # Case 1: User chooses to skip network processing
-        if skip_indicators:
-            if not os.path.exists('clean_data/data_network.csv'):
-                # messages.error(request, "❌ Skipping network processing failed: No existing network data found.")
-                return render(request, 'Network.html', {'form': form})
-            # messages.success(request, "☑️ Skipped network processing. Using existing network data.")
-            return render(request, 'Network.html', {'form': Uploaded_networks()})
+                change_serie1_all = data_array[:, 2:] - data_array[:, 1:-1]
+                change_serie2_all = data_array[:, 1:-1] - data_array[:, :-2]
 
-        # Case 2: User uploads a new file for network processing
-        uploaded_file = request.FILES.get('interdependency_network')
-       
-        if uploaded_file and form.is_valid():
-            # Save uploaded file temporarily
-            os.makedirs('temp', exist_ok=True)
-            temp_file_name = uploaded_file.name
-            # Ensure unique temp file name to avoid conflicts if multiple users upload same filename
-            temp_file_path = os.path.join('temp', f"{os.urandom(8).hex()}_{temp_file_name}")
+                def is_not_constant(arr):
+                    return np.any(arr != arr[0])
 
-            with open(temp_file_path, 'wb+') as destination:
-                for chunk in uploaded_file.chunks():
-                    destination.write(chunk)
-            file_to_process_path = temp_file_path
-            delete_temp_after_use = True
-            messages.success(request, "☑️ File uploaded successfully. Processing network data...")
+                valid_c1 = np.array([is_not_constant(row) for row in change_serie1_all])
+                valid_c2 = np.array([is_not_constant(row) for row in change_serie2_all])
 
-        # Case 3: No new file uploaded, try to use previously prepared indicator data
-        elif not uploaded_file and request.session.get('indicators_path'):
-            file_to_process_path = request.session.get('indicators_path')
-            # No need to set delete_temp_after_use = True as this file was prepared by another function
-            messages.info(request, "ℹ️ No new file uploaded. Using previously prepared indicator data for network processing.")
+                N = len(data_indi)
+                M = np.zeros((N, N))
+
+                valid_i = np.where(valid_c1)[0]
+                valid_j = np.where(valid_c2)[0]
+
+                for i in valid_i:
+                    c1 = change_serie1_all[i]
+                    for j in valid_j:
+                        if i != j:
+                            c2 = change_serie2_all[j]
+                            M[i, j] = np.corrcoef(c1, c2)[0, 1]
+
+                M[np.abs(M) < 0.5] = 0
+
+                ids = data_indi.indicator_label.values
+                edge_list = [[ids[i], ids[j], M[i, j]] for i, j in zip(*np.where(M != 0))]
+                data_net = pd.DataFrame(edge_list, columns=['origin', 'destination', 'weight'])
+     
         else:
-            # If no file uploaded, not skipping, and no prepared indicator path
-            # messages.error(request, "❌ Please upload a network file or ensure prepared indicator data is available.")
-            return render(request, 'Network.html', {'form': form})
+            # No relevant POST data, just render the form
+            return render(request, 'Network.html', {'skip_form': skip_form, 'uploaded_form': uploaded_form})
+        
+        # Save the network dataframe to Excel files and session path
+        if data_net is not None:
+            wb = Workbook()
+            ws_network = wb.active
+            ws_network.title = "template_network"
+            for r in dataframe_to_rows(data_net, index=False, header=True):
+                ws_network.append(r)
 
-        # --- Common processing logic for both new uploads and prepared data ---
-        if file_to_process_path:
-            # Load Excel data
-            try:
-                data = pd.read_excel(file_to_process_path)
-            except Exception as e:
-                messages.error(request, f"❌ Failed to read Excel file from '{file_to_process_path}': {str(e)}")
-                if delete_temp_after_use and os.path.exists(file_to_process_path):
-                    os.remove(file_to_process_path)
-                return render(request, 'Network.html', {'form': form})
-            finally:
-                # Clean up the temporary file if it was created in this function
-                if delete_temp_after_use and os.path.exists(file_to_process_path):
-                    os.remove(file_to_process_path)
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp_file:
+                wb.save(tmp_file.name)
+                # tmp_file.close() # context manager closes automatically
+                request.session['network_path'] = tmp_file.name
 
-            # Begin matrix processing
-            N = len(data)
-            M = np.zeros((N, N))
+          
+        return redirect('calibration')
 
-            # Find year columns
-            years = [col for col in data.columns if str(col).isnumeric()]
-
-            # Ensure there are enough years for calculating changes
-            if len(years) < 2:
-                # messages.error(request, "❌ Not enough year columns to calculate network correlations. Need at least two years.")
-                return render(request, 'Network.html', {'form': form})
+    return render(request, 'Network.html', {
+        'skip_form': skip_form,
+        'uploaded_form': uploaded_form,
+    })
 
 
-            for i, rowi in data.iterrows():
-                for j, rowj in data.iterrows():
-                    if i != j:
-                        # Ensure the series have enough data points for change calculation
-                        if len(rowi[years].values) < 2 or len(rowj[years].values) < 2:
-                            continue # Skip if not enough data points
 
-                        serie1 = rowi[years].values.astype(float)
-                        serie2 = rowj[years].values.astype(float)
 
-                        change_serie1 = serie1[1:] - serie1[:-1]
-                        change_serie2 = serie2[1:] - serie2[:-1]
-
-                        # Check if there's any variation in the change series
-                        # np.all(change_serie == change_serie[0]) checks if all elements are the same
-                        if not (np.all(change_serie1 == change_serie1[0]) or np.all(change_serie2 == change_serie2[0])):
-                            corr = np.corrcoef(change_serie1, change_serie2)[0, 1]
-                            if not np.isnan(corr):
-                                M[i, j] = corr
-
-            M[np.abs(M) < 0.5] = 0
-
-            # Build edge list
-            # Ensure 'indicator_label' column exists in the DataFrame
-            if 'indicator_label' not in data.columns:
-                messages.error(request, "❌ Missing 'indicator_label' column in the uploaded data. Cannot build network.")
-                return render(request, 'Network.html', {'form': form})
-
-            ids = data['indicator_label'].values
-            edge_list = []
-            for i, j in zip(*np.where(M != 0)):
-                edge_list.append([ids[i], ids[j], M[i, j]])
-
-            # Save result to Excel
-            os.makedirs('clean_data', exist_ok=True)
-            output_path = os.path.join('clean_data', 'data_network.xlsx')
-            pd.DataFrame(edge_list, columns=['origin', 'destination', 'weight']) \
-                .to_excel(output_path, index=False)
-                
-            request.session['network_path'] = output_path
-
-            # messages.success(request, "☑️ File processed and network created.")
-            return render(request, 'Network.html', {'form': Uploaded_networks()})
-
-    # GET request
-    return render(request, 'Network.html', {'form': Uploaded_networks()})
-
+   
 def calibration(request):
     return render(request,'calibration.html')
 def simulation(request):

@@ -68,12 +68,31 @@ class Uploaded_indicators(forms.Form):
                 css_class='bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded mt-4'
             )
         )
-class BudgetForm(forms.Form):
-    budget = forms.IntegerField(label="Enter Budget (in local currency)", min_value=0)
-    inflation_rate = forms.FloatField(label="Inflation Rate (%)", min_value=0)
-     
-    
+from django import forms
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Submit
 
+class BudgetForm(forms.Form):
+    budget = forms.IntegerField(label="(in local currency)", min_value=0)
+    inflation_rate = forms.FloatField(
+        label="Inflation Rate (%)", 
+        min_value=0, 
+        widget=forms.NumberInput(attrs={'step': 'any'})
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.layout = Layout(
+            'budget',
+            'inflation_rate',
+            Submit(
+                'submit',
+                'Submit',
+                css_class='bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded mt-4'
+            )
+        )
 class Uploaded_Budget(forms.Form):
     government_expenditure = forms.FileField(
         label='Upload file',
@@ -124,3 +143,5 @@ class Uploaded_networks(forms.Form):
                 css_class='hidden'
             )
         )
+class Skip_networks(forms.Form):
+    pass
