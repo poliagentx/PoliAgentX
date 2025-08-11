@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-+s=4l(dq#andq)$$brkj4a@55czpe4w5f)t&5hwn=-p#8$%s3c'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
@@ -55,7 +55,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    "django_browser_reload.middleware.BrowserReloadMiddleware",
+     "django_browser_reload.middleware.BrowserReloadMiddleware",
     'whitenoise.middleware.WhiteNoiseMiddleware',
 
 ]
@@ -141,7 +141,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # Include custom app-level static folders
 STATICFILES_DIRS = [
     BASE_DIR / 'theme' / 'static',              # theme app static
-    BASE_DIR / 'PoliagentX' / 'staticfiles',   # PoliagentX app static
+    BASE_DIR / 'PoliagentX' / 'static_files',   # PoliagentX app static
 ]
 
 # Required for django-compressor to find static files
