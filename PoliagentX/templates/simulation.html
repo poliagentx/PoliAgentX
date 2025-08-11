@@ -1,12 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PPI Simulation Interface</title>
+
+    {% extends "base.html" %}
+    {% load static %}
     <!-- <link rel="stylesheet" href="simulation.css"> -->
-</head>
-<body>
+    {% block content %}
     <style>
         * {
             margin: 0;
@@ -27,23 +23,9 @@
             flex-direction: column;
         }
 
-        .header {
-            background-color: #e8e8e8;
-            padding: 20px 40px;
-            flex-shrink: 0;
-        }
+        
 
-        .logo {
-            background: #60a5fa;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            display: inline-block;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-        }
+       
 
         .logo:hover {
             background-color: #3b82f6;
@@ -186,9 +168,7 @@
     </style>
 
     <div class="container">
-        <div class="header">
-            <div class="logo">LOGO</div>
-        </div>
+        
         
         <div class="main-content">
             <div class="left-section">
@@ -214,5 +194,6 @@
             </div>
         </div>
     </div>
-</body>
-</html>
+{% endblock %}
+    
+    <!-- <script src="simulation.js"></script> -->
