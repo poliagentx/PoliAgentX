@@ -35,7 +35,7 @@
 
       <!-- Right Upload Form -->
       <div>
-        <form method="post" enctype="multipart/form-data" class="bg-gray-100 rounded-lg p-6 shadow-md" id="upload-form">
+        <form action="{% url 'upload_network' %}" method="post" enctype="multipart/form-data" class="bg-gray-100 rounded-lg p-6 shadow-md" id="upload-form">
           {% csrf_token %}
 
           <!-- Message area -->
@@ -77,43 +77,53 @@
             <p class="text-sm text-gray-500 mb-4">Supported formats: xlsx, xls</p>
 
             <!-- Choose File Button -->
-            <label for="file-upload" class="cursor-pointer inline-block bg-black text-white px-4 py-2 rounded hover:bg-gray-800 mt-2">
+            <label for="{{ form.interdependency_network.id_for_label }}" class="cursor-pointer inline-block bg-black text-white px-4 py-2 rounded hover:bg-gray-800 mt-2">
               Choose File
             </label>
           </div>
 
           <!-- Crispy Form Input (rendered but hidden visually) -->
           <div class="hidden">
-            {{ form|crispy }}
+    
+              <input type="file" id="fileInput" name="interdependency_network" accept=".xlsx,.xls">
           </div>
+
 
         </form>
       </div>
     </div>
 
   <div class="mt-6 flex justify-between items-center">
-      <a href="{% url 'calibration' %}" class="inline-block mt-4 px-4 py-2 border border-gray-700 text-black font-semibold rounded hover:bg-green-700">
-        SKIP THIS STEP
-      </a>
+    <form method="post" action="{% url 'upload_network' %}" id="skip-form">
+  {% csrf_token %}
+   <button type="submit" name="skip-network" value="on" id="skip-button" 
+    class="inline-block mt-4 px-4 py-2 border border-gray-700 text-black font-semibold rounded hover:bg-green-700">
+    SKIP THIS STEP
+</button>
+
+</form>
 
     <!-- NEXT Button -->
-    <div class="mt-6 text-right">
-      <div id="next-button-container" class="hidden">
-        <a href="{% url 'calibration' %}" class="inline-block px-6 py-2 bg-green-600 text-white font-semibold rounded hover:bg-green-700">
-          NEXT →
-        </a>
-      </div>
-      <div id="next-disabled">
-        <button disabled class="inline-block px-6 py-2 bg-gray-400 text-white font-semibold rounded cursor-not-allowed">
-          NEXT →
-        </button>
-      </div>
-    </div>
+  <div class="mt-6 text-right">
+    <div id="next-button-container" class="hidden">
+    <button type="button" form="upload-form" id="next-button"
+      class="inline-block px-6 py-2 bg-green-600 text-white font-semibold rounded hover:bg-green-700">
+      NEXT →
+    </button>
+</div>
+<div id="next-disabled">
+    <button disabled
+      class="inline-block px-6 py-2 bg-gray-400 text-white font-semibold rounded cursor-not-allowed">
+      NEXT →
+    </button>
+</div>
+</div>
   </div>
 </div>
 
 
-<script src="{% static 'Js/Nextbutton.js' %}"></script>
+<script src="{% static 'Js/network.js' %}"></script>
+
 
 
 

@@ -178,3 +178,5 @@ CRISPY_TEMPLATE_PACK='tailwind'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+SESSION_ENGINE= 'django.contrib.sessions.backends.file'
