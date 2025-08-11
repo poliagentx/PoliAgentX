@@ -2,26 +2,7 @@ from django.urls import path, include
 from django.shortcuts import redirect
 from django.conf import settings
 from django.conf.urls.static import static
-<<<<<<< HEAD
-from .views import (
-    
-    # CompleteWorkflowView,
-    # WorkflowStatusView,
-    # DownloadResultView,
-    # BottleneckAnalysisView,
-    # ExcelToTableView,
-    upload_expenditure,
-    upload_indicators,
-    upload_network,
-    download_indicator_template,
-    download_budget_template,
-    download_network_template,
-    process_whole_budget,
-)
-
-=======
 from .views import*
->>>>>>> c7f7550ce5f43d111d4981cba5605c6f0ffcde0e
 
 urlpatterns = [
  
