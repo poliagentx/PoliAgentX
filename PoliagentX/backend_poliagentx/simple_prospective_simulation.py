@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-from .policy_priority_inference import run_ppi  # Make sure this file is present in your project
+from PoliagentX.backend_poliagentx.policy_priority_inference import run_ppi,run_ppi_parallel
 
 def run_simulation(
     indicators_path,
@@ -16,7 +16,7 @@ def run_simulation(
     sample_size=100
 ):
     # Load data
-    df_indis = pd.read_csv(indicators_path)
+    df_indis = pd.read_excel(indicators_path)
     N = len(df_indis)
     I0 = df_indis.IF.values
     R = df_indis.instrumental
@@ -26,12 +26,12 @@ def run_simulation(
     Imax = df_indis.maxVals.values
     Imin = df_indis.minVals.values
 
-    df_params = pd.read_csv(parameters_path)
+    df_params = pd.read_excel(parameters_path)
     alphas = df_params.alpha.values
     alphas_prime = df_params.alpha_prime.values
     betas = df_params.beta.values
 
-    df_net = pd.read_csv(network_path)
+    df_net = pd.read_excel(network_path)
     A = np.zeros((N, N))
     for index, row in df_net.iterrows():
         i = indis_index[row.origin]
@@ -39,11 +39,11 @@ def run_simulation(
         w = row.weight
         A[i, j] = w
 
-    df_exp = pd.read_csv(expenditure_path)
+    df_exp = pd.read_excel(expenditure_path)
     Bs_retrospective = df_exp.values[:, 1::]
     Bs = np.tile(Bs_retrospective[:, -1], (T, 1)).T
 
-    df_rela = pd.read_csv(relational_table_path)
+    df_rela = pd.read_excel(relational_table_path)
     B_dict = {}
     for index, row in df_rela.iterrows():
         B_dict[indis_index[row.indicator_label]] = [
@@ -54,7 +54,7 @@ def run_simulation(
 
     outputs = []
     for sample in range(sample_size):
-        output = run_ppi(
+        output =run_ppi(
             I0, alphas, alphas_prime, betas, A=A, R=R, qm=qm, rl=rl,
             Imax=Imax, Imin=Imin, Bs=Bs, B_dict=B_dict, T=T, G=goals
         )

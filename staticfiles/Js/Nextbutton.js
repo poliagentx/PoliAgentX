@@ -37,4 +37,12 @@ const dropZone = document.getElementById('drop-zone');
       nextButton.classList.remove("hidden");
       disabledButton.classList.add("hidden");
     }
+<<<<<<< HEAD
   });
+=======
+  });
+  
+
+
+  
+>>>>>>> c7f7550ce5f43d111d4981cba5605c6f0ffcde0e
