@@ -6,6 +6,7 @@ from django.conf import settings
 import uuid
 from django.views.decorators.csrf import csrf_exempt
 from PoliagentX.backend_poliagentx.policy_priority_inference import calibrate
+from PoliagentX.backend_poliagentx.parameters import save_parameters_to_excel
 from PoliagentX.backend_poliagentx.relational_table import build_relational_table
 from PoliagentX.backend_poliagentx.allocation import get_sdg_allocation_from_file,SDG_ALLOCATION
 from PoliagentX.backend_poliagentx.budget import expand_budget
@@ -109,10 +110,6 @@ def upload_indicators(request):
         return render(request, 'indicators.html', {'form': form})
 
     return render(request, 'indicators.html', {'form': Uploaded_indicators()})
-
-
-
- 
 
 def budgets_page(request):
     indicators_path = request.session.get('indicators_path')
@@ -492,14 +489,12 @@ def upload_network(request):
         'uploaded_form': uploaded_form,
     })
 
-
-
-
-   
-def calibration(request):
-    return render(request,'calibration.html')
+       
 def simulation(request):
     return render(request,'simulation.html')
+def calibration(request):
+    return render(request,'calibration.html')
+
 
 
 def download_indicator_template(request):
@@ -528,8 +523,7 @@ def run_calibration(request, threshold=0.7):
     indicators_path = request.session.get('indicators_path')
     network_path = request.session.get('network_path')
     budget_path = request.session.get('budget_file_path')
-    relation_path = request.session.get('relation_file_path')
-
+   
     # --- Load indicator data ---
     df_indis = pd.read_excel(indicators_path)
     N = len(df_indis)
@@ -573,23 +567,40 @@ def run_calibration(request, threshold=0.7):
     )
 
     return parameters
+
 @csrf_exempt
 def start_calibration(request):
     if request.method == 'POST':
         uploaded_budget_path = request.session.get('budget_file_path')
         
-        # if not uploaded_budget_path:
-        #     messages.error(request, "❌ Budget not found in session. Please upload or generate a budget.")
-        #     return redirect('budgets_page')
-
         try:
             threshold = float(request.POST.get('threshold', 0.7))
         except (ValueError, TypeError):
             threshold = 0.7
 
         parameters = run_calibration(request, threshold=threshold)
+        
+       
+
+        # print("Calibration parameters saved to Excel file at:")
+       
+        
+        param_excel_path = save_parameters_to_excel(parameters)
+        old_path = request.session.get('param_excel_path')
+    
+        # print(param_excel_path)
+        
+        # Delete old temp file if exists
+        if old_path and os.path.exists(old_path):
+            os.remove(old_path)
+
+        request.session['param_excel_path'] = param_excel_path
+
 
         return render(request, 'calibration.html', {
             'threshold': threshold,
             'parameters': parameters
+                
         })
+        
+    

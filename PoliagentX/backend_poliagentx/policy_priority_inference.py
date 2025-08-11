@@ -658,7 +658,7 @@ def compute_error(I0, IF, success_rates, alphas, alphas_prime, betas, A=None,
         success_rates: numpy array 
             See calibrate function.
         alphas: numpy array
-            See run_ppi function.
+            See                                bh hmynj vaaaujnaw bvwxedn4db    wes4  h9 on.
         alphas_prime: numpy array
             See run_ppi function.
         betas: numpy array
