@@ -371,10 +371,9 @@ def start_calibration(request):
             threshold = 0.7
 
         parameters = run_calibration(request, threshold=threshold)
+        parameters = pd.DataFrame(parameters)
 
-        # Ensure parameters is a DataFrame
-        if not isinstance(parameters, pd.DataFrame):
-            parameters = pd.DataFrame(parameters)
+        
 
         # Create Excel workbook
         wb = Workbook()
@@ -421,7 +420,7 @@ def run_simulation(request):
         Imin = df_indis.min_value.values
 
         # Load Parameters
-        df_params = pd.read_excel(param_excel_path)
+        df_params = pd.read_excel(param_excel_path ,skiprows=1)
         alpha = df_params.alpha.values
         alpha_prime = df_params.alpha_prime.values
         betas = df_params.beta.values
@@ -482,6 +481,8 @@ def run_simulation(request):
         ]
         df_output = pd.DataFrame(new_rows, columns=['indicator_label', 'sdg', 'color'] + list(range(T)))
         df_output['goal'] = goals
+        media_dir = 'media'
+        os.makedirs(media_dir, exist_ok=True)
 
         # === Plot 1: Indicator levels ===
         plt.figure(figsize=(8, 5))
@@ -528,4 +529,19 @@ def run_simulation(request):
             'plots': ['media/plot1.png', 'media/plot2.png', 'media/plot3.png'],
             'table': df_output.to_html(index=False)
         })
+    
+
+def results(request):
+    # You might want to get these from session or pass them as needed
+    plots = ['media/plot1.png', 'media/plot2.png', 'media/plot3.png']
+    
+    # Assuming you saved the DataFrame HTML in session or regenerate it here
+    table_html = request.session.get('simulation_table_html')
+    
+    context = {
+        'plots': plots,
+        'table': table_html,
+    }
+    
+    return render(request, 'results.html', context)
 
