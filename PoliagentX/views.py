@@ -4,12 +4,12 @@ import os
 # from .model_calibration import load_uploaded_data
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
-from PoliagentX.backend_poliagentx.policy_priority_inference import calibrate
+from backend_poliagentx.policy_priority_inference import calibrate
 from django.contrib import messages
 from django.http import FileResponse, HttpResponse
 # from PoliagentX.backend_poliagentx.model_calibration import load_uploaded_data
-from PoliagentX.backend_poliagentx.simple_prospective_simulation import run_simulation
-from PoliagentX.backend_poliagentx.structural_bottlenecks import analyze_structural_bottlenecks
+from backend_poliagentx.simple_prospective_simulation import run_simulation
+from backend_poliagentx.structural_bottlenecks import analyze_structural_bottlenecks
 from openpyxl import Workbook
 from .forms import Uploaded_indicators,BudgetForm,Uploaded_Budget, Uploaded_networks
 from django.shortcuts import render, redirect
