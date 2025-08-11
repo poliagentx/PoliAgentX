@@ -36,7 +36,7 @@ def upload_indicators(request):
             # Load Excel data
             try:
                 data = pd.read_excel(temp_file_path)
-                data_filtered = data.drop(['monitoring', 'rule_of_law'], axis=1)
+                data_filtered = data.copy()  # don't drop anything here
             except Exception as e:
                 messages.error(request, f"❌ Failed to read Excel file: {str(e)}")
                 return render(request, 'indicators.html', {'form': form})
@@ -59,12 +59,12 @@ def upload_indicators(request):
 
             # Create DataFrame with normalized values
             df = pd.DataFrame(normalised_series, columns=years)
-            df['indicator_label'] = data['indicator_label']
+            df['seriesCode'] = data['seriesCode']
             df['sdg'] = data['sdg']
             df['min_value'] = 0
             df['max_value'] = 1
             df['instrumental'] = data['instrumental']
-            df['indicator_name'] = data['indicator_name']
+            df['seriesName'] = data['seriesName']
             df['color'] = data['color']
 
             # Add I0, IF
@@ -81,8 +81,8 @@ def upload_indicators(request):
             df.loc[df['I0'] == df['IF'], 'IF'] *= 1.05
 
             # Governance parameters
-            df['qm'] = data['monitoring']
-            df['rl'] = data['rule_of_law']
+            df['qm'] = -0.33
+            df['rl'] = -0.33
             
 
             # Save to cleaned Excel
@@ -181,7 +181,7 @@ def budgets_page(request):
                 uploaded_file = request.FILES['government_expenditure']
                 try:
                     # Save and read uploaded Excel file
-                    with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx', prefix='uploaded_budget_') as tmp:
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp:
                         for chunk in uploaded_file.chunks():
                             tmp.write(chunk)
                         tmp_path = tmp.name
@@ -201,7 +201,7 @@ def budgets_page(request):
 
         # If data_exp was generated from either source, continue processing
         if data_exp is not None:
-            T = 69  # Total time periods (e.g., 69 months)
+            T=69  # Total time periods (e.g., 69 months)
             try:
                 # Generate disbursement schedule
                 years = [col for col in data_exp.columns if str(col).isnumeric()]
@@ -234,19 +234,13 @@ def budgets_page(request):
                 for i, sdg in enumerate(SDG_ALLOCATION):
                     ws2.append([i + 1, f"Program {i + 1}", sdg["goal"]])
 
-                # Save to distinct file path
-                with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx', prefix='disbursement_schedule_') as tmp_out:
+                # Save to session
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp_out:
                     wb.save(tmp_out.name)
-                    request.session['temp_excel_path'] = tmp_out.name
+                    request.session['budget_path'] = tmp_out.name
 
                 messages.success(request, "☑️ Budget processed successfully.")
                 return redirect('upload_network')
-                messages.success(request, "☑️ Budget processed successfully.")
-                return redirect('upload_network')
-
-            except Exception as e:
-                messages.error(request, f"❌ Failed to generate workbook: {e}")
-                return redirect('budgets_page')
 
             except Exception as e:
                 messages.error(request, f"❌ Failed to generate workbook: {e}")
@@ -257,35 +251,59 @@ def budgets_page(request):
         'upload_form': upload_form,
     })
 
+def calibration(request):
+    return render(request,'calibration.html')
+def simulation(request):
+    return render(request,'simulation.html')
+
+
+
 def upload_network(request):
     
     if request.method == 'POST':
         skip_indicators = request.POST.get('skip_indicators', 'off') == 'on'
         form = Uploaded_networks(request.POST, request.FILES)
 
-        # Determine the file path to use
-        temp_file_path = request.session.get('temp_excel_path') 
-        uploaded_file = request.FILES.get('file')
+        file_to_process_path = None
+        delete_temp_after_use = False
 
-        # Case 1: Skip indicators
+        # Case 1: User chooses to skip network processing
         if skip_indicators:
             if not os.path.exists('clean_data/data_network.csv'):
-                return HttpResponse("Skipping indicators failed: no cleaned network file found.", status=404)
-
-            messages.success(request, "☑️ Skipped indicator processing. Using existing network data.")
-            return render(request, 'network.html', {
-                'form': Uploaded_networks()
-            })
+                # messages.error(request, "❌ Skipping network processing failed: No existing network data found.")
+                return render(request, 'Network.html', {'form': form})
+            # messages.success(request, "☑️ Skipped network processing. Using existing network data.")
+            return render(request, 'Network.html', {'form': Uploaded_networks()})
 
         # Case 2: User uploads a new file for network processing
-        if form.is_valid() and uploaded_file:
+        uploaded_file = request.FILES.get('interdependency_network')
+       
+        if uploaded_file and form.is_valid():
             # Save uploaded file temporarily
-            temp_file_path = f'temp/{uploaded_file.name}'
             os.makedirs('temp', exist_ok=True)
+            temp_file_name = uploaded_file.name
+            # Ensure unique temp file name to avoid conflicts if multiple users upload same filename
+            temp_file_path = os.path.join('temp', f"{os.urandom(8).hex()}_{temp_file_name}")
+
             with open(temp_file_path, 'wb+') as destination:
                 for chunk in uploaded_file.chunks():
                     destination.write(chunk)
+            file_to_process_path = temp_file_path
+            delete_temp_after_use = True
+            messages.success(request, "☑️ File uploaded successfully. Processing network data...")
 
+        # Case 3: No new file uploaded, try to use previously prepared indicator data
+        elif not uploaded_file and request.session.get('indicators_path'):
+            file_to_process_path = request.session.get('indicators_path')
+            # No need to set delete_temp_after_use = True as this file was prepared by another function
+            messages.info(request, "ℹ️ No new file uploaded. Using previously prepared indicator data for network processing.")
+        else:
+            # If no file uploaded, not skipping, and no prepared indicator path
+            # messages.error(request, "❌ Please upload a network file or ensure prepared indicator data is available.")
+            return render(request, 'Network.html', {'form': form})
+
+        # --- Common processing logic for both new uploads and prepared data ---
+        if file_to_process_path:
             # Load Excel data
             try:
                 data = pd.read_excel(file_to_process_path)
@@ -357,14 +375,78 @@ def upload_network(request):
             return render(request, 'Network.html', {'form': Uploaded_networks()})
 
     # GET request
-    return render(request, 'network.html', {'form': Uploaded_networks()})
-
-def calibration(request):
-    return render(request, 'calibration.html')
-
-def simulation(request):
-    return render(request, 'simulation.html')
+    return render(request, 'Network.html', {'form': Uploaded_networks()})
 
 
 
+def run_calibration(request,threshold=0.7):  # default is 0.7
+    indicators_path = request.session.get('indicators_path')
+    network_path = request.session.get('network_path')
+    uploaded_budget_path = request.session.get('budget_path')
+
+    df_indis = pd.read_excel(indicators_path)
+    
+    N = len(df_indis) # number of indicators
+    I0 = df_indis.I0.values # initial values
+    IF = df_indis.IF.values # final values
+    success_rates = df_indis.success_rates.values # success rates
+    R = df_indis.instrumental # instrumental indicators
+    qm = df_indis.qm.values # quality of monitoring
+    rl = df_indis.rl.values # quality of the rule of law
+    indis_index = dict([(code, i) for i, code in enumerate(df_indis.seriesCode)])
+
+    df_net = pd.read_excel( network_path)
+    A = np.zeros((N, N)) # adjacency matrix
+    for index, row in df_net.iterrows():
+       i = indis_index[row.origin]
+       j = indis_index[row.destination]
+       w = row.weight
+       A[i,j] = w
+
+
+    df_exp = pd.read_excel(uploaded_budget_path, sheet_name='template_expenditure')
+    Bs = df_exp.values[:, 1:]
+
+    df_rela = pd.read_excel(uploaded_budget_path, sheet_name='relational_table')
+    B_dict = {}
+    for index, row in df_rela.iterrows():
+        B_dict[indis_index[row.indicator_label]] = [
+            programme for programme in row.values[1:] if str(programme) != 'nan'
+        ]
+    
+    T = Bs.shape[1]
+    parallel_processes = 4
+    low_precision_counts = 50
+   
+
+    parameters = calibrate(
+        I0, IF, success_rates, A=A, R=R, qm=qm, rl=rl, Bs=Bs, B_dict=B_dict,
+        T=T, threshold=threshold, parallel_processes=parallel_processes, verbose=True,
+        low_precision_counts=low_precision_counts
+    )
+    return parameters
+
+
+@csrf_exempt
+def start_calibration(request):
+    if request.method == 'POST':
+        uploaded_budget_path = request.session.get('budget_path')
+
+        if not uploaded_budget_path:
+            messages.error(request, "❌ Budget not found in session. Please upload or generate a budget.")
+            return redirect('budgets_page')
+
+        try:
+            threshold = float(request.POST.get('threshold', 0.7))
+        except (ValueError, TypeError):
+            threshold = 0.7
+
+        parameters = run_calibration(request, threshold=threshold)
+
+        return render(request, 'calibration.html', {
+            'threshold': threshold,
+            'parameters': parameters
+        })
+    
+    return redirect('budgets_page')
 
