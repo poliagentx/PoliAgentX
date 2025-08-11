@@ -18,4 +18,6 @@ urlpatterns = [
     path('budgets/', budgets_page, name='budgets_page'),
     path('calibration/', calibration, name='calibration'),
     path('start_calibration/', start_calibration, name='start_calibration'),
+    path('run_simulation/', run_simulation, name='run_simulation'),
+    path('simulation/', simulation, name='simulation'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
