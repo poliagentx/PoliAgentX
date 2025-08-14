@@ -42,8 +42,8 @@
     <h1>Simulation Results</h1>
 
     <div class="plots">
-        {% for plot in plots %}
-            <img src="/{{ plot }}" alt="Simulation plot" />
+        {% for plot_url in plots %}
+            <img src="{{ plot_url }}" alt="Simulation plot" />
         {% endfor %}
     </div>
 

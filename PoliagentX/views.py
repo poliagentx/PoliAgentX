@@ -1,5 +1,6 @@
 import tempfile
 from io import BytesIO
+import uuid
 import os
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
@@ -397,18 +398,22 @@ def start_calibration(request):
 
 
 def run_simulation(request):
-    if request.method == 'POST':
-        # Retrieve required file paths from session
-        param_excel_path = request.session.get('param_excel_path')
-        network_path = request.session.get('network_path')
-        budget_path = request.session.get('budget_file_path')
-        indicators_path = request.session.get('indicators_path')
+    if request.method != 'POST':
+        messages.error(request, "Invalid request method.")
+        return redirect('simulation')
 
-        if not all([param_excel_path, network_path, budget_path, indicators_path]):
-            messages.error(request, "Missing required files for simulation.")
-            return redirect('calibration')
+    # Retrieve paths from session
+    param_excel_path = request.session.get('param_excel_path')
+    network_path = request.session.get('network_path')
+    budget_path = request.session.get('budget_file_path')
+    indicators_path = request.session.get('indicators_path')
 
-        # Load Indicators
+    if not all([param_excel_path, network_path, budget_path, indicators_path]):
+        messages.error(request, "Missing required files for simulation.")
+        return redirect('calibration')
+
+    try:
+        # Load indicators
         df_indis = pd.read_excel(indicators_path)
         N = len(df_indis)
         I0 = df_indis.I0.values
@@ -419,13 +424,13 @@ def run_simulation(request):
         Imax = df_indis.max_value.values
         Imin = df_indis.min_value.values
 
-        # Load Parameters
-        df_params = pd.read_excel(param_excel_path ,skiprows=1)
+        # Load parameters
+        df_params = pd.read_excel(param_excel_path, skiprows=1)
         alpha = df_params.alpha.values
         alpha_prime = df_params.alpha_prime.values
         betas = df_params.beta.values
 
-        # Load Network
+        # Load network matrix
         df_net = pd.read_excel(network_path)
         A = np.zeros((N, N))
         for _, row in df_net.iterrows():
@@ -436,16 +441,16 @@ def run_simulation(request):
         # Number of simulations
         T = int(request.POST.get("num_simulations", 50))
 
-        # Load budget template
+        # Load budget
         df_exp = pd.read_excel(budget_path, sheet_name='template_budget')
         Bs_retrospective = df_exp.values[:, 1:]
         Bs = np.tile(Bs_retrospective[:, -1], (T, 1)).T
 
-        # Relational table
+        # Load relational table
         df_rela = pd.read_excel(budget_path, sheet_name='relational_table')
         B_dict = {
             indis_index[row.indicator_label]: [
-                programme for programme in row.values[1:] if pd.notna(programme)
+                prog for prog in row.values[1:] if pd.notna(prog)
             ]
             for _, row in df_rela.iterrows()
         }
@@ -457,35 +462,38 @@ def run_simulation(request):
         sample_size = 100
         outputs = []
         for _ in range(sample_size):
-            try:
-                output = run_ppi(
-                    I0, alpha, alpha_prime, betas,
-                    A=A, Bs=Bs, B_dict=B_dict, T=T, R=R, qm=qm, rl=rl,
-                    Imax=Imax, Imin=Imin, G=goals
-                )
-                outputs.append(output)
-            except Exception as e:
-                messages.error(request, f"❌ Simulation failed: {str(e)}")
-                return redirect('simulation')
+            output = run_ppi(
+                I0, alpha, alpha_prime, betas,
+                A=A, Bs=Bs, B_dict=B_dict, T=T, R=R, qm=qm, rl=rl,
+                Imax=Imax, Imin=Imin, G=goals
+            )
+            outputs.append(output)
 
-        # Separate outputs
         tsI, tsC, tsF, tsP, tsS, tsG = zip(*outputs)
-
-        # Average indicator time series
         tsI_hat = np.mean(tsI, axis=0)
 
-        # Prepare DataFrame output
+        # Prepare output DataFrame
         new_rows = [
             [df_indis.iloc[i].indicator_label, df_indis.iloc[i].sdg, df_indis.iloc[i].color] + serie.tolist()
             for i, serie in enumerate(tsI_hat)
         ]
         df_output = pd.DataFrame(new_rows, columns=['indicator_label', 'sdg', 'color'] + list(range(T)))
         df_output['goal'] = goals
-        media_dir = 'media'
-        os.makedirs(media_dir, exist_ok=True)
 
-        # === Plot 1: Indicator levels ===
-        plt.figure(figsize=(8, 5))
+        # Ensure media folder exists
+        os.makedirs(settings.MEDIA_ROOT, exist_ok=True)
+        plot_urls = []
+
+        def save_plot(fig):
+            filename = f"plot_{uuid.uuid4().hex}.png"
+            filepath = os.path.join(settings.MEDIA_ROOT, filename)
+            fig.savefig(filepath, bbox_inches='tight')
+            plt.close(fig)
+            print(f"MEDIA_ROOT = {settings.MEDIA_ROOT}")
+            return settings.MEDIA_URL + filename
+
+        # Plot 1: Indicator levels
+        fig1 = plt.figure(figsize=(8, 5))
         for _, row in df_output.iterrows():
             plt.plot(row[list(range(T))], color=row.color, linewidth=3)
         plt.gca().spines['right'].set_visible(False)
@@ -493,11 +501,10 @@ def run_simulation(request):
         plt.xlim(0, T)
         plt.xlabel('time')
         plt.ylabel('indicator level')
-        plt.tight_layout()
-        plt.savefig('media/plot1.png')
+        plot_urls.append(save_plot(fig1))
 
-        # === Plot 2: Change from initial ===
-        plt.figure(figsize=(8, 5))
+        # Plot 2: Change from initial
+        fig2 = plt.figure(figsize=(8, 5))
         for _, row in df_output.iterrows():
             plt.plot(row[list(range(T))] - row[0], color=row.color, linewidth=3)
         plt.gca().spines['right'].set_visible(False)
@@ -505,11 +512,10 @@ def run_simulation(request):
         plt.xlim(0, T)
         plt.xlabel('time')
         plt.ylabel('change w.r.t initial condition')
-        plt.tight_layout()
-        plt.savefig('media/plot2.png')
+        plot_urls.append(save_plot(fig2))
 
-        # === Plot 3: Final levels vs goals ===
-        plt.figure(figsize=(14, 5))
+        # Plot 3: Final levels vs goals
+        fig3 = plt.figure(figsize=(14, 5))
         for idx, row in df_output.iterrows():
             plt.bar(idx, row[T - 1], color=row.color, linewidth=3)
             plt.plot([idx, idx], [row[T - 1], row.goal], color=row.color, linewidth=1)
@@ -521,27 +527,32 @@ def run_simulation(request):
         plt.gca().set_xticklabels(df_output.indicator_label, rotation=90)
         plt.xlabel('indicator')
         plt.ylabel('level')
-        plt.tight_layout()
-        plt.savefig('media/plot3.png')
+        plot_urls.append(save_plot(fig3))
 
-        # Return simulation results to template
-        return render(request, 'simulation.html', {
-            'plots': ['media/plot1.png', 'media/plot2.png', 'media/plot3.png'],
-            'table': df_output.to_html(index=False)
-        })
+        # Save to session and redirect to results
+        request.session['plots'] = plot_urls
+        request.session['simulation_table_html'] = df_output.to_html(index=False)
+        request.session.modified = True
+
+        return redirect('results')
+
+    except Exception as e:
+        messages.error(request, f"Simulation error: {e}")
+        return redirect('simulation')
     
+
 
 def results(request):
-    # You might want to get these from session or pass them as needed
-    plots = ['media/plot1.png', 'media/plot2.png', 'media/plot3.png']
-    
-    # Assuming you saved the DataFrame HTML in session or regenerate it here
-    table_html = request.session.get('simulation_table_html')
-    
-    context = {
+    plots = request.session.get('plots', [])
+    table_html = request.session.get('simulation_table_html', '')
+
+    if not plots or not table_html:
+        return render(request, 'results.html', {
+            'error': 'No simulation results found. Please run a simulation first.'
+        })
+
+    return render(request, 'results.html', {
         'plots': plots,
         'table': table_html,
-    }
-    
-    return render(request, 'results.html', context)
+    })
 
