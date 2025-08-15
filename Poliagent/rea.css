@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Simulation Results{% endblock %}</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    <!-- Plotly CDN -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+
+    <header>
+        <h1>{% block header %}My Simulation App{% endblock %}</h1>
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Global JS -->
+    <script>
+        // Global delegated event listener for buttons
+        const figFrames = [];
+
+        document.body.addEventListener('click', function (e) {
+            if (e.target.matches('.play-btn')) {
+                const wrapper = e.target.closest('.plot-wrapper');
+                const idx = [...document.querySelectorAll('.plot-wrapper')].indexOf(wrapper);
+                const figData = figFrames[idx];
+                clearInterval(figData.intervalId);
+                figData.intervalId = setInterval(() => {
+                    if (figData.max === 0) return;
+                    figData.current = (figData.current + 1) % figData.max;
+                    const frameName = figData.fig._fullLayout.frames[figData.current].name;
+                    Plotly.animate(figData.fig, [frameName], {
+                        frame: { duration: 200, redraw: true },
+                        transition: { duration: 0 }
+                    });
+                }, 200);
+            }
+
+            if (e.target.matches('.pause-btn')) {
+                const wrapper = e.target.closest('.plot-wrapper');
+                const idx = [...document.querySelectorAll('.plot-wrapper')].indexOf(wrapper);
+                const figData = figFrames[idx];
+                clearInterval(figData.intervalId);
+            }
+        });
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

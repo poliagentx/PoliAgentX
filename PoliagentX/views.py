@@ -572,15 +572,15 @@ def run_simulation(request):
 
 
 def results(request):
-    plot_data = request.session.get('plots_html', [])
+    plot_html = request.session.get('plots_html', [])
     table_data = request.session.get('simulation_table_html', [])
 
-    if not plot_data or not table_data:
+    if not plot_html or not table_data:
         return render(request, 'results.html', {
             'error': 'No simulation results found. Please run a simulation first.'
         })
 
     return render(request, 'results.html', {
-        'plot_data': plot_data,
+        'plot_html': plot_html,
         'table_data': table_data,
     })
