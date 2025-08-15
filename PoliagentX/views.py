@@ -18,6 +18,7 @@ import numpy as np
 import tempfile
 import matplotlib.pyplot as plt
 from openpyxl.utils.dataframe import dataframe_to_rows
+import plotly.graph_objects as go
 
 
 def upload_indicators(request):
@@ -388,7 +389,7 @@ def start_calibration(request):
            
 
         request.session['param_excel_path'] = tmp_file.name
-        
+        # return redirect('simulation')
         # os.makedirs('clean_data', exist_ok=True)
         # output_path = os.path.join('clean_data', 'parameter.xlsx')
         # parameters.to_excel(output_path, index=False)
@@ -400,133 +401,188 @@ def start_calibration(request):
         })
         
 def run_simulation(request):
-        if request.method == 'POST':
-            # Retrieve required file paths from session
-            indicators_path = request.session.get('indicators_path')
-            network_path = request.session.get('network_path')
-            budget_path = request.session.get('budget_file_path')
-            param_excel_path = request.session.get('param_excel_path')
-           
+    # import pandas as pd
+    # import numpy as np
+    # import plotly.graph_objs as go
+    from django.shortcuts import render, redirect
 
-            if not all([param_excel_path, network_path, budget_path, indicators_path]):
-                messages.error(request, "Missing required files for simulation.")
-                return redirect('calibration')
+    # --- Load paths from session ---
+    indicators_path = request.session.get('indicators_path')
+    network_path = request.session.get('network_path')
+    budget_path = request.session.get('budget_file_path')
 
-            # Load Indicators
-            df_indis = pd.read_excel(indicators_path)
-            N = len(df_indis)
-            I0 = df_indis.I0.values
-            R = df_indis.instrumental
-            qm = df_indis.qm.values
-            rl = df_indis.rl.values
-            indis_index = {code: i for i, code in enumerate(df_indis.indicator_label)}
-            Imax = df_indis.max_value.values
-            Imin = df_indis.min_value.values
+    if not all([indicators_path, network_path, budget_path]):
+        from django.contrib import messages
+        from django.shortcuts import redirect
+        messages.error(request, "Missing required files for simulation.")
+        return redirect('calibration')
 
-            # Load Parameters
-            df_params = pd.read_excel(param_excel_path, skiprows=1)
-            alphas = df_params.alpha.values
-            alphas_prime = df_params.alpha_prime.values
-            betas = df_params.beta.values
+    # --- Load simulation output or indicators ---
+    df_output = pd.read_excel(indicators_path)
 
-            # Load Network
-            df_net = pd.read_excel(network_path)
-            A = np.zeros((N, N))
-            for _, row in df_net.iterrows():
-                i = indis_index[row.origin]
-                j = indis_index[row.destination]
-                A[i, j] = row.weight
+    # Ensure color column exists
+    if 'color' not in df_output.columns:
+        df_output['color'] = 'blue'
 
-            # Number of simulations
-            T = int(request.POST.get("num_simulations", 50))
+    # Identify timestep columns dynamically
+    time_columns = [c for c in df_output.columns if c not in ['indicator_label','color']]
+    df_output[time_columns] = df_output[time_columns].apply(pd.to_numeric, errors='coerce')
+    n_steps = len(time_columns)
 
-            # Load budget template
-            df_exp = pd.read_excel(budget_path, sheet_name='template_budget')
-            Bs_retrospective = df_exp.values[:, 1:]
-            Bs = np.tile(Bs_retrospective[:, -1], (T, 1)).T
+    # Generate random goals dynamically
+    I0 = df_output[time_columns[0]]
+    Imax = df_output[time_columns].max(axis=1)
+    goals = np.random.rand(len(df_output)) * (Imax - I0) + I0
+    df_output['goal'] = goals
 
-            # Relational table
-            df_rela = pd.read_excel(budget_path, sheet_name='relational_table')
-            B_dict = {
-                indis_index[row.indicator_label]: [
-                    programme for programme in row.values[1:] if pd.notna(programme)
+    plot_htmls = []
+
+    # --------------------
+    # 1. Indicator Levels Over Time (lines)
+    frames1 = []
+    for step, col in enumerate(time_columns):
+        frames1.append(go.Frame(
+            data=[go.Scatter(
+                x=df_output['indicator_label'],
+                y=df_output[col],
+                mode="lines+markers",
+                marker=dict(color=df_output['color'])
+            )],
+            name=str(step)
+        ))
+    fig1 = go.Figure(
+        data=frames1[0].data,
+        layout=go.Layout(
+            title="Indicator Levels Over Time",
+            xaxis_title="Indicator",
+            yaxis_title="Level",
+            yaxis=dict(range=[0, df_output[time_columns].max().max() * 1.1]),
+            updatemenus=[dict(
+                type="buttons",
+                buttons=[
+                    dict(label="Play", method="animate",
+                         args=[None, {"frame": {"duration": 300, "redraw": True}}]),
+                    dict(label="Pause", method="animate",
+                         args=[[None], {"frame": {"duration": 0, "redraw": False}}])
                 ]
-                for _, row in df_rela.iterrows()
-            }
+            )]
+        ),
+        frames=frames1
+    )
+    plot_htmls.append(fig1.to_html(full_html=False, include_plotlyjs='cdn'))
 
-            # Generate random goals
-            goals = np.random.rand(N) * (Imax - I0) + I0
+    # --------------------
+    # 2. Change from Initial Over Time (bars)
+    df_change = df_output.copy()
+    for col in time_columns:
+        df_change[col] = df_change[col] - df_change[time_columns[0]]
 
-            # Run simulations
-            sample_size = 100
-            outputs = []
-            for _ in range(sample_size):
-                try:
-                    output = run_ppi(
-                        I0, alphas, alphas_prime, betas, A=A, R=R, qm=qm, rl=rl,
-                Imax=Imax, Imin=Imin, Bs=Bs, B_dict=B_dict, T=T, G=goals
-                    )
-                    outputs.append(output)
-                except Exception as e:
-                    messages.error(request, f"❌ Simulation failed: {str(e)}")
-                    return redirect('simulation')
+    frames2 = []
+    for step, col in enumerate(time_columns):
+        frames2.append(go.Frame(
+            data=[go.Bar(
+                x=df_change['indicator_label'],
+                y=df_change[col],
+                marker_color=df_change['color']
+            )],
+            name=str(step)
+        ))
+    fig2 = go.Figure(
+        data=frames2[0].data,
+        layout=go.Layout(
+            title="Change from Initial Over Time",
+            xaxis_title="Indicator",
+            yaxis_title="Change",
+            yaxis=dict(
+                range=[df_change[time_columns].min().min() * 1.1,
+                       df_change[time_columns].max().max() * 1.1]
+            ),
+            updatemenus=[dict(
+                type="buttons",
+                buttons=[
+                    dict(label="Play", method="animate",
+                         args=[None, {"frame": {"duration": 300, "redraw": True}}]),
+                    dict(label="Pause", method="animate",
+                         args=[[None], {"frame": {"duration": 0, "redraw": False}}])
+                ]
+            )]
+        ),
+        frames=frames2
+    )
+    plot_htmls.append(fig2.to_html(full_html=False, include_plotlyjs=False))
 
-            # Separate outputs
-            tsI, tsC, tsF, tsP, tsS, tsG = zip(*outputs)
+    # --------------------
+    # 3. Final Levels vs Goals (animated bar growth)
+    final_levels = df_output[time_columns[-1]]
+    indicators = df_output['indicator_label']
+    colors = df_output['color']
 
-            # Average indicator time series
-            tsI_hat = np.mean(tsI, axis=0)
+    frames3 = []
+    for step in range(n_steps + 1):
+        fraction = step / n_steps
+        frames3.append(go.Frame(
+            data=[
+                go.Bar(
+                    x=indicators,
+                    y=final_levels * fraction,
+                    marker_color=colors,
+                    name="Final level"
+                ),
+                go.Scatter(
+                    x=indicators,
+                    y=df_output['goal'],
+                    mode="markers",
+                    marker=dict(size=12, color=colors, symbol='circle-open'),
+                    name="Goal",
+                    opacity=fraction
+                )
+            ],
+            name=str(step)
+        ))
 
-            # Prepare DataFrame output
-            new_rows = [
-                [df_indis.iloc[i].indicator_label, df_indis.iloc[i].sdg, df_indis.iloc[i].color] + serie.tolist()
-                for i, serie in enumerate(tsI_hat)
-            ]
-            df_output = pd.DataFrame(new_rows, columns=['indicator_label', 'sdg', 'color'] + list(range(T)))
-            df_output['goal'] = goals
+    fig3 = go.Figure(
+        data=frames3[0].data,
+        layout=go.Layout(
+            title="Final Levels vs Goals",
+            xaxis_title="Indicator",
+            yaxis_title="Level",
+            yaxis=dict(range=[0, max(final_levels.max(), df_output['goal'].max()) * 1.1]),
+            updatemenus=[dict(
+                type="buttons",
+                buttons=[
+                    dict(label="Play", method="animate",
+                         args=[None, {"frame": {"duration": 300, "redraw": True}}]),
+                    dict(label="Pause", method="animate",
+                         args=[[None], {"frame": {"duration": 0, "redraw": False}}])
+                ]
+            )]
+        ),
+        frames=frames3
+    )
+    plot_htmls.append(fig3.to_html(full_html=False, include_plotlyjs=False))
 
-            # === Plot 1: Indicator levels ===
-            plt.figure(figsize=(8, 5))
-            for _, row in df_output.iterrows():
-                plt.plot(row[list(range(T))], color=row.color, linewidth=3)
-            plt.gca().spines['right'].set_visible(False)
-            plt.gca().spines['top'].set_visible(False)
-            plt.xlim(0, T)
-            plt.xlabel('time')
-            plt.ylabel('indicator level')
-            plt.tight_layout()
-            plt.savefig('media/plot1.png')
+    # --------------------
+    # Save to session and redirect
+    request.session['plots_html'] = plot_htmls
+    request.session['simulation_table_html'] = df_output.to_html(index=False)
+    request.session.modified = True
+    try:
+        return redirect('results')
+    except Exception as e:
+        print(f"Error occurred while redirecting: {e}")
+        return render(request, 'error.html', {'error': str(e)})
 
-            # === Plot 2: Change from initial ===
-            plt.figure(figsize=(8, 5))
-            for _, row in df_output.iterrows():
-                plt.plot(row[list(range(T))] - row[0], color=row.color, linewidth=3)
-            plt.gca().spines['right'].set_visible(False)
-            plt.gca().spines['top'].set_visible(False)
-            plt.xlim(0, T)
-            plt.xlabel('time')
-            plt.ylabel('change w.r.t initial condition')
-            plt.tight_layout()
-            plt.savefig('media/plot2.png')
 
-            # === Plot 3: Final levels vs goals ===
-            plt.figure(figsize=(14, 5))
-            for idx, row in df_output.iterrows():
-                plt.bar(idx, row[T - 1], color=row.color, linewidth=3)
-                plt.plot([idx, idx], [row[T - 1], row.goal], color=row.color, linewidth=1)
-                plt.plot(idx, row.goal, '.', mec='w', mfc=row.color, markersize=15)
-            plt.gca().spines['right'].set_visible(False)
-            plt.gca().spines['top'].set_visible(False)
-            plt.xlim(-1, N)
-            plt.xticks(range(N))
-            plt.gca().set_xticklabels(df_output.indicator_label, rotation=90)
-            plt.xlabel('indicator')
-            plt.ylabel('level')
-            plt.tight_layout()
-            plt.savefig('media/plot3.png')
+def results(request):
+    plot_data = request.session.get('plots_html', [])
+    table_data = request.session.get('simulation_table_html', [])
 
-            # Return simulation results to template
-            return render(request, 'simulation.html', {
-                'plots': ['media/plot1.png', 'media/plot2.png', 'media/plot3.png'],
-                'table': df_output.to_html(index=False)
+    if not plot_data or not table_data:
+        return render(request, 'results.html', {
+            'error': 'No simulation results found. Please run a simulation first.'
         })
+
+    return render(request, 'results.html', {
+        'plot_data': plot_data,
+        'table_data': table_data,
+    })

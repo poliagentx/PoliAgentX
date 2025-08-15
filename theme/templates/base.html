@@ -17,9 +17,10 @@
 
 <header class="sticky top-0 left-0 w-full bg-[#f2f2f2] shadow-md z-50">
   <nav class="flex justify-between items-center w-[90%] mx-auto py-2">
-    <div class="flex items-center">
-      <img src="{% static 'Images/flag.jpg' %}" alt="Flag" class="h-6 mr-4 object-contain">
-    </div>
+   <div class="flex items-center">
+  <span class="h-6 mr-4 text-lg font-bold tracking-wide">POLIAGENTX</span>
+</div>
+
 
     <div class="workflow-progress-container">
       <a class="workflow-step {% if request.resolver_match.url_name == 'upload_indicators' %}current{% elif 'indicators_completed' in request.session %}completed{% endif %}">
@@ -37,13 +38,17 @@
       </a>
       <span class="separator">&gt;</span>
 
-      <a  class="workflow-step {% if request.resolver_match.url_name == 'calibration' %}current{% elif 'calibration_completed' in request.session %}completed{% endif %}">
+      <a  class="workflow-step {% if request.resolver_match.url_name == 'calibration' or request.resolver_match.url_name == 'start_calibration' %}current{% elif 'calibration_completed' in request.session %}completed{% endif %}">
         Calibration
       </a>
+      
       <span class="separator">&gt;</span>
   
-      <a  class="workflow-step {% if request.resolver_match.url_name == 'simulation' %}current{% elif 'simulation_completed' in request.session %}completed{% endif %}">
+      <a  class="workflow-step {% if request.resolver_match.url_name == 'simulation' or request.resolver_match.url_name == 'start_simulation' %}current{% elif 'simulation_completed' in request.session %}completed{% endif %}">
         Simulation
+      </a>
+      <a  class="workflow-step {% if request.resolver_match.url_name == 'results' %}current{% elif 'simulation_completed' in request.session %}completed{% endif %}">
+        Results
       </a>
     </div>
   </nav>
@@ -75,8 +80,7 @@
 .workflow-step.current {
     color: #000;
     font-weight: bold;
-    {% comment %} text-decoration: underline; {% endcomment %}
-    {% comment %} background-color: #e0e0e0; /* Light background for current step */ {% endcomment %}
+ 
 }
 
 .workflow-step.completed {
@@ -90,38 +94,14 @@
     font-weight: bold;
 }
 
-/* Example of a connecting line (more complex CSS/JS might be needed for dynamic fill) */
-/* .workflow-progress-container {
-    position: relative;
-    padding-bottom: 5px;
-}
-.workflow-progress-container::before {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    height: 3px;
-    background-color: #ccc;
-    width: 100%;
-    z-index: -1;
-}
-.workflow-step.completed + .separator::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    height: 3px;
-    background-color: #4CAF50;
-    width: 100%;
-    z-index: -1;
-} */
 </style>
 
 
-  <main class="flex-grow w-[95%] mx-auto pt-[40px] pb-[40px] z-40">
-    {% block content %}
-    {% endblock %}
-  </main>
+<main class="flex-grow w-full px-4 sm:px-6 lg:px-8 pt-10 pb-10 z-40">
+  {% block content %}
+  {% endblock %}
+</main>
+
 
 </body>
 </html>

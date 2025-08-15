@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<h1 class="mb-4">Simulation Results</h1>
+
+{% if error %}
+<div class="alert alert-warning">{{ error }}</div>
+{% else %}
+
+<!-- Summary Cards -->
+<div class="summary-cards mb-4" style="display:flex; gap:20px;">
+    <div class="card p-3" style="flex:1; text-align:center; background:#f0f8ff;">
+        <h3>Total Runs</h3>
+        <p>{{ summary.total_runs }}</p>
+    </div>
+    <div class="card p-3" style="flex:1; text-align:center; background:#f0f8ff;">
+        <h3>Average Value</h3>
+        <p>{{ summary.average_value|floatformat:2 }}</p>
+    </div>
+    <!-- Add more summary cards here if needed -->
+</div>
+
+<!-- Filters (example: category filter) -->
+<div class="filters mb-3">
+    <label for="categoryFilter">Filter by Category:</label>
+    <select id="categoryFilter" class="form-select" style="width:200px; display:inline-block;">
+        <option value="all">All</option>
+        <!-- Dynamically populate categories if available -->
+    </select>
+</div>
+
+<!-- Plots Section -->
+<div class="plots-container mb-4">
+    {% for plot in plots_html %}
+    <div class="plot-wrapper mb-3 border p-2 rounded" style="position:relative;">
+        {{ plot|safe }}
+        <div class="plot-buttons mt-2" style="text-align:right;">
+            <button class="btn btn-sm btn-success play-btn">Play</button>
+            <button class="btn btn-sm btn-danger pause-btn">Pause</button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Global Controls -->
+<div class="global-buttons mb-4">
+    <button id="playAll" class="btn btn-primary me-2">Play All</button>
+    <button id="pauseAll" class="btn btn-secondary">Pause All</button>
+</div>
+
+<!-- Simulation Table -->
+<div class="results-table">
+    <table id="simulationTable" class="table table-striped table-bordered">
+        {{ simulation_table_html|safe }}
+    </table>
+</div>
+
+<!-- Optional: Export Buttons -->
+<div class="export-buttons mt-3">
+    <button id="downloadCSV" class="btn btn-outline-primary me-2">Download CSV</button>
+    <button id="downloadPDF" class="btn btn-outline-secondary">Download PDF</button>
+</div>
+
+<script>
+// --- Plotly Play/Pause Functionality ---
+document.addEventListener('DOMContentLoaded', function() {
+    if(typeof Plotly === 'undefined') {
+        console.error('Plotly is not loaded!');
+        return;
+    }
+
+    const figs = Array.from(document.querySelectorAll('.js-plotly-plot'));
+    const figFrames = figs.map(fig => ({
+        fig,
+        current: 0,
+        max: fig._fullLayout.frames ? fig._fullLayout.frames.length : 0,
+        intervalId: null
+    }));
+
+    document.querySelectorAll('.plot-wrapper').forEach((wrapper, idx) => {
+        const playBtn = wrapper.querySelector('.play-btn');
+        const pauseBtn = wrapper.querySelector('.pause-btn');
+        const figData = figFrames[idx];
+
+        if(!playBtn || !pauseBtn) return;
+
+        playBtn.onclick = () => {
+            clearInterval(figData.intervalId);
+            figData.intervalId = setInterval(() => {
+                if(figData.max === 0) return;
+                figData.current = (figData.current + 1) % figData.max;
+                const frameName = figData.fig._fullLayout.frames[figData.current].name;
+                Plotly.animate(figData.fig, [frameName], {frame:{duration:200, redraw:true}, transition:{duration:0}});
+            }, 200);
+        };
+
+        pauseBtn.onclick = () => clearInterval(figData.intervalId);
+    });
+
+    document.getElementById('playAll')?.addEventListener('click', () => {
+        figFrames.forEach(f => {
+            clearInterval(f.intervalId);
+            f.intervalId = setInterval(() => {
+                if(f.max === 0) return;
+                f.current = (f.current + 1) % f.max;
+                const frameName = f.fig._fullLayout.frames[f.current].name;
+                Plotly.animate(f.fig, [frameName], {frame:{duration:200, redraw:true}, transition:{duration:0}});
+            }, 200);
+        });
+    });
+
+    document.getElementById('pauseAll')?.addEventListener('click', () => {
+        figFrames.forEach(f => clearInterval(f.intervalId));
+    });
+
+    // --- Filter Table Example ---
+    const categoryFilter = document.getElementById('categoryFilter');
+    categoryFilter?.addEventListener('change', function() {
+        const selected = this.value;
+        const rows = document.querySelectorAll('#simulationTable tbody tr');
+        rows.forEach(row => {
+            if(selected === 'all' || row.dataset.category === selected) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+
+    // --- Export CSV Example ---
+    document.getElementById('downloadCSV')?.addEventListener('click', () => {
+        let csv = [];
+        const rows = document.querySelectorAll('#simulationTable tr');
+        rows.forEach(row => {
+            const cols = Array.from(row.querySelectorAll('td, th')).map(cell => `"${cell.innerText}"`);
+            csv.push(cols.join(','));
+        });
+        const blob = new Blob([csv.join('\n')], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'simulation_results.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+
+    // --- PDF export would require a library like jsPDF ---
+});
+</script>
+{% endif %}
+{% endblock %}
