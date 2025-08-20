@@ -180,7 +180,7 @@
             </div>
             
             <div class="right-section">
-                <form method="POST" action="{% url 'run_simulation' %}">
+                <form method="POST" action="{% url 'results_view' %}">
                     {% csrf_token %}
                     <p class="description">
                         CHOOSE THE NUMBER OF SIMULATIONS THAT YOU WANT TO RUN. THE MODEL USES THE CALIBRATION TO RUN 50 SIMULATIONS.
