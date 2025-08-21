@@ -1,415 +1,72 @@
-<<<<<<< HEAD
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PPI Simulation Interface</title>
-    <link rel="stylesheet" href="simulation.css">
-</head>
-<body>
-    <style>
-                * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+{% extends "base.html" %}
+{% load static %}
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #ffffff;
-            height: 100vh;
-            overflow: hidden;
-        }
+{% block content %}
+<div class="bg-white py-8 px-4 sm:py-12 sm:px-6 lg:px-8">
+  <div class="max-w-7xl mx-auto">
+    <div class="grid md:grid-cols-2 gap-8 items-start">
 
-        .container {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
+      <!-- Left instructions -->
+      <div>
+        <h1 class="text-4xl font-bold text-black mb-4">Simulation</h1>
+        <p class="text-gray-700 mb-4">
+          Choose how many simulation runs you want to execute.
+          The model uses the calibrated parameters to run the specified number
+          of stochastic simulations.
+        </p>
+      </div>
 
-        .header {
-            background-color: #e8e8e8;
-            padding: 20px 40px;
-            flex-shrink: 0;
-        }
+      <!-- Right form -->
+      <div>
+          <form method="POST" action="{% url 'results' %}"
+              class="bg-gray-100 rounded-lg p-6 shadow-md space-y-6">
+          {% csrf_token %}
 
-        .logo {
-            background: #60a5fa;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            display: inline-block;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-        }
-        .logo:hover{
-            background-color:  #3b82f6;
-            transition: background-color 0/3s ease-in;
-        }
-        .main-content {
-            flex: 1;
-            display: flex;
-            padding: 60px 80px;
-            gap: 80px;
-            align-items: center;
-            justify-content: center;
-        }
+          <p class="text-center text-lg text-black font-medium">
+            Number of simulations steps
+          </p>
 
-        .left-section {
-            flex: 1;
-            max-width: 500px;
-        }
+          <div class="bg-white border rounded p-4 text-center">
+            <input type="number" name="num_simulations"
+                   value="50" min="1" max="1000" required
+                   class="w-full text-3xl font-bold text-center outline-none">
+          </div>
 
-        .step-title {
-            font-size: 42px;
-            font-weight: 700;
-            color: #2c3e50;
-            margin-bottom: 40px;
-            line-height: 1.1;
-            letter-spacing: -0.5px;
-        }
+          <button type="submit"
+                  class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded font-medium">
+            START SIMULATIONS
+          </button>
+        </form>
+      </div>
 
-        .simulation-area {
-            background: #e8e8e8;
-            border-radius: 8px;
-            height: 280px;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-
-        .right-section {
-            flex: 1;
-            background: #e8e8e8;
-            padding: 40px;
-            border-radius: 8px;
-            max-width: 500px;
-            height:410px;
-        }
-
-        .description {
-            font-size: 13px;
-            color: #2c3e50;
-            margin-bottom: 30px;
-            line-height: 1.5;
-            font-weight: 600;
-            letter-spacing: 0.3px;
-            text-transform: uppercase;
-        }
-
-        .input-container {
-            background: white;
-            border-radius: 4px;
-            padding: 20px;
-            margin-bottom: 30px;
-            border: 1px solid #d1d5db;
-            text-align: center;
-        }
-
-        .input-field {
-            width: 100%;
-            border: none;
-            outline: none;
-            font-size: 28px;
-            font-weight: 600;
-            color: #2c3e50;
-            text-align: center;
-            background: transparent;
-        }
-
-        .input-field::placeholder {
-            color: #9ca3af;
-        }
-
-        .start-button {
-            background: #60a5fa;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            letter-spacing: 0.5px;
-            width: 100%;
-            text-transform: uppercase;
-        }
-
-        .start-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-        }
-
-        .start-button:active {
-            transform: translateY(0);
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 1200px) {
-            .main-content {
-                padding: 40px 60px;
-                gap: 60px;
-            }
-            
-            .step-title {
-                font-size: 36px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .main-content {
-                flex-direction: column;
-                padding: 40px 20px;
-                gap: 40px;
-            }
-            
-            .left-section,
-            .right-section {
-                max-width: 100%;
-            }
-            
-            .step-title {
-                font-size: 32px;
-            }
-            
-            .simulation-area {
-                height: 200px;
-            }
-        }
-    </style>
-    <div class="container">
-        <div class="header">
-            <div class="logo">LOGO</div>
-        </div>
-        
-        <div class="main-content">
-            <div class="left-section">
-                <h1 class="step-title">STEP 5<br>SIMULATION</h1>
-                
-                <div class="simulation-area">
-                    <!-- Empty simulation area as shown in design -->
-                </div>
-            </div>
-            
-            <div class="right-section">
-                <p class="description">
-                    CHOOSE THE NUMBER OF SIMULATIONS THAT YOU WANT TO RUN. THE MODEL USES THE CALIBRATION TO RUN 50 SIMULATIONS.
-                </p>
-                
-                <div class="input-container">
-                    <input type="number" class="input-field" value="50" min="1" max="1000">
-                </div>
-                
-                <button class="start-button">START SIMULATIONS</button>
-            </div>
-        </div>
     </div>
-</body>
-</html>
-=======
 
-    {% extends "base.html" %}
-    {% load static %}
-    <!-- <link rel="stylesheet" href="simulation.css"> -->
-    {% block content %}
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #ffffff;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        .container {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        
-
-       
-
-        .logo:hover {
-            background-color: #3b82f6;
-            transition: background-color 0/3s ease-in;
-        }
-
-        .main-content {
-            flex: 1;
-            display: flex;
-            padding: 60px 80px;
-            gap: 80px;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .left-section {
-            flex: 1;
-            max-width: 500px;
-        }
-
-        .step-title {
-            font-size: 42px;
-            font-weight: 700;
-            color: #2c3e50;
-            margin-bottom: 40px;
-            line-height: 1.1;
-            letter-spacing: -0.5px;
-        }
-
-        .simulation-area {
-            background: #e8e8e8;
-            border-radius: 8px;
-            height: 280px;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-
-        .right-section {
-            flex: 1;
-            background: #e8e8e8;
-            padding: 40px;
-            border-radius: 8px;
-            max-width: 500px;
-            height: 410px;
-        }
-
-        .description {
-            font-size: 13px;
-            color: #2c3e50;
-            margin-bottom: 30px;
-            line-height: 1.5;
-            font-weight: 600;
-            letter-spacing: 0.3px;
-            text-transform: uppercase;
-        }
-
-        .input-container {
-            background: white;
-            border-radius: 4px;
-            padding: 20px;
-            margin-bottom: 30px;
-            border: 1px solid #d1d5db;
-            text-align: center;
-        }
-
-        .input-field {
-            width: 100%;
-            border: none;
-            outline: none;
-            font-size: 28px;
-            font-weight: 600;
-            color: #2c3e50;
-            text-align: center;
-            background: transparent;
-        }
-
-        .input-field::placeholder {
-            color: #9ca3af;
-        }
-
-        .start-button {
-            background: #60a5fa;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            letter-spacing: 0.5px;
-            width: 100%;
-            text-transform: uppercase;
-        }
-
-        .start-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-        }
-
-        .start-button:active {
-            transform: translateY(0);
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 1200px) {
-            .main-content {
-                padding: 40px 60px;
-                gap: 60px;
-            }
-            
-            .step-title {
-                font-size: 36px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .main-content {
-                flex-direction: column;
-                padding: 40px 20px;
-                gap: 40px;
-            }
-            
-            .left-section,
-            .right-section {
-                max-width: 100%;
-            }
-            
-            .step-title {
-                font-size: 32px;
-            }
-            
-            .simulation-area {
-                height: 200px;
-            }
-        }
-    </style>
-
-    <div class="container">
-        
-        
-        <div class="main-content">
-            <div class="left-section">
-                <h1 class="step-title">STEP 5<br>SIMULATION</h1>
-                <div class="simulation-area">
-                    <!-- Empty simulation area as shown in design -->
-                </div>
-            </div>
-            
-            <div class="right-section">
-                <form method="POST" action="{% url 'run_simulation' %}">
-                    {% csrf_token %}
-                    <p class="description">
-                        CHOOSE THE NUMBER OF SIMULATIONS THAT YOU WANT TO RUN. THE MODEL USES THE CALIBRATION TO RUN 50 SIMULATIONS.
-                    </p>
-                    
-                    <div class="input-container">
-                        <input type="number" name="num_simulations" class="input-field" value="50" min="1" max="1000" required>
-                    </div>
-                    
-                    <button type="submit" class="start-button">START SIMULATIONS</button>
-                </form>
-            </div>
-        </div>
+    <!-- NEXT button (shown after run_simulation finishes) -->
+    <div class="mt-6 text-right">
+      <div id="next-button-container" class="hidden">
+        <a href="{% url 'results' %}"
+           class="inline-block px-6 py-2 bg-green-600 text-white font-semibold rounded hover:bg-green-700">
+          NEXT →
+        </a>
+      </div>
+      <div id="next-disabled">
+        <button disabled
+                class="inline-block px-6 py-2 bg-gray-400 text-white font-semibold rounded cursor-not-allowed">
+          NEXT →
+        </button>
+      </div>
     </div>
+  </div>
+</div>
+
+<script>
+/* basic toggle – replace with real logic once simulation ends */
+document.addEventListener('DOMContentLoaded', () => {
+  /* Example: if view sets session flag */
+  {% if simulation_completed %}
+    document.getElementById('next-button-container').classList.remove('hidden');
+    document.getElementById('next-disabled').classList.add('hidden');
+  {% endif %}
+});
+</script>
 {% endblock %}
-    
-    <!-- <script src="simulation.js"></script> -->
->>>>>>> c7f7550ce5f43d111d4981cba5605c6f0ffcde0e

@@ -51,6 +51,8 @@ class Uploaded_indicators(forms.Form):
             lambda f: validate_contains_sheet(f, 'template')
         ]
     )
+    
+    # REQUIRED_COLUMNS = ['monitoring', 'rule_of_law', 'minVals']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -68,9 +70,6 @@ class Uploaded_indicators(forms.Form):
                 css_class='bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded mt-4'
             )
         )
-from django import forms
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Submit
 
 class BudgetForm(forms.Form):
     budget = forms.IntegerField(label="(in local currency)", min_value=0)
@@ -143,5 +142,9 @@ class Uploaded_networks(forms.Form):
                 css_class='hidden'
             )
         )
+        
 class Skip_networks(forms.Form):
+    pass
+
+
     pass

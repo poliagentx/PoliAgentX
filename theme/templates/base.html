@@ -1,7 +1,7 @@
 {% load static tailwind_tags %}
 
 <!doctype html>
-<html lang="en">
+<html lang="en" class="h-[100%]">
 <head>
   <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,18 +13,28 @@
     
     {% tailwind_css %}
 </head>
-<body style="font-family: Poppins;" class="bg-white text-black/90">
+<body style="font-family: Poppins;" class="bg-white text-[#0b0b0b] h-[100%] flex-row ">
 
+<<<<<<< HEAD
   <header class="sticky top-0 left-0 w-full bg-[#f2f2f2] shadow-md z-50">
+=======
+<header class="sticky top-0 left-0 w-full bg-white/20 backdrop-blur-md border-b border-white/30 shadow-lg z-50">
+>>>>>>> 601ba059e74ff254ec75770ba8c61424698b475c
   <nav class="flex justify-between items-center w-[90%] mx-auto py-2">
     <div class="flex items-center">
-      <img src="{% static 'Images/flag.jpg' %}" alt="Flag" class="h-6 mr-4 object-contain">
+      <span class="h-6 mr-4 text-lg font-bold tracking-wide text-[#0b0b0b] drop-shadow-md">POLIAGENTX</span>
     </div>
 
+<<<<<<< HEAD
     <div class="justify-between text-center text-sm text-gray-500 space-x-1">
       <a href=""
          class="{% if request.resolver_match.url_name == 'upload_indicators' %}text-black font-bold underline{% else %}text-gray-600 hover:text-black hover:underline{% endif %}">
          Indicators
+=======
+    <div class="workflow-progress-container text-white">
+      <a class="workflow-step {% if request.resolver_match.url_name == 'upload_indicators' %}current{% elif 'indicators_completed' in request.session %}completed{% endif %}">
+        Indicators
+>>>>>>> 601ba059e74ff254ec75770ba8c61424698b475c
       </a>
       &gt;
 
@@ -34,12 +44,18 @@
       </a>
       &gt;
 
+<<<<<<< HEAD
       <a href=""
          class="{% if request.resolver_match.url_name == 'upload_network' %}text-black font-bold underline{% else %}text-gray-600 hover:text-black hover:underline{% endif %}">
          Network (optional)
+=======
+      <a class="workflow-step {% if request.resolver_match.url_name == 'upload_network' %}current{% elif 'network_completed' in request.session %}completed{% endif %}">
+        Network (optional)
+>>>>>>> 601ba059e74ff254ec75770ba8c61424698b475c
       </a>
       &gt;
 
+<<<<<<< HEAD
       <a href=""
          class="{% if request.resolver_match.url_name == 'calibration' %}text-black font-bold underline{% else %}text-gray-600 hover:text-black hover:underline{% endif %}">
          Calibration
@@ -51,15 +67,81 @@
          Simulation
       </a>
       
+=======
+      <a class="workflow-step {% if request.resolver_match.url_name == 'calibration' or request.resolver_match.url_name == 'start_calibration' %}current{% elif 'calibration_completed' in request.session %}completed{% endif %}">
+        Calibration
+      </a>
+
+      <span class="separator">&gt;</span>
+
+      <a class="workflow-step {% if request.resolver_match.url_name == 'simulation' or request.resolver_match.url_name == 'start_simulation' %}current{% elif 'simulation_completed' in request.session %}completed{% endif %}">
+        Simulation
+      </a>
+      <a class="workflow-step {% if request.resolver_match.url_name == 'results' %}current{% elif 'simulation_completed' in request.session %}completed{% endif %}">
+        Results
+      </a>
+>>>>>>> 601ba059e74ff254ec75770ba8c61424698b475c
     </div>
   </nav>
 </header>
 
+<<<<<<< HEAD
 
   <main class="flex-grow w-[90%] mx-auto pt-[40px] pb-[40px] z-40">
     {% block content %}
     {% endblock %}
   </main>
+=======
+
+<style>
+/* Add these styles to your CSS file */
+.workflow-progress-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem; /* Space between steps and separators */
+}
+
+.workflow-step {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    color: #6b7280; /* Default gray */
+    font-weight: normal;
+    transition: all 0.3s ease;
+    position: relative; /* For potential future indicators like checkmarks */
+}
+
+.workflow-step:hover {
+    color: #000;
+    text-decoration: underline;
+}
+
+.workflow-step.current {
+    color: #000;
+    font-weight: bold;
+ 
+}
+
+.workflow-step.completed {
+    color: #4CAF50; /* Green for completed steps */
+    font-weight: bold;
+    /* You could add a background, border, or icon here */
+}
+
+.separator {
+    color: #9ca3af; /* Gray for separators */
+    font-weight: bold;
+}
+
+</style>
+
+
+<main class="flex-grow w-full px-4 sm:px-6 lg:px-8 pt-10 pb-10 z-40 flex items-stretch h-[100%]">
+  {% block content %}
+  {% endblock %}
+</main>
+
+>>>>>>> 601ba059e74ff254ec75770ba8c61424698b475c
 
 </body>
 </html>
