@@ -372,27 +372,29 @@ def run_calibration(request, threshold=0.7):
 def start_calibration(request):
     if request.method == 'POST':
         try:
-           
-
+            # Get threshold safely
             try:
                 threshold = float(request.POST.get('threshold', 0.5))
             except (ValueError, TypeError):
                 threshold = 0.5
 
+            # Run calibration (your function)
             parameters = run_calibration(request, threshold=threshold)
             parameters = pd.DataFrame(parameters)
 
+            # Save calibration output
             tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx')
-            tmp_file.close()  # close it so ExcelWriter can open it by name
-
+            tmp_file.close()
             with pd.ExcelWriter(tmp_file.name) as writer:
                 parameters.to_excel(writer, sheet_name='template', index=False)
 
+            # Save path + calibration flag in session
             request.session['param_excel_path'] = tmp_file.name
+            request.session['calibrated'] = True   # ✅ flag that calibration is done
 
             return render(request, 'calibration.html', {
                 'threshold': threshold,
-                'parameters': parameters
+                'parameters': parameters,
             })
 
         except Exception as e:
@@ -402,137 +404,8 @@ def start_calibration(request):
 
 
 
-
 def run_simulation(request):
-        if request.method == 'POST':
-            # Retrieve required file paths from session
-            indicators_path = request.session.get('indicators_path')
-            network_path = request.session.get('network_path')
-            budget_path = request.session.get('budget_file_path')
-            param_excel_path = request.session.get('param_excel_path')
-           
-
-            if not all([param_excel_path, network_path, budget_path, indicators_path]):
-                messages.error(request, "Missing required files for simulation.")
-                return redirect('calibration')
-
-            # Load Indicators
-            df_indis = pd.read_excel(indicators_path)
-            N = len(df_indis)
-            I0 = df_indis.I0.values
-            R = df_indis.instrumental
-            qm = df_indis.qm.values
-            rl = df_indis.rl.values
-            indis_index = {code: i for i, code in enumerate(df_indis.indicator_label)}
-            Imax = df_indis.max_value.values
-            Imin = df_indis.min_value.values
-
-            # Load Parameters
-            df_params = pd.read_excel(param_excel_path, skiprows=1)
-            alphas = df_params.alpha.values
-            alphas_prime = df_params.alpha_prime.values
-            betas = df_params.beta.values
-
-            # Load Network
-            df_net = pd.read_excel(network_path)
-            A = np.zeros((N, N))
-            for _, row in df_net.iterrows():
-                i = indis_index[row.origin]
-                j = indis_index[row.destination]
-                A[i, j] = row.weight
-
-            # Number of simulations
-            T = int(request.POST.get("num_simulations", 50))
-
-            # Load budget template
-            df_exp = pd.read_excel(budget_path, sheet_name='template_budget')
-            Bs_retrospective = df_exp.values[:, 1:]
-            Bs = np.tile(Bs_retrospective[:, -1], (T, 1)).T
-
-            # Relational table
-            df_rela = pd.read_excel(budget_path, sheet_name='relational_table')
-            B_dict = {
-                indis_index[row.indicator_label]: [
-                    programme for programme in row.values[1:] if pd.notna(programme)
-                ]
-                for _, row in df_rela.iterrows()
-            }
-
-            # Generate random goals
-            goals = np.random.rand(N) * (Imax - I0) + I0
-
-            # Run simulations
-            sample_size = 100
-            outputs = []
-            for _ in range(sample_size):
-                try:
-                    output = run_ppi(
-                        I0, alphas, alphas_prime, betas, A=A, R=R, qm=qm, rl=rl,
-                Imax=Imax, Imin=Imin, Bs=Bs, B_dict=B_dict, T=T, G=goals
-                    )
-                    outputs.append(output)
-                except Exception as e:
-                    messages.error(request, f"❌ Simulation failed: {str(e)}")
-                    return redirect('simulation')
-
-            # Separate outputs
-            tsI, tsC, tsF, tsP, tsS, tsG = zip(*outputs)
-
-            # Average indicator time series
-            tsI_hat = np.mean(tsI, axis=0)
-
-            # Prepare DataFrame output
-            new_rows = [
-                [df_indis.iloc[i].indicator_label, df_indis.iloc[i].sdg, df_indis.iloc[i].color] + serie.tolist()
-                for i, serie in enumerate(tsI_hat)
-            ]
-            df_output = pd.DataFrame(new_rows, columns=['indicator_label', 'sdg', 'color'] + list(range(T)))
-            df_output['goal'] = goals
-
-            # === Plot 1: Indicator levels ===
-            plt.figure(figsize=(8, 5))
-            for _, row in df_output.iterrows():
-                plt.plot(row[list(range(T))], color=row.color, linewidth=3)
-            plt.gca().spines['right'].set_visible(False)
-            plt.gca().spines['top'].set_visible(False)
-            plt.xlim(0, T)
-            plt.xlabel('time')
-            plt.ylabel('indicator level')
-            plt.tight_layout()
-          
-
-            # === Plot 2: Change from initial ===
-            plt.figure(figsize=(8, 5))
-            for _, row in df_output.iterrows():
-                plt.plot(row[list(range(T))] - row[0], color=row.color, linewidth=3)
-            plt.gca().spines['right'].set_visible(False)
-            plt.gca().spines['top'].set_visible(False)
-            plt.xlim(0, T)
-            plt.xlabel('time')
-            plt.ylabel('change w.r.t initial condition')
-            plt.tight_layout()
-           
-
-            # === Plot 3: Final levels vs goals ===
-            plt.figure(figsize=(14, 5))
-            for idx, row in df_output.iterrows():
-                plt.bar(idx, row[T - 1], color=row.color, linewidth=3)
-                plt.plot([idx, idx], [row[T - 1], row.goal], color=row.color, linewidth=1)
-                plt.plot(idx, row.goal, '.', mec='w', mfc=row.color, markersize=15)
-            plt.gca().spines['right'].set_visible(False)
-            plt.gca().spines['top'].set_visible(False)
-            plt.xlim(-1, N)
-            plt.xticks(range(N))
-            plt.gca().set_xticklabels(df_output.indicator_label, rotation=90)
-            plt.xlabel('indicator')
-            plt.ylabel('level')
-            plt.tight_layout()
-            
-
-            # Return simulation results to template
-            return render(request, 'simulation.html', {
-                'table': df_output.to_html(index=False)
-        })
+        return render(request,'simulation.html')
 
 
 # A custom JSONEncoder class to handle NumPy data types
@@ -611,7 +484,7 @@ def results(request):
             )
             outputs.append(output)
 
-        tsI, _, _, _, _, _ = zip(*outputs)
+        tsI, tsC, tsF, tsP, tsS, tsG= zip(*outputs)
         tsI_hat = np.mean(tsI, axis=0)
 
         # Build the list of dictionaries

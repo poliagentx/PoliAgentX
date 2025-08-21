@@ -24,100 +24,65 @@
         </p>
 
         <div class="text-center space-y-2">
-          <div id="slider-value" class="text-xl font-semibold text-black">0.50</div>
+          <div id="slider-value" class="text-xl font-semibold text-black">0.70</div>
           <input type="range" id="slider" name="threshold"
             min="0.05" max="0.99" step="0.01" value="0.70"
             class="w-full h-2 bg-black rounded appearance-none focus:outline-none">
         </div>
 
-          <button id="start-calibration-button" type="submit"
-          class="w-full bg-gradient-to-r from-green-600/10 to-green-600/20 backdrop-blur-md 
-          text-black py-2 font-medium">
+        <button id="start-calibration-button" type="submit"
+          class="w-full   tracking-wide 
+         bg-gradient-to-r from-[#0b0b0b]/20 to-[#0b0b0b]/10
+          backdrop-blur-xl border border-gray-50 
+          text-[#0b0b0b] shadow-[0_4px_20px_rgba(0,0,0,0.4)]
+          hover:shadow-[0_0_20px_rgba(0,255,200,0.6)]   
+          transition-all duration-500 ease-in-out
+           py-2 font-medium">
           START CALIBRATION
         </button>
       </form>
     </div>
 
-    <div class="bg-white shadow-lg rounded-xl p-6 mb-6  text-right">
-      <div id="next-button-container" class="hidden">
+    <!-- NEXT button area -->
+    <div class="bg-white shadow-lg rounded-xl p-6 mb-6 text-right">
+      {% if request.session.calibrated %}
+        <!-- ✅ Enabled if calibration done -->
         <a href="{% url 'simulation' %}"
-          class="inline-block px-6 py-2 bg-green-600 text-white font-semibold rounded hover:bg-green-700">
+          class="inline-block mt-4 px-6 py-2 
+          font-semibold tracking-wide 
+          bg-gradient-to-r from-[#0b0b0b]/20 to-[#0b0b0b]/10
+          backdrop-blur-xl border border-white/20 
+          text-[#0b0b0b] shadow-[0_4px_20px_rgba(0,0,0,0.4)]
+          hover:shadow-[0_0_20px_rgba(0,255,200,0.6)]   
+          transition-all duration-500 ease-in-out">
           NEXT →
         </a>
-      </div>
-      <div id="next-disabled">
+      {% else %}
+        <!-- 🚫 Disabled until calibration done -->
         <button disabled
           class="inline-block px-6 py-2 bg-gray-400 text-white font-semibold rounded cursor-not-allowed">
           NEXT →
         </button>
-      </div>
+      {% endif %}
     </div>
   </div>
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const slider = document.getElementById('slider');
-    const sliderValueDisplay = document.getElementById('slider-value');
-    const calibrationForm = document.getElementById('calibration-form');
-    const startCalibrationButton = document.getElementById('start-calibration-button');
-    const nextButtonContainer = document.getElementById('next-button-container');
-    const nextDisabled = document.getElementById('next-disabled');
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+  const slider = document.getElementById("slider");
+  const display = document.getElementById("slider-value");
 
-    // Initialize slider value display
-    sliderValueDisplay.textContent = parseFloat(slider.value).toFixed(2);
+  // Show live slider value
+  slider.addEventListener("input", function () {
+    display.textContent = parseFloat(this.value).toFixed(2);
+  });
 
-    slider.addEventListener('input', function() {
-      sliderValueDisplay.textContent = parseFloat(this.value).toFixed(2);
-    });
-
-    // ✅ Handle calibration form submission
-    calibrationForm.addEventListener('submit', async function(event) {
-      event.preventDefault();
-      console.log("Calibration form submitted 🚀");
-
-      startCalibrationButton.disabled = true;
-      startCalibrationButton.textContent = "Calibrating...";
-
-      try {
-        const formData = new FormData(calibrationForm);
-        const response = await fetch(calibrationForm.action, {
-          method: 'POST',
-          headers: { 'X-CSRFToken': csrfToken },
-          body: formData
-        });
-
-        console.log("Raw response:", response);
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        console.log("Parsed JSON:", result);
-
-        if (result.success) {
-          console.log("Calibration success ✅", result);
-          nextDisabled.classList.add('hidden');
-          nextButtonContainer.classList.remove('hidden');
-          alert(result.message);
-        } else {
-          alert('Calibration failed: ' + result.message);
-        }
-
-      } catch (error) {
-        console.error("Error during calibration:", error);
-        alert('An error occurred during calibration. Please try again.');
-      } finally {
-        startCalibrationButton.disabled = false;
-        startCalibrationButton.textContent = "START CALIBRATION";
-      }
-    });
-
-    // Keep NEXT disabled initially
-    nextButtonContainer.classList.add('hidden');
-    nextDisabled.classList.remove('hidden');
+  // Disable double clicks while calibration runs
+  const form = document.getElementById("calibration-form");
+  form.addEventListener("submit", () => {
+    const submitBtn = form.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Calibrating...";
   });
 </script>
 
