@@ -8,6 +8,7 @@ urlpatterns = [
  
     path("__reload__/", include("django_browser_reload.urls")),
     path('upload-indicators/', upload_indicators, name='upload_indicators'),
+    path('download_indicator_template/', download_indicator_template, name='download_indicator_template'),
     path('', lambda request: redirect('upload_indicators', permanent=False)),
     path('download_budget_template/', download_budget_template, name='download_budget_template'),
     path('', lambda request: redirect('upload_expenditure', permanent=False)),

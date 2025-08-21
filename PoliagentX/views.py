@@ -403,7 +403,6 @@ def start_calibration(request):
     return JsonResponse({"success": False, "message": "Invalid request"}, status=400)
 
 
-
 def run_simulation(request):
         return render(request,'simulation.html')
 

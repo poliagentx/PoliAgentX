@@ -4,287 +4,171 @@
 {% block title %}Simulation Results{% endblock %}
 
 {% block content %}
+<div class="container mx-auto px-6 py-8">
+    <h2 class="text-2xl font-bold mb-6 text-center">Simulation Results</h2>
 
-<div class="container mx-auto px-4 my-4">
-    <h1 class="text-2xl font-bold text-gray-900 text-center mb-6">Simulation Results</h1>
+    <!-- Number of simulations -->
+    <div class="bg-white shadow-md rounded-xl p-6 mb-6">
+        <label class="block mb-2 font-semibold">Number of Simulations:</label>
+        <input type="text" value="{{ num_simulations }}" 
+               class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+    </div>
 
-    {% if error %}
-        <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative" role="alert">
-            {{ error }}
+    <!-- Indicator selection + Compare -->
+    <div class="bg-white shadow-md rounded-xl p-6 mb-6 flex flex-col md:flex-row gap-6 items-center justify-between">
+        <div class="w-full md:w-2/3">
+            <label class="block mb-2 font-semibold">Select Indicator:</label>
+            <select id="indicatorSelect" 
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                {% for indicator in indicators %}
+                    <option value="{{ indicator }}">{{ indicator }}</option>
+                {% endfor %}
+            </select>
         </div>
-    {% else %}
-        <div class="bg-white shadow-lg rounded-xl p-6 mb-6">
-            <form method="POST" action="{% url 'results' %}" class="flex flex-col md:flex-row items-center md:gap-4">
-                {% csrf_token %}
-                <div class="w-full md:w-1/3">
-                    <label for="num_simulations" class="block text-sm font-semibold text-gray-700">Number of Simulations:</label>
-                    <input type="number" name="num_simulations" id="num_simulations" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" value="50" min="1" max="1000" required>
-                </div>
-                <div class="w-full md:w-auto mt-4 md:mt-0 md:ml-auto">
-                    <button type="submit" class="w-full md:w-auto px-6 py-2  bg-gradient-to-r from-[#0b0b0b]/10 to-[#0b0b0b]/20 text-[#0b0b0b] font-semibold rounded-lg  shadow-[0_4px_20px_rgba(0,0,0,0.4)]  tracking-wide  backdrop-blur-xl border border-white/20  transition-all duration-500 ease-in-out  hover:bg-indigo-700 hover:text-white">Run Simulations</button>
-                </div>
-            </form>
-        </div>
+        <button id="compareBtn" 
+                class="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow hover:opacity-90 transition">
+            Compare Indicators
+        </button>
+    </div>
 
-        <div class="bg-white shadow-lg rounded-xl p-6 mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div class="w-full md:flex-grow">
-                <label for="indicator-select" class="block text-sm font-semibold text-gray-700">Select Indicator:</label>
-                <select id="indicator-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                    <option  value="all"  selected>All Indicators Combined</option>
-                    {% for row in df_output_list %}
-                        <option value="{{ row.indicator_label }}">{{ row.indicator_label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <button 
-                type="button" 
-                class="w-full md:w-auto  px-6 py-2  shadow-[0_4px_20px_rgba(0,0,0,0.4)]  text-[#0b0b0b] font-semibold  bg-gradient-to-r from-[#0b0b0b]/10 to-[#0b0b0b]/20  rounded-lg tracking-wide  backdrop-blur-xl border border-white/20  transition-all duration-500 ease-in-out  hover:bg-indigo-700  hover:text-white"
-                onclick="document.getElementById('compareModal').classList.remove('hidden')">
-                Compare Indicators
-            </button>
-        </div>
-{% endif %}
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="plots-container"></div>
+    <!-- Plots -->
+    <div id="plots-container" class="grid gap-6"></div>
 
-        <div class="bg-white shadow-lg rounded-xl p-6 mt-6">
-            <h4 class="text-xl font-semibold text-gray-800 mb-4">Simulation Table</h4>
-            <div class="overflow-auto max-h-[400px]">
-                <table class="w-full text-sm text-left text-gray-500 rounded-lg overflow-hidden" id="simulation-table">
-                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0" id="table-head"></thead>
-                    <tbody id="table-body"></tbody>
-                </table>
-            </div>
+    <!-- Simulation Table -->
+    <div class="bg-white shadow-md rounded-xl p-6 mt-8">
+        <h3 class="text-xl font-semibold mb-4">Simulation Table</h3>
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm border rounded-lg overflow-hidden">
+                <thead class="bg-gray-100 text-gray-700">
+                    <tr id="table-head"></tr>
+                </thead>
+                <tbody id="table-body" class="divide-y divide-gray-200"></tbody>
+            </table>
         </div>
-    
+    </div>
 </div>
 
-<div id="compareModal" class="fixed inset-0 flex items-center justify-center  z-50 hidden backdrop-blur-md bg-white/1">
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md">
-        
-        <div class="flex justify-between items-center px-6 py-4 border-b">
-            <h3 class="text-lg font-semibold text-gray-800">Select Indicators to Compare</h3>
-            <button 
-                class="text-gray-500 hover:text-gray-700" 
-                onclick="document.getElementById('compareModal').classList.add('hidden')">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-        </div>
-        
-        <div class="p-6 max-h-80 overflow-y-auto space-y-3">
-            <form id="compare-form" class="space-y-2">
-                {% for row in df_output_list %}
-                <div class="flex items-center space-x-3">
-                    <input 
-                        type="checkbox" 
-                        id="compare-{{ row.indicator_label }}" 
-                        value="{{ row.indicator_label }}" 
-                        class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 compare-checkbox">
-                    
-                    <label for="compare-{{ row.indicator_label }}" class="text-sm text-gray-700 flex items-center">
-                        <span class="w-3 h-3 rounded-full mr-2" style="background-color: {{ row.color }}"></span>
-                        {{ row.indicator_label }}
-                    </label>
-                </div>
-                {% endfor %}
-            </form>
-        </div>
-        
-        <div class="flex justify-end space-x-3 px-6 py-4 border-t">
-            <button 
-                type="button" 
-                class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
-                onclick="document.getElementById('compareModal').classList.add('hidden')">
+<!-- Compare Indicators Modal -->
+<div id="compareModal" class="fixed inset-0 hidden items-center justify-center z-50 backdrop-blur-md bg-black/40">
+    <div class="bg-white rounded-2xl shadow-xl p-6 w-96">
+        <h4 class="text-lg font-semibold mb-4">Compare Indicators</h4>
+        <form id="compareForm" class="space-y-3 max-h-64 overflow-y-auto">
+            {% for row in table_rows %}
+                <label class="flex items-center space-x-2 text-sm text-gray-700">
+                    <input type="checkbox" name="indicators" value="{{ row.indicator_label }}"
+                           class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                    <span class="w-3 h-3 rounded-full bg-[{{ row.color }}]"></span>
+                    <span>{{ row.indicator_label }}</span>
+                </label>
+            {% endfor %}
+        </form>
+        <div class="mt-6 flex justify-end gap-3">
+            <button id="closeModal" 
+                    class="px-4 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition">
                 Cancel
             </button>
-            <button 
-                type="button" 
-                id="compare-submit"
-                class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition">
-                Compare Selected
+            <button id="applyCompare" 
+                    class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition">
+                Apply
             </button>
         </div>
     </div>
 </div>
 
+<!-- Plotly -->
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-    const rawData = JSON.parse("{{ df_output_json|escapejs }}");
+const indicatorData = {{ indicator_data|safe }};
+const allIndicators = Object.keys(indicatorData);
+
+// --- Render plots ---
+function renderPlots(indicators) {
     const container = document.getElementById("plots-container");
+    container.innerHTML = "";
 
-    // Prepare structured data
-    const indicatorData = {};
-    rawData.forEach(row => {
-        const timeKeys = Object.keys(row)
-            .filter(k => /^\d+$/.test(k))
-            .sort((a, b) => parseInt(a) - parseInt(b));
-        indicatorData[row.indicator_label] = {
-            row: row,
-            x: timeKeys.map(k => parseInt(k)),
-            y: timeKeys.map(k => row[k]),
-            goal: Array(timeKeys.length).fill(row.goal)
+    indicators.forEach(ind => {
+        const { x, y, goal, row } = indicatorData[ind];
+
+        const trace = {
+            x: x, y: y, mode: "lines+markers",
+            name: row.indicator_label,
+            line: { color: row.color },
+            marker: { size: 6 }
         };
-    });
 
-    const allIndicators = Object.keys(indicatorData);
-    const selectEl = document.getElementById('indicator-select');
-
-    // Render plots
-    function renderPlots(selectedIndicators) {
-    container.innerHTML = '';
-    
-    // Check if only one indicator is selected, and plot it individually.
-    if (selectedIndicators.length === 1) {
-        const label = selectedIndicators[0];
-        const dataObj = indicatorData[label];
-        const plotWrapper = document.createElement('div');
-        //plotWrapper.className = 'bg-white shadow-lg rounded-xl p-6 h-[600px]';
-        plotWrapper.className = 'col-span-1 md:col-span-2 bg-white shadow-lg rounded-xl p-6 h-[600px]';
-        
-        // ... (badge creation logic remains the same)
-        const badge = document.createElement('span');
-        badge.className = 'inline-block px-3 py-1 text-xs font-semibold text-white rounded-full mb-2';
-        badge.style.backgroundColor = dataObj.row.color;
-        badge.textContent = 'SDG ' + dataObj.row.sdg;
-        plotWrapper.appendChild(badge);
-
-        const plotDiv = document.createElement('div');
-        plotDiv.id = `plot-${label.replace(/[^a-zA-Z0-9-_]/g,'')}`;
-        plotDiv.style.height = '100%';
-        plotWrapper.appendChild(plotDiv);
-        container.appendChild(plotWrapper);
-
-        Plotly.newPlot(plotDiv, [
-            { x: dataObj.x, y: dataObj.y, mode: 'lines+markers', name: label, line: { color: dataObj.row.color, width: 3 } },
-            { x: dataObj.x, y: dataObj.goal, mode: 'lines', name: 'Goal', line: { color: '#000', width: 2, dash: 'dash' } }
-        ], { title: `Indicator: ${label}`, xaxis: { title: 'Time' }, yaxis: { title: 'Level' }, legend: { orientation: 'h', y: -0.2 } }, { responsive: true });
-    
-    } else {
-        // This is the new logic for plotting multiple indicators on one graph
-        const plotWrapper = document.createElement('div');
-        plotWrapper.className = 'col-span-1 md:col-span-2 bg-white shadow-lg rounded-xl p-6 h-[600px]';
-        const plotDiv = document.createElement('div');
-        plotDiv.id = 'combined-plot';
-        plotDiv.style.height = '100%';
-        plotWrapper.appendChild(plotDiv);
-        container.appendChild(plotWrapper);
-
-        const traces = [];
-        selectedIndicators.forEach(label => {
-            const dataObj = indicatorData[label];
-            traces.push({
-                x: dataObj.x,
-                y: dataObj.y,
-                mode: 'lines+markers',
-                name: label,
-                line: { color: dataObj.row.color, width: 3 }
-            });
-            traces.push({
-                x: dataObj.x,
-                y: dataObj.goal,
-                mode: 'lines',
-                name: `${label} Goal`,
-                line: { color: dataObj.row.color, width: 2, dash: 'dot' }
-            });
-        });
+        const goalTrace = {
+            x: x, y: goal, mode: "lines",
+            name: `${row.indicator_label} Goal`,
+            line: { dash: "dash", color: "gray" }
+        };
 
         const layout = {
-            title: 'Selected Indicators Comparison',
-            xaxis: { title: 'Time' },
-            yaxis: { title: 'Level' },
-            legend: { orientation: 'h', y: -0.2 },
-            responsive: true
+            title: row.indicator_label,
+            margin: { t: 40, l: 50, r: 20, b: 40 },
+            xaxis: { title: "Time" },
+            yaxis: { title: "Value" },
+            legend: { orientation: "h" }
         };
 
-        Plotly.newPlot(plotDiv, traces, layout);
-    }
+        const div = document.createElement("div");
+        div.className = "bg-white shadow-md rounded-lg p-4 w-full h-[400px]";
+        container.appendChild(div);
+
+        Plotly.newPlot(div, [trace, goalTrace], layout, { responsive: true });
+    });
 }
-    // Render table with SDG color-coding and tooltips
-    function renderTable(selectedIndicators) {
-        const thead = document.getElementById('table-head');
-        const tbody = document.getElementById('table-body');
-        thead.innerHTML = '';
-        tbody.innerHTML = '';
 
-        if(selectedIndicators.length === allIndicators.length) {
-            const combinedX = indicatorData[allIndicators[0]].x;
-            const headerRow = ['Time', ...allIndicators];
-            thead.innerHTML = `<tr class="bg-gray-100">${headerRow.map(h => `<th scope="col" class="px-6 py-3">${h}</th>`).join('')}</tr>`;
+// --- Render table ---
+function renderTable(indicators) {
+    const head = document.getElementById("table-head");
+    const body = document.getElementById("table-body");
+    head.innerHTML = "";
+    body.innerHTML = "";
 
-            combinedX.forEach((t, idx) => {
-                const row = [t, ...allIndicators.map(l => indicatorData[l].y[idx])];
-                tbody.innerHTML += `<tr class="bg-white border-b hover:bg-gray-50">${row.map((v, colIdx) => {
-                    if(colIdx===0) return `<td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${v}</td>`;
-                    const label = allIndicators[colIdx-1];
-                    const color = indicatorData[label].row.color;
-                    const sdg = indicatorData[label].row.sdg;
-                    return `<td class="px-6 py-4" style="background-color:${color};color:white;" title="SDG ${sdg}: ${v.toFixed(4)}">${v.toFixed(4)}</td>`;
-                }).join('')}</tr>`;
-            });
-        } else if(selectedIndicators.length>1) {
-            const firstX = indicatorData[selectedIndicators[0]].x;
-            const headerRow = ['Time'];
-            selectedIndicators.forEach(label => headerRow.push(`${label} Value`, `${label} Goal`));
-            thead.innerHTML = `<tr class="bg-gray-100">${headerRow.map(h=>`<th scope="col" class="px-6 py-3">${h}</th>`).join('')}</tr>`;
+    if (indicators.length === 0) return;
 
-            firstX.forEach((t, idx) => {
-                const row = [t];
-                selectedIndicators.forEach(label => {
-                    const dataObj = indicatorData[label];
-                    row.push({value:dataObj.y[idx], color:dataObj.row.color, sdg:dataObj.row.sdg}, dataObj.goal[idx]);
-                });
-                tbody.innerHTML += `<tr class="bg-white border-b hover:bg-gray-50">${row.map((cell, colIdx)=>{
-                    if(colIdx===0) return `<td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${cell}</td>`;
-                    if(typeof cell==='object') return `<td class="px-6 py-4" style="background-color:${cell.color};color:white;" title="SDG ${cell.sdg}: ${cell.value.toFixed(4)}">${cell.value.toFixed(4)}</td>`;
-                    return `<td class="px-6 py-4" title="Goal: ${cell.toFixed(4)}">${cell.toFixed(4)}</td>`;
-                }).join('')}</tr>`;
-            });
-        } else {
-            const label = selectedIndicators[0];
-            const dataObj = indicatorData[label];
-            thead.innerHTML = `<tr class="bg-gray-100"><th scope="col" class="px-6 py-3">Time</th><th scope="col" class="px-6 py-3">Value</th><th scope="col" class="px-6 py-3">Goal</th></tr>`;
-            dataObj.x.forEach((t, idx) => {
-                const value = dataObj.y[idx];
-                const goal = dataObj.goal[idx];
-                const color = dataObj.row.color;
-                const sdg = dataObj.row.sdg;
-                tbody.innerHTML += `<tr class="bg-white border-b hover:bg-gray-50">
-                    <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${t}</td>
-                    <td class="px-6 py-4" style="background-color:${color};color:white;" title="SDG ${sdg}: ${value.toFixed(4)}">${value.toFixed(4)}</td>
-                    <td class="px-6 py-4" title="Goal: ${goal.toFixed(4)}">${goal.toFixed(4)}</td>
-                </tr>`;
-            });
-        }
-    }
-
-    // Initial render
-    renderPlots(allIndicators);
-    renderTable(allIndicators);
-
-    // Dropdown change
-    selectEl.addEventListener('change', () => {
-        if(selectEl.value==='all'){
-            renderPlots(allIndicators);
-            renderTable(allIndicators);
-        } else {
-            renderPlots([selectEl.value]);
-            renderTable([selectEl.value]);
-        }
+    const firstInd = indicatorData[indicators[0]];
+    const headerRow = document.createElement("tr");
+    headerRow.innerHTML = `<th class="px-4 py-2">Indicator</th>`;
+    firstInd.x.forEach(t => {
+        headerRow.innerHTML += `<th class="px-4 py-2">${t}</th>`;
     });
+    head.appendChild(headerRow);
 
-    // Compare Modal Submit
-    document.getElementById('compare-submit').addEventListener('click', () => {
-        const checked = Array.from(document.querySelectorAll('.compare-checkbox:checked')).map(c=>c.value);
-        if(checked.length>0){
-            renderPlots(checked);
-            renderTable(checked);
-            // Hide the modal manually since Bootstrap JS is removed
-            document.getElementById('compareModal').classList.add('hidden');
-        }
+    indicators.forEach(ind => {
+        const { y, row } = indicatorData[ind];
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-gray-50";
+        tr.innerHTML = `<td class="px-4 py-2 font-medium">${row.indicator_label}</td>`;
+        y.forEach(val => {
+            tr.innerHTML += `<td class="px-4 py-2">${val.toFixed(2)}</td>`;
+        });
+        body.appendChild(tr);
     });
+}
+
+// --- Initial render ---
+renderPlots(allIndicators);
+renderTable(allIndicators);
+
+// --- Modal logic ---
+const modal = document.getElementById("compareModal");
+document.getElementById("compareBtn").addEventListener("click", () => {
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+});
+document.getElementById("closeModal").addEventListener("click", () => {
+    modal.classList.remove("flex");
+    modal.classList.add("hidden");
+});
+document.getElementById("applyCompare").addEventListener("click", () => {
+    const selected = Array.from(document.querySelectorAll("#compareForm input:checked"))
+                          .map(cb => cb.value);
+    renderPlots(selected);
+    renderTable(selected);
+    modal.classList.remove("flex");
+    modal.classList.add("hidden");
 });
 </script>
 {% endblock %}

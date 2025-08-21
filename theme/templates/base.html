@@ -15,26 +15,15 @@
 </head>
 <body style="font-family: Poppins;" class="bg-white text-[#0b0b0b] h-[100%] flex-row ">
 
-<<<<<<< HEAD
-  <header class="sticky top-0 left-0 w-full bg-[#f2f2f2] shadow-md z-50">
-=======
 <header class="sticky top-0 left-0 w-full bg-white/20 backdrop-blur-md border-b border-white/30 shadow-lg z-50">
->>>>>>> 601ba059e74ff254ec75770ba8c61424698b475c
   <nav class="flex justify-between items-center w-[90%] mx-auto py-2">
     <div class="flex items-center">
       <span class="h-6 mr-4 text-lg font-bold tracking-wide text-[#0b0b0b] drop-shadow-md">POLIAGENTX</span>
     </div>
 
-<<<<<<< HEAD
-    <div class="justify-between text-center text-sm text-gray-500 space-x-1">
-      <a href=""
-         class="{% if request.resolver_match.url_name == 'upload_indicators' %}text-black font-bold underline{% else %}text-gray-600 hover:text-black hover:underline{% endif %}">
-         Indicators
-=======
     <div class="workflow-progress-container text-white">
       <a class="workflow-step {% if request.resolver_match.url_name == 'upload_indicators' %}current{% elif 'indicators_completed' in request.session %}completed{% endif %}">
         Indicators
->>>>>>> 601ba059e74ff254ec75770ba8c61424698b475c
       </a>
       &gt;
 
@@ -44,30 +33,11 @@
       </a>
       &gt;
 
-<<<<<<< HEAD
-      <a href=""
-         class="{% if request.resolver_match.url_name == 'upload_network' %}text-black font-bold underline{% else %}text-gray-600 hover:text-black hover:underline{% endif %}">
-         Network (optional)
-=======
       <a class="workflow-step {% if request.resolver_match.url_name == 'upload_network' %}current{% elif 'network_completed' in request.session %}completed{% endif %}">
         Network (optional)
->>>>>>> 601ba059e74ff254ec75770ba8c61424698b475c
       </a>
       &gt;
 
-<<<<<<< HEAD
-      <a href=""
-         class="{% if request.resolver_match.url_name == 'calibration' %}text-black font-bold underline{% else %}text-gray-600 hover:text-black hover:underline{% endif %}">
-         Calibration
-      </a>
-      &gt;
-  
-      <a href=""
-         class="{% if request.resolver_match.url_name == 'run_simulation' %}text-black font-bold underline{% else %}text-gray-600 hover:text-black hover:underline{% endif %}">
-         Simulation
-      </a>
-      
-=======
       <a class="workflow-step {% if request.resolver_match.url_name == 'calibration' or request.resolver_match.url_name == 'start_calibration' %}current{% elif 'calibration_completed' in request.session %}completed{% endif %}">
         Calibration
       </a>
@@ -80,18 +50,10 @@
       <a class="workflow-step {% if request.resolver_match.url_name == 'results' %}current{% elif 'simulation_completed' in request.session %}completed{% endif %}">
         Results
       </a>
->>>>>>> 601ba059e74ff254ec75770ba8c61424698b475c
     </div>
   </nav>
 </header>
 
-<<<<<<< HEAD
-
-  <main class="flex-grow w-[90%] mx-auto pt-[40px] pb-[40px] z-40">
-    {% block content %}
-    {% endblock %}
-  </main>
-=======
 
 <style>
 /* Add these styles to your CSS file */
@@ -141,7 +103,6 @@
   {% endblock %}
 </main>
 
->>>>>>> 601ba059e74ff254ec75770ba8c61424698b475c
 
 </body>
 </html>
