@@ -136,7 +136,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_URL = '/static/'
 
 # Where collectstatic dumps all files (for production)
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = BASE_DIR / 'static_files'
 
 # Include custom app-level static folders
 STATICFILES_DIRS = [
