@@ -1,6 +1,7 @@
 import os
 import uuid
 import json
+import random
 import tempfile
 import plotly.utils
 from io import BytesIO
@@ -12,7 +13,7 @@ from PoliagentX.backend_poliagentx.policy_priority_inference import calibrate
 from PoliagentX.backend_poliagentx.policy_priority_inference import run_ppi,run_ppi_parallel
 from PoliagentX.backend_poliagentx.parameters import save_parameters_to_excel
 from PoliagentX.backend_poliagentx.relational_table import build_relational_table
-from PoliagentX.backend_poliagentx.allocation import get_sdg_allocation_from_file,SDG_ALLOCATION
+from PoliagentX.backend_poliagentx.allocation import get_sdg_allocation_from_file
 from PoliagentX.backend_poliagentx.budget import expand_budget
 from django.contrib import messages
 from django.http import FileResponse, HttpResponse, JsonResponse
@@ -20,12 +21,12 @@ from openpyxl import Workbook
 from .forms import *
 import base64
 from django.shortcuts import render, redirect
-from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.contrib.staticfiles import finders
 import pandas as pd
 import numpy as np
 import tempfile
+import matplotlib.pyplot as plt
 from openpyxl.utils.dataframe import dataframe_to_rows
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
@@ -110,7 +111,7 @@ def upload_indicators(request):
             request.session['indicators_path'] = tmp_file.name
 
 
-            messages.success(request, "☑️ File uploaded and processed successfully.")
+            messages.success(request, "File uploaded and processed successfully.")
             return render(request, 'indicators.html', {'form': Uploaded_indicators()})
 
         return render(request, 'indicators.html', {'form': form})
@@ -199,12 +200,17 @@ def budgets_page(request):
 
             request.session['budget_file_path'] = tmp_file.name
 
+        # os.makedirs('clean_data', exist_ok=True)
+        # output_path = os.path.join('clean_data', 'data_budget.xlsx')
+        # df_exp.to_excel(output_path, index=False)
+        
         return redirect('upload_network')
 
     return render(request, 'budgets.html', {
         'budget_form': budget_form,
         'upload_form': upload_form,
     })
+
 
 
 
@@ -283,7 +289,9 @@ def upload_network(request):
                 # tmp_file.close() # context manager closes automatically
                 request.session['network_path'] = tmp_file.name
 
-          
+            # os.makedirs('clean_data', exist_ok=True)
+            # output_path = os.path.join('clean_data', 'network.xlsx')
+            # data_net.to_excel(output_path, index=False)
         return redirect('calibration')
 
     return render(request, 'Network.html', {
@@ -374,9 +382,11 @@ def run_calibration(request, threshold=0.7):
 def start_calibration(request):
     if request.method == 'POST':
         try:
-            threshold = float(request.POST.get('threshold', 0.7))
-        except (ValueError, TypeError):
-            threshold = 0.7
+            # Get threshold safely
+            try:
+                threshold = float(request.POST.get('threshold', 0.5))
+            except (ValueError, TypeError):
+                threshold = 0.5
 
         parameters = run_calibration(request, threshold=threshold)
         parameters = pd.DataFrame(parameters)
