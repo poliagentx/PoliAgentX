@@ -1,7 +1,7 @@
 {% load static tailwind_tags %}
 
 <!doctype html>
-<html lang="en">
+<html lang="en" class="h-[100%]">
 <head>
   <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,16 +13,15 @@
     
     {% tailwind_css %}
 </head>
-<body style="font-family: Poppins;" class="bg-white text-black/90">
+<body style="font-family: Poppins;" class="bg-white text-[#0b0b0b] h-[100%] flex-row ">
 
-<header class="sticky top-0 left-0 w-full bg-[#f2f2f2] shadow-md z-50">
+<header class="sticky top-0 left-0 w-full bg-white/20 backdrop-blur-md border-b border-white/30 shadow-lg z-50">
   <nav class="flex justify-between items-center w-[90%] mx-auto py-2">
-   <div class="flex items-center">
-  <span class="h-6 mr-4 text-lg font-bold tracking-wide">POLIAGENTX</span>
-</div>
+    <div class="flex items-center">
+      <span class="h-6 mr-4 text-lg font-bold tracking-wide text-[#0b0b0b] drop-shadow-md">POLIAGENTX</span>
+    </div>
 
-
-    <div class="workflow-progress-container">
+    <div class="workflow-progress-container text-white">
       <a class="workflow-step {% if request.resolver_match.url_name == 'upload_indicators' %}current{% elif 'indicators_completed' in request.session %}completed{% endif %}">
         Indicators
       </a>
@@ -33,26 +32,27 @@
       </a>
       <span class="separator">&gt;</span>
 
-      <a  class="workflow-step {% if request.resolver_match.url_name == 'upload_network' %}current{% elif 'network_completed' in request.session %}completed{% endif %}">
+      <a class="workflow-step {% if request.resolver_match.url_name == 'upload_network' %}current{% elif 'network_completed' in request.session %}completed{% endif %}">
         Network (optional)
       </a>
       <span class="separator">&gt;</span>
 
-      <a  class="workflow-step {% if request.resolver_match.url_name == 'calibration' or request.resolver_match.url_name == 'start_calibration' %}current{% elif 'calibration_completed' in request.session %}completed{% endif %}">
+      <a class="workflow-step {% if request.resolver_match.url_name == 'calibration' or request.resolver_match.url_name == 'start_calibration' %}current{% elif 'calibration_completed' in request.session %}completed{% endif %}">
         Calibration
       </a>
-      
+
       <span class="separator">&gt;</span>
-  
-      <a  class="workflow-step {% if request.resolver_match.url_name == 'simulation' or request.resolver_match.url_name == 'start_simulation' %}current{% elif 'simulation_completed' in request.session %}completed{% endif %}">
+
+      <a class="workflow-step {% if request.resolver_match.url_name == 'simulation' or request.resolver_match.url_name == 'start_simulation' %}current{% elif 'simulation_completed' in request.session %}completed{% endif %}">
         Simulation
       </a>
-      <a  class="workflow-step {% if request.resolver_match.url_name == 'results' %}current{% elif 'simulation_completed' in request.session %}completed{% endif %}">
+      <a class="workflow-step {% if request.resolver_match.url_name == 'results' %}current{% elif 'simulation_completed' in request.session %}completed{% endif %}">
         Results
       </a>
     </div>
   </nav>
 </header>
+
 
 <style>
 /* Add these styles to your CSS file */
@@ -97,7 +97,7 @@
 </style>
 
 
-<main class="flex-grow w-full px-4 sm:px-6 lg:px-8 pt-10 pb-10 z-40">
+<main class="flex-grow w-full px-4 sm:px-6 lg:px-8 pt-10 pb-10 z-40 flex items-stretch h-[100%]">
   {% block content %}
   {% endblock %}
 </main>

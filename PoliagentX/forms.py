@@ -145,3 +145,6 @@ class Uploaded_networks(forms.Form):
         
 class Skip_networks(forms.Form):
     pass
+
+
+    pass
