@@ -1,25 +1,17 @@
-import os
-import uuid
 import json
-import random
-import tempfile
-import plotly.utils
+import base64
 from io import BytesIO
-from django.conf import settings
-from plotly.utils import PlotlyJSONEncoder
+import os
+import random
 from django.views.decorators.csrf import csrf_exempt
-from django.core.serializers.json import DjangoJSONEncoder
-from PoliagentX.backend_poliagentx.policy_priority_inference import calibrate
-from PoliagentX.backend_poliagentx.policy_priority_inference import run_ppi,run_ppi_parallel
-from PoliagentX.backend_poliagentx.parameters import save_parameters_to_excel
+from PoliagentX.backend_poliagentx.policy_priority_inference import calibrate,run_ppi,run_ppi_parallel
 from PoliagentX.backend_poliagentx.relational_table import build_relational_table
 from PoliagentX.backend_poliagentx.allocation import get_sdg_allocation_from_file
 from PoliagentX.backend_poliagentx.budget import expand_budget
 from django.contrib import messages
-from django.http import FileResponse, HttpResponse, JsonResponse
+from django.http import FileResponse, HttpResponse,JsonResponse
 from openpyxl import Workbook
 from .forms import *
-import base64
 from django.shortcuts import render, redirect
 from django.core.exceptions import ValidationError
 from django.contrib.staticfiles import finders
@@ -28,9 +20,7 @@ import numpy as np
 import tempfile
 import matplotlib.pyplot as plt
 from openpyxl.utils.dataframe import dataframe_to_rows
-import matplotlib.pyplot as plt
 import plotly.graph_objects as go
-import plotly.io as pio
 
 
 def upload_indicators(request):
@@ -388,38 +378,35 @@ def start_calibration(request):
             except (ValueError, TypeError):
                 threshold = 0.5
 
-        parameters = run_calibration(request, threshold=threshold)
-        parameters = pd.DataFrame(parameters)
+            # Run calibration (your function)
+            parameters = run_calibration(request, threshold=threshold)
+            parameters = pd.DataFrame(parameters)
 
-        
+            # Save calibration output
+            tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx')
+            tmp_file.close()
+            with pd.ExcelWriter(tmp_file.name) as writer:
+                parameters.to_excel(writer, sheet_name='template', index=False)
 
-        # Create Excel workbook
-        wb = Workbook()
-        ws = wb.active
-        ws.title = "parameters"
-        for row in dataframe_to_rows(parameters, index=False, header=True):
-            ws.append(row)
+            # Save path + calibration flag in session
+            request.session['param_excel_path'] = tmp_file.name
+            request.session['calibrated'] = True   # ✅ flag that calibration is done
 
-        # Save to temp file
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp_file:
-            tmp_path = tmp_file.name
-        wb.save(tmp_path)
+            return render(request, 'calibration.html', {
+                'threshold': threshold,
+                'parameters': parameters,
+            })
 
-        # Store in session
-        request.session['param_excel_path'] = tmp_path
+        except Exception as e:
+            return JsonResponse({"success": False, "message": str(e)}, status=500)
 
-        return render(request, 'calibration.html', {
-            'threshold': threshold,
-            'parameters': parameters.to_numpy().tolist()  # so you can render easily
-        })
+    return JsonResponse({"success": False, "message": "Invalid request"}, status=400)
 
-import json
-import pandas as pd
-import numpy as np
-from io import BytesIO
-from django.http import HttpResponse, JsonResponse
-from django.shortcuts import render
-import base64
+
+
+def run_simulation(request):
+        return render(request,'simulation.html')
+
 
 # A custom JSONEncoder class to handle NumPy data types
 class NumpyJSONEncoder(json.JSONEncoder):
@@ -441,103 +428,129 @@ class NumpyJSONEncoder(json.JSONEncoder):
         # Fallback to the base class's default method for all other types.
         return super().default(obj)
 
-def results_view(request):
-    if request.method == "POST":
-        param_excel_path = request.session.get('param_excel_path')
-        network_path = request.session.get('network_path')
-        budget_path = request.session.get('budget_file_path')
-        indicators_path = request.session.get('indicators_path')
+def results(request):
+    if request.method != "POST":
+        return HttpResponse("Please run the simulation first.", status=400)
 
-        if not all([param_excel_path, network_path, budget_path, indicators_path]):
-            return HttpResponse("Missing required files.", status=400)
+    param_excel_path = request.session.get('param_excel_path')
+    network_path = request.session.get('network_path')
+    budget_path = request.session.get('budget_file_path')
+    indicators_path = request.session.get('indicators_path')
 
-        df_indis = pd.read_excel(indicators_path)
-        N = len(df_indis)
-        I0 = df_indis.I0.values
-        R = df_indis.instrumental
-        qm = df_indis.qm.values
-        rl = df_indis.rl.values
-        indis_index = {code: i for i, code in enumerate(df_indis.indicator_label)}
-        Imax = df_indis.max_value.values
-        Imin = df_indis.min_value.values
+    if not all([param_excel_path, network_path, budget_path, indicators_path]):
+        return HttpResponse("Missing required files.", status=400)
 
-        df_params = pd.read_excel(param_excel_path, skiprows=1)
-        alpha = df_params.alpha.values
-        alpha_prime = df_params.alpha_prime.values
-        betas = df_params.beta.values
+    # --- Load indicators ---
+    df_indis = pd.read_excel(indicators_path)
+    N = len(df_indis)
+    I0 = df_indis.I0.values
+    R = df_indis.instrumental
+    qm = df_indis.qm.values
+    rl = df_indis.rl.values
+    indis_index = {code: i for i, code in enumerate(df_indis.indicator_label)}
+    Imax = df_indis.max_value.values
+    Imin = df_indis.min_value.values
 
-        df_net = pd.read_excel(network_path)
-        A = np.zeros((N, N))
-        for _, row in df_net.iterrows():
-            i = indis_index[row.origin]
-            j = indis_index[row.destination]
-            A[i, j] = row.weight
+    # --- Load parameters ---
+    df_params = pd.read_excel(param_excel_path, skiprows=1)
+    alpha = df_params.alpha.values
+    alpha_prime = df_params.alpha_prime.values
+    betas = df_params.beta.values
 
-        T = int(request.POST.get("num_simulations", 50))
+    # --- Load network ---
+    df_net = pd.read_excel(network_path)
+    A = np.zeros((N, N))
+    for _, row in df_net.iterrows():
+        i = indis_index[row.origin]
+        j = indis_index[row.destination]
+        A[i, j] = row.weight
 
-        df_exp = pd.read_excel(budget_path, sheet_name='template_budget')
-        Bs_retrospective = df_exp.values[:, 1:]
-        Bs = np.tile(Bs_retrospective[:, -1], (T, 1)).T
+    # --- Simulation count ---
+    T = int(request.POST.get("num_simulations", 50))
 
-        df_rela = pd.read_excel(budget_path, sheet_name='relational_table')
-        B_dict = {
-            indis_index[row.indicator_label]: [p for p in row.values[1:] if pd.notna(p)]
-            for _, row in df_rela.iterrows()
+    # --- Load budget template ---
+    df_exp = pd.read_excel(budget_path, sheet_name='template_budget')
+
+    # --- Map budgets by SDG number ---
+    budget_dict_label = {}
+    for i, row in df_exp.iterrows():
+        try:
+            sdg_num = int(row[0])  # first column must be SDG number
+        except:
+            continue
+        # Find all indicators with this SDG
+        labels = df_indis[df_indis.sdg == sdg_num]['indicator_label'].tolist()
+        for label in labels:
+            budget_dict_label[label] = row[1:].tolist()
+
+    # --- Load relational table ---
+    df_rela = pd.read_excel(budget_path, sheet_name='relational_table')
+    B_dict = {
+        indis_index[row.indicator_label]: [p for p in row.values[1:] if pd.notna(p)]
+        for _, row in df_rela.iterrows()
+    }
+
+    # --- Prepare Bs matrix ---
+    Bs_retrospective = df_exp.values[:, 1:]
+    Bs = np.tile(Bs_retrospective[:, -1], (T, 1)).T
+
+    # --- Generate random goals ---
+    goals = np.random.rand(N) * (Imax - I0) + I0
+
+    # --- Run simulations ---
+    sample_size = 100
+    outputs = []
+    for _ in range(sample_size):
+        output = run_ppi(
+            I0, alpha, alpha_prime, betas,
+            A=A, Bs=Bs, B_dict=B_dict, T=T, R=R, qm=qm, rl=rl,
+            Imax=Imax, Imin=Imin, G=goals
+        )
+        outputs.append(output)
+
+    tsI, tsC, tsF, tsP, tsS, tsG = zip(*outputs)
+    tsI_hat = np.mean(tsI, axis=0)
+
+    # --- Build output list ---
+    df_output_list = []
+    for i, serie in enumerate(tsI_hat):
+        label = df_indis.iloc[i].indicator_label
+        row_dict = {
+            'indicator_label': label,
+            'sdg': df_indis.iloc[i].sdg,
+            'color': df_indis.iloc[i].color,
+            'goal': goals[i],
+            'budget': budget_dict_label.get(label, [])
         }
+        for t, val in enumerate(serie):
+            row_dict[str(t)] = val
+        df_output_list.append(row_dict)
 
-        goals = np.random.rand(N) * (Imax - I0) + I0
+    df_output_json = json.dumps(df_output_list, cls=NumpyJSONEncoder)
 
-        sample_size = 100
-        outputs = []
-        for _ in range(sample_size):
-            output = run_ppi(
-                I0, alpha, alpha_prime, betas,
-                A=A, Bs=Bs, B_dict=B_dict, T=T, R=R, qm=qm, rl=rl,
-                Imax=Imax, Imin=Imin, G=goals
-            )
-            outputs.append(output)
+    # --- Save Excel for download ---
+    output = BytesIO()
+    df_output_for_excel = pd.DataFrame(df_output_list)
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df_output_for_excel.to_excel(writer, index=False, sheet_name="Simulation_Results")
+    output.seek(0)
+    request.session['excel_data'] = base64.b64encode(output.getvalue()).decode('utf-8')
 
-        tsI, _, _, _, _, _ = zip(*outputs)
-        tsI_hat = np.mean(tsI, axis=0)
+    # --- Debug ---
+    import pprint
+    print("\n=== DEBUG: df_output_list (first 2 rows) ===")
+    pprint.pprint(df_output_list[:2])
+    print("\n=== DEBUG: df_output_json (truncated) ===")
+    print(df_output_json[:500])
 
-        # Build the list of dictionaries
-        df_output_list = []
-        for i, serie in enumerate(tsI_hat):
-            row_dict = {
-                'indicator_label': df_indis.iloc[i].indicator_label,
-                'sdg': df_indis.iloc[i].sdg, # Now handles sdg which may be int64
-                'color': df_indis.iloc[i].color,
-                'goal': goals[i]
-            }
-            for t, val in enumerate(serie):
-                row_dict[str(t)] = val
-            df_output_list.append(row_dict)
-            
-        # FIX: Use the custom NumpyJSONEncoder to handle serialization correctly
-        df_output_json = json.dumps(df_output_list, cls=NumpyJSONEncoder)
+    # --- Render ---
+    context = {
+        'df_output_list': df_output_list,
+        'df_output_json': df_output_json,
+        'T': T,
+    }
+    return render(request, "results.html", context)
 
-        output = BytesIO()
-        df_output_for_excel = pd.DataFrame(df_output_list)
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df_output_for_excel.to_excel(writer, index=False, sheet_name="Simulation_Results")
-        output.seek(0)
-        request.session['excel_data'] = base64.b64encode(output.getvalue()).decode('utf-8')
-        # import pprint
-
-        # # Right before context
-        # print("\n=== DEBUG: df_output_list (first 2 rows) ===")
-        # pprint.pprint(df_output_list[:2])  # print only first 2 to avoid spamming logs
-        # print("\n=== DEBUG: df_output_json (truncated) ===")
-        # print(df_output_json[:500])  # first 500 chars
-
-        context = {
-            'df_output_list': df_output_list,
-            'df_output_json': df_output_json,
-            'T': T,
-        }
-        return render(request, "results.html", context)
-
-    return HttpResponse("Please run the simulation first.", status=400)
 
 
 
@@ -574,7 +587,3 @@ def download_plots_excel(request):
     )
     response['Content-Disposition'] = 'attachment; filename="all_plots_data.xlsx"'
     return response
-
-
-
-
