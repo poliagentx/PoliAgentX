@@ -23,7 +23,6 @@ import matplotlib.pyplot as plt
 from openpyxl.utils.dataframe import dataframe_to_rows
 import plotly.graph_objects as go
 
-
 def upload_indicators(request):
     if request.method == 'POST':
         form = Uploaded_indicators(request.POST, request.FILES)
@@ -36,17 +35,19 @@ def upload_indicators(request):
                     tmp.write(chunk)
                 temp_file_path = tmp.name
 
-            # Load Excel data
-            try: 
+            # Try loading Excel data
+            try:
                 data = pd.read_excel(temp_file_path)
                 data_filtered = data.drop(['monitoring', 'rule_of_law'], axis=1)
             except Exception as e:
+                if request.headers.get("x-requested-with") == "XMLHttpRequest":
+                    return JsonResponse({"success": False, "message": f"❌ Failed to read Excel file: {str(e)}"})
                 messages.error(request, f"❌ Failed to read Excel file: {str(e)}")
                 return render(request, 'indicators.html', {'form': form})
 
             # Identify year columns
             years = [col for col in data_filtered.columns if str(col).isdigit()]
-            
+
             # Normalize and invert indicators
             normalised_series = []
             for index, row in data_filtered.iterrows():
@@ -57,6 +58,8 @@ def upload_indicators(request):
                         norm = 1 - norm
                     normalised_series.append(norm)
                 except Exception as e:
+                    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+                        return JsonResponse({"success": False, "message": f"❌ Error processing row {index}: {str(e)}"})
                     messages.error(request, f"❌ Error processing row {index}: {str(e)}")
                     return render(request, 'indicators.html', {'form': form})
 
@@ -87,27 +90,49 @@ def upload_indicators(request):
             df['qm'] = data['monitoring']
             df['rl'] = data['rule_of_law']
             
-
+            
             # Save to cleaned Excel
-            # os.makedirs('clean_data', exist_ok=True)
-            # output_path = os.path.join('clean_data', 'data_indicators.xlsx')
+            # from django.conf import settings
+
+            # debug_dir = os.path.join(settings.BASE_DIR, 'clean_data')
+            # os.makedirs(debug_dir, exist_ok=True)
+
+            # output_path = os.path.join(debug_dir, 'data_indicators.xlsx')
             # df.to_excel(output_path, index=False)
+            # print(f"✅ Debug indicators file saved at: {output_path}")
 
+            
+            
+            # Save to temporary cleaned Excel
             tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx')
-            tmp_file.close()  # close it so ExcelWriter can open it by name
-
+            tmp_file.close()
             with pd.ExcelWriter(tmp_file.name) as writer:
                 df.to_excel(writer, sheet_name='template', index=False)
 
             request.session['indicators_path'] = tmp_file.name
 
+            # If AJAX → return JSON
+            if request.headers.get("x-requested-with") == "XMLHttpRequest":
+                return JsonResponse({
+                    "success": True,
+                    "message": "✅ Validation successful",
+                    "stats": {
+                        "total_indicators": len(df)
+                    }
+                })
 
-            messages.success(request, "validation successfully")
+            # If normal form POST → Django messages
+            messages.success(request, "✅ Validation successful")
             return render(request, 'indicators.html', {'form': Uploaded_indicators()})
 
+        # Invalid form
+        if request.headers.get("x-requested-with") == "XMLHttpRequest":
+            return JsonResponse({"success": False, "message": "Invalid form submission"})
         return render(request, 'indicators.html', {'form': form})
 
+    # GET request
     return render(request, 'indicators.html', {'form': Uploaded_indicators()})
+
 
 def budgets_page(request):
     # Ensure indicators file exists in session
@@ -145,7 +170,7 @@ def budgets_page(request):
                 return JsonResponse({"success": False, "message": f"❌ Failed to read uploaded file: {e}"})
 
             # Add Django success message
-            messages.success(request, "Budget uploaded successfully!")
+            # messages.success(request, "Budget uploaded successfully!")
 
         # ---------------- Manual Input ----------------
         elif 'budget' in request.POST:
@@ -199,9 +224,6 @@ def budgets_page(request):
 
 
 
-
-
-
 def upload_network(request):
     indicators_path = request.session.get('indicators_path')
     if not indicators_path:
@@ -224,10 +246,9 @@ def upload_network(request):
                 except Exception as e:
                     error_message = f"❌ Failed to read uploaded file: {e}"
                     if is_ajax:
-                        return JsonResponse({'success': False, 'error': error_message})
-                    else:
-                        messages.error(request, error_message)
-                        return redirect('upload_network')
+                        return JsonResponse({'success': False, 'message': error_message})
+                    messages.error(request, error_message)
+                    return redirect('upload_network')
 
         # -----------------------------
         # Case 2: User skipped upload
@@ -270,10 +291,9 @@ def upload_network(request):
                 except Exception as e:
                     error_message = f"❌ Failed to generate default network: {e}"
                     if is_ajax:
-                        return JsonResponse({'success': False, 'error': error_message})
-                    else:
-                        messages.error(request, error_message)
-                        return redirect('upload_network')
+                        return JsonResponse({'success': False, 'message': error_message})
+                    messages.error(request, error_message)
+                    return redirect('upload_network')
 
         # -----------------------------
         # Save the dataframe
@@ -293,42 +313,40 @@ def upload_network(request):
                     # os.makedirs('clean_data', exist_ok=True)
                     # output_path = os.path.join('clean_data', 'network.xlsx')    
                     # data_net.to_excel(output_path, index=False)
-     
-                   
-                success_message = "File validation successful."
+
+                success_message = "Network file processed successfully."
+
                 if is_ajax:
                     return JsonResponse({'success': True, 'message': success_message})
                 else:
                     messages.success(request, success_message)
 
-                    # ✅ Redirect logic:
                     if 'skip-network' in request.POST:
-                        return redirect('calibration')   # Skip → go forward
-                    else:
-                        return redirect('upload_network')  # Upload → stay on page
+                        return redirect('calibration')  # Skip → move forward
+                    return redirect('upload_network')  # Upload → stay
 
             except Exception as e:
                 error_message = f"❌ Failed to save network: {e}"
                 if is_ajax:
-                    return JsonResponse({'success': False, 'error': error_message})
-                else:
-                    messages.error(request, error_message)
-                    return redirect('upload_network')
+                    return JsonResponse({'success': False, 'message': error_message})
+                messages.error(request, error_message)
+                return redirect('upload_network')
 
     # -----------------------------
     # Default GET request
     # -----------------------------
     skip_form = Skip_networks()
     uploaded_form = Uploaded_networks()
-    return render(request, 'Network.html', {'skip_form': skip_form, 'uploaded_form': uploaded_form})
-
+    return render(request, 'Network.html', {
+        'skip_form': skip_form,
+        'uploaded_form': uploaded_form
+    })
 
        
 def simulation(request):
     return render(request,'simulation.html')
 def calibration(request):
     return render(request,'calibration.html')
-
 
 
 def download_indicator_template(request):
