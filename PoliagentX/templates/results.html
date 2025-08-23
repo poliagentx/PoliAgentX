@@ -21,7 +21,7 @@
                     <input type="number" name="num_simulations" id="num_simulations" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" value="50" min="1" max="1000" required>
                 </div>
                 <div class="w-full md:w-auto mt-4 md:mt-0 md:ml-auto">
-                    <button type="submit" class="w-full md:w-auto px-6 py-2  bg-gradient-to-r from-[#0b0b0b]/10 to-[#0b0b0b]/20 text-[#0b0b0b] font-semibold rounded-lg  shadow-[0_4px_20px_rgba(0,0,0,0.4)]  tracking-wide  backdrop-blur-xl border border-white/20  transition-all duration-500 ease-in-out  hover:bg-indigo-700 hover:text-white">Run Simulations</button>
+                    <button type="submit" class="w-full md:w-auto px-6 py-2  bg-[#cb8700] font-semibold rounded-lg text-[#f2f2f2] tracking-wide  backdrop-blur-xl border border-white/20  transition-all duration-500 ease-in-out  hover:bg-indigo-700 hover:text-white">Run Simulations</button>
                 </div>
             </form>
         </div>
@@ -38,7 +38,7 @@
             </div>
             <button 
                 type="button" 
-                class="w-full md:w-auto  px-6 py-2  shadow-[0_4px_20px_rgba(0,0,0,0.4)]  text-[#0b0b0b] font-semibold  bg-gradient-to-r from-[#0b0b0b]/10 to-[#0b0b0b]/20  rounded-lg tracking-wide  backdrop-blur-xl border border-white/20  transition-all duration-500 ease-in-out  hover:bg-indigo-700  hover:text-white"
+                class="w-full md:w-auto  px-6 py-2  text-[#f2f2f2]  font-semibold  bg-[#cb8700]  rounded-lg tracking-wide  backdrop-blur-xl border border-white/20  transition-all duration-500 ease-in-out  hover:bg-indigo-700  hover:text-white"
                 onclick="document.getElementById('compareModal').classList.remove('hidden')">
                 Compare Indicators
             </button>
@@ -58,7 +58,7 @@
     
 </div>
 
-<div id="compareModal" class="fixed inset-0 items-center justify-center  z-50 hidden backdrop-blur-md bg-white/1">
+<div id="compareModal" class="fixed inset-0 z-50 hidden backdrop-blur-md bg-white/1 flex items-center justify-center">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-md">
         
         <div class="flex justify-between items-center px-6 py-4 border-b">
@@ -72,7 +72,7 @@
             </button>
         </div>
         
-        <div class="p-6 max-h-80 overflow-y-auto space-y-3">
+<div class="p-6 max-h-80 overflow-y-auto space-y-3">
             <form id="compare-form" class="space-y-2">
                 {% for row in df_output_list %}
                 <div class="flex items-center space-x-3">

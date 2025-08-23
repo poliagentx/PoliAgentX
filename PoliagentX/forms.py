@@ -92,16 +92,17 @@ class BudgetForm(forms.Form):
                 css_class='bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded mt-4'
             )
         )
-class Uploaded_Budget(forms.Form):
-    government_expenditure = forms.FileField(
+class Uploaded_indicators(forms.Form):
+    government_indicators = forms.FileField(
         label='Upload file',
         required=True,
         widget=forms.ClearableFileInput(attrs={
-            'id': 'government_expenditure',
+            'id': 'file-upload',   # keep the ID for JS
             'class': 'hidden'
         }),
         validators=[
-            validate_extension,   
+            validate_extension,
+            lambda f: validate_contains_sheet(f, 'template')
         ]
     )
 
@@ -111,11 +112,16 @@ class Uploaded_Budget(forms.Form):
         self.helper.form_method = 'post'
         self.helper.layout = Layout(
             Field(
-                'government_expenditure',
-                id='file-upload',  
+                'government_indicators',   # don’t repeat id here
                 css_class='hidden'
+            ),
+            Submit(
+                'submit',
+                'Upload',
+                css_class='bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded mt-4'
             )
         )
+
 
 
 class Uploaded_networks(forms.Form):
@@ -143,6 +149,31 @@ class Uploaded_networks(forms.Form):
             )
         )
         
+        
+class Uploaded_Budget(forms.Form):
+    government_expenditure = forms.FileField(
+        label='Upload file',
+        required=True,
+        widget=forms.ClearableFileInput(attrs={
+            'id': 'government_expenditure',
+            'class': 'hidden'
+        }),
+        validators=[
+            validate_extension,   
+        ]
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.layout = Layout(
+            Field(
+                'government_expenditure',
+                id='file-upload',  
+                css_class='hidden'
+            )
+        )
 class Skip_networks(forms.Form):
     pass
 

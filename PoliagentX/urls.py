@@ -18,7 +18,6 @@ urlpatterns = [
     path('calibration/',calibration,name='calibration'),
     path('simulation/', simulation, name='simulation'),
     path('start_calibration/', start_calibration, name='start_calibration'),
-    path('run_simulation/', run_simulation, name='run_simulation'),
     path('results/', results, name="results"),
     path('download_excel/', download_excel, name='download_excel'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

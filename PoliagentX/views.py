@@ -3,6 +3,7 @@ import base64
 from io import BytesIO
 import os
 import random
+import json
 from django.views.decorators.csrf import csrf_exempt
 from PoliagentX.backend_poliagentx.policy_priority_inference import calibrate,run_ppi,run_ppi_parallel
 from PoliagentX.backend_poliagentx.relational_table import build_relational_table
@@ -101,7 +102,7 @@ def upload_indicators(request):
             request.session['indicators_path'] = tmp_file.name
 
 
-            messages.success(request, "File uploaded and processed successfully.")
+            messages.success(request, "validation successfully")
             return render(request, 'indicators.html', {'form': Uploaded_indicators()})
 
         return render(request, 'indicators.html', {'form': form})
@@ -109,8 +110,11 @@ def upload_indicators(request):
     return render(request, 'indicators.html', {'form': Uploaded_indicators()})
 
 def budgets_page(request):
+    # Ensure indicators file exists in session
     indicators_path = request.session.get('indicators_path')
     if not indicators_path:
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({"success": False, "message": "Indicators file is missing."})
         messages.error(request, "Indicators file is missing. Please upload it first.")
         return redirect('upload_indicators')
 
@@ -122,35 +126,32 @@ def budgets_page(request):
     if request.method == 'POST':
         data_indi = pd.read_excel(indicators_path)
 
-        # Handle uploaded Excel file
+        # ---------------- File Upload ----------------
         if 'government_expenditure' in request.FILES:
             upload_form = Uploaded_Budget(request.POST, request.FILES)
             if not upload_form.is_valid():
-                messages.error(request, "❌ Invalid file upload.")
-                return redirect('budgets_page')
-
+                return JsonResponse({"success": False, "message": "❌ Invalid file upload."})
             try:
                 uploaded_file = request.FILES['government_expenditure']
                 data_exp = pd.read_excel(BytesIO(uploaded_file.read()))
-
                 if 'sdg' not in data_exp.columns:
-                    messages.error(request, "❌ Uploaded file must have an 'sdg' column.")
-                    return redirect('budgets_page')
+                    return JsonResponse({"success": False, "message": "❌ Uploaded file must have an 'sdg' column."})
 
                 # Filter for matching & instrumental SDGs
                 data_exp = data_exp[data_exp.sdg.isin(data_indi.sdg.values)]
                 data_exp = data_exp[data_exp.sdg.isin(data_indi[data_indi.instrumental == 1].sdg.values)]
 
             except Exception as e:
-                messages.error(request, f"❌ Failed to read uploaded file: {e}")
-                return redirect('budgets_page')
+                return JsonResponse({"success": False, "message": f"❌ Failed to read uploaded file: {e}"})
 
-        # Handle manual budget input
+            # Add Django success message
+            messages.success(request, "Budget uploaded successfully!")
+
+        # ---------------- Manual Input ----------------
         elif 'budget' in request.POST:
             budget_form = BudgetForm(request.POST)
             if not budget_form.is_valid():
-                messages.error(request, "❌ Invalid manual budget input.")
-                return redirect('budgets_page')
+                return JsonResponse({"success": False, "message": "❌ Invalid manual budget input."})
 
             budget = budget_form.cleaned_data['budget']
             inflation = budget_form.cleaned_data['inflation_rate']
@@ -162,27 +163,25 @@ def budgets_page(request):
             data_exp = pd.DataFrame([
                 {
                     'sdg': i + 1,
-                    **{str(years[0] + j): round(adjusted_budget * sdg['percent'] / 100 / periods, 2) for j in range(periods)}
+                    **{str(years[0] + j): round(adjusted_budget * sdg['percent'] / 100 / periods, 2)
+                       for j in range(periods)}
                 }
                 for i, sdg in enumerate(allocation)
             ])
 
-            if 'sdg' not in data_exp.columns:
-                messages.error(request, "❌ Data is missing an 'sdg' column.")
-                return redirect('budgets_page')
-
             data_exp = data_exp[data_exp.sdg.isin(data_indi.sdg.values)]
             data_exp = data_exp[data_exp.sdg.isin(data_indi[data_indi.instrumental == 1].sdg.values)]
 
-        else:
-            # No relevant POST data, just render the form
-            return render(request, 'budgets.html', {'budget_form': budget_form, 'upload_form': upload_form})
+            # Add Django success message
+            messages.success(request, "Manual budget submitted successfully!")
 
-        # Expand budget and build relational table
+        else:
+            return JsonResponse({"success": False, "message": "No input provided."})
+
+        # ---------------- Process & Save ----------------
         df_exp = expand_budget(data_exp)
         df_rel = build_relational_table(data_indi)
 
-        # Save results to temp file
         with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp_file:
             with pd.ExcelWriter(tmp_file.name) as writer:
                 df_exp.to_excel(writer, sheet_name='template_budget', index=False)
@@ -190,16 +189,15 @@ def budgets_page(request):
 
             request.session['budget_file_path'] = tmp_file.name
 
-        # os.makedirs('clean_data', exist_ok=True)
-        # output_path = os.path.join('clean_data', 'data_budget.xlsx')
-        # df_exp.to_excel(output_path, index=False)
-        
-        return redirect('upload_network')
+        return JsonResponse({"success": True, "message": " Validation successful!"})
 
+    # ---------------- GET Request ----------------
     return render(request, 'budgets.html', {
         'budget_form': budget_form,
         'upload_form': upload_form,
     })
+
+
 
 
 
@@ -210,12 +208,13 @@ def upload_network(request):
         messages.error(request, "Indicators file is missing. Please upload it first.")
         return redirect('upload_indicators')
 
-    skip_form = Skip_networks()
-    uploaded_form = Uploaded_networks()
-    data_net = None
-
     if request.method == 'POST':
-        # User uploaded a file
+        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+        data_net = None
+
+        # -----------------------------
+        # Case 1: User uploaded a file
+        # -----------------------------
         if 'interdependency_network' in request.FILES:
             uploaded_form = Uploaded_networks(request.POST, request.FILES)
             if uploaded_form.is_valid():
@@ -223,71 +222,106 @@ def upload_network(request):
                 try:
                     data_net = pd.read_excel(BytesIO(uploaded_file.read()))
                 except Exception as e:
-                    messages.error(request, f"❌ Failed to read uploaded file: {e}")
-                    return redirect('upload_network')
+                    error_message = f"❌ Failed to read uploaded file: {e}"
+                    if is_ajax:
+                        return JsonResponse({'success': False, 'error': error_message})
+                    else:
+                        messages.error(request, error_message)
+                        return redirect('upload_network')
 
-        # User chose to skip network upload, generate default network
+        # -----------------------------
+        # Case 2: User skipped upload
+        # -----------------------------
         elif 'skip-network' in request.POST:
             skip_form = Skip_networks(request.POST)
             if skip_form.is_valid():
-                data_indi = pd.read_excel(indicators_path)
-                years = sorted([col for col in data_indi.columns if str(col).strip().isdigit()])
-                data_array = data_indi[years].astype(float).values
+                try:
+                    data_indi = pd.read_excel(indicators_path)
+                    years = sorted([col for col in data_indi.columns if str(col).strip().isdigit()])
+                    data_array = data_indi[years].astype(float).values
 
-                change_serie1_all = data_array[:, 2:] - data_array[:, 1:-1]
-                change_serie2_all = data_array[:, 1:-1] - data_array[:, :-2]
+                    change_serie1_all = data_array[:, 2:] - data_array[:, 1:-1]
+                    change_serie2_all = data_array[:, 1:-1] - data_array[:, :-2]
 
-                def is_not_constant(arr):
-                    return np.any(arr != arr[0])
+                    def is_not_constant(arr):
+                        return np.any(arr != arr[0])
 
-                valid_c1 = np.array([is_not_constant(row) for row in change_serie1_all])
-                valid_c2 = np.array([is_not_constant(row) for row in change_serie2_all])
+                    valid_c1 = np.array([is_not_constant(row) for row in change_serie1_all])
+                    valid_c2 = np.array([is_not_constant(row) for row in change_serie2_all])
 
-                N = len(data_indi)
-                M = np.zeros((N, N))
+                    N = len(data_indi)
+                    M = np.zeros((N, N))
 
-                valid_i = np.where(valid_c1)[0]
-                valid_j = np.where(valid_c2)[0]
+                    valid_i = np.where(valid_c1)[0]
+                    valid_j = np.where(valid_c2)[0]
 
-                for i in valid_i:
-                    c1 = change_serie1_all[i]
-                    for j in valid_j:
-                        if i != j:
-                            c2 = change_serie2_all[j]
-                            M[i, j] = np.corrcoef(c1, c2)[0, 1]
+                    for i in valid_i:
+                        c1 = change_serie1_all[i]
+                        for j in valid_j:
+                            if i != j:
+                                c2 = change_serie2_all[j]
+                                M[i, j] = np.corrcoef(c1, c2)[0, 1]
 
-                M[np.abs(M) < 0.5] = 0
+                    M[np.abs(M) < 0.5] = 0
 
-                ids = data_indi.indicator_label.values
-                edge_list = [[ids[i], ids[j], M[i, j]] for i, j in zip(*np.where(M != 0))]
-                data_net = pd.DataFrame(edge_list, columns=['origin', 'destination', 'weight'])
-     
-        else:
-            # No relevant POST data, just render the form
-            return render(request, 'Network.html', {'skip_form': skip_form, 'uploaded_form': uploaded_form})
-        
-        # Save the network dataframe to Excel files and session path
+                    ids = data_indi.indicator_label.values
+                    edge_list = [[ids[i], ids[j], M[i, j]] for i, j in zip(*np.where(M != 0))]
+                    data_net = pd.DataFrame(edge_list, columns=['origin', 'destination', 'weight'])
+                except Exception as e:
+                    error_message = f"❌ Failed to generate default network: {e}"
+                    if is_ajax:
+                        return JsonResponse({'success': False, 'error': error_message})
+                    else:
+                        messages.error(request, error_message)
+                        return redirect('upload_network')
+
+        # -----------------------------
+        # Save the dataframe
+        # -----------------------------
         if data_net is not None:
-            wb = Workbook()
-            ws_network = wb.active
-            ws_network.title = "template_network"
-            for r in dataframe_to_rows(data_net, index=False, header=True):
-                ws_network.append(r)
+            try:
+                wb = Workbook()
+                ws_network = wb.active
+                ws_network.title = "template_network"
+                for r in dataframe_to_rows(data_net, index=False, header=True):
+                    ws_network.append(r)
 
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp_file:
-                wb.save(tmp_file.name)
-                # tmp_file.close() # context manager closes automatically
-                request.session['network_path'] = tmp_file.name
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp_file:
+                    wb.save(tmp_file.name)
+                    request.session['network_path'] = tmp_file.name
+                    
+                    # os.makedirs('clean_data', exist_ok=True)
+                    # output_path = os.path.join('clean_data', 'network.xlsx')    
+                    # data_net.to_excel(output_path, index=False)
+     
+                   
+                success_message = "File validation successful."
+                if is_ajax:
+                    return JsonResponse({'success': True, 'message': success_message})
+                else:
+                    messages.success(request, success_message)
 
-            # os.makedirs('clean_data', exist_ok=True)
-            # output_path = os.path.join('clean_data', 'network.xlsx')
-            # data_net.to_excel(output_path, index=False)
-        return redirect('calibration')
+                    # ✅ Redirect logic:
+                    if 'skip-network' in request.POST:
+                        return redirect('calibration')   # Skip → go forward
+                    else:
+                        return redirect('upload_network')  # Upload → stay on page
 
-    return render(request, 'Network.html', {
-        'skip_form': skip_form,
-        'uploaded_form': uploaded_form,
-    })
+            except Exception as e:
+                error_message = f"❌ Failed to save network: {e}"
+                if is_ajax:
+                    return JsonResponse({'success': False, 'error': error_message})
+                else:
+                    messages.error(request, error_message)
+                    return redirect('upload_network')
+
+    # -----------------------------
+    # Default GET request
+    # -----------------------------
+    skip_form = Skip_networks()
+    uploaded_form = Uploaded_networks()
+    return render(request, 'Network.html', {'skip_form': skip_form, 'uploaded_form': uploaded_form})
+
 
        
 def simulation(request):
@@ -391,7 +425,7 @@ def start_calibration(request):
             # Save path + calibration flag in session
             request.session['param_excel_path'] = tmp_file.name
             request.session['calibrated'] = True   # ✅ flag that calibration is done
-
+            
             return render(request, 'calibration.html', {
                 'threshold': threshold,
                 'parameters': parameters,
@@ -402,10 +436,6 @@ def start_calibration(request):
 
     return JsonResponse({"success": False, "message": "Invalid request"}, status=400)
 
-
-
-def run_simulation(request):
-        return render(request,'simulation.html')
 
 
 # A custom JSONEncoder class to handle NumPy data types

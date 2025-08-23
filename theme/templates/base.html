@@ -46,6 +46,7 @@
       <a class="workflow-step {% if request.resolver_match.url_name == 'simulation' or request.resolver_match.url_name == 'start_simulation' %}current{% elif 'simulation_completed' in request.session %}completed{% endif %}">
         Simulation
       </a>
+       <span class="separator">&gt;</span>
       <a class="workflow-step {% if request.resolver_match.url_name == 'results' %}current{% elif 'simulation_completed' in request.session %}completed{% endif %}">
         Results
       </a>

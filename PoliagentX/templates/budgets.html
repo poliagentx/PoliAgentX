@@ -4,8 +4,6 @@
 
 {% block content %}
 
-
-
 <div class="bg-white py-8 px-4 sm:py-12 sm:px-6 lg:px-8">
     <div class="max-w-7xl mx-auto">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
@@ -13,42 +11,40 @@
             <div>
                 <h1 class="text-4xl font-bold text-black mb-4">Budget</h1>
                 <p class="text-gray-700 mb-4 leading-[1.9]">
-If you have data on how the government spends across different development categories, you can upload it here. If you do not have disaggregated expenditure data, you can simply declare a total budget to be used by the model. The more disaggregate the data are, the more nuanced inferences you will be able to make. To learn about the format and other requirements of the budget dataset, you should download the associated spreadsheet template and consult its "metadata" tab.
+                    If you have data on how the government spends across different development categories, you can upload it here. If you do not have disaggregated expenditure data, you can simply declare a total budget to be used by the model. The more disaggregate the data are, the more nuanced inferences you will be able to make. To learn about the format and other requirements of the budget dataset, you should download the associated spreadsheet template and consult its "metadata" tab.
                 </p>
-              <form action="{% url 'download_budget_template' %}" method="get">
-  <button type="submit"
-    class="group inline-flex items-center gap-2 mt-4 px-6 py-2
-           font-semibold tracking-wide
-           bg-gradient-to-r from-[#0b0b0b]/20 to-[#0b0b0b]/10
-           backdrop-blur-xl border border-white/20
-           text-[#0b0b0b] shadow-[0_4px_20px_rgba(0,0,0,0.4)]
-           hover:shadow-[0_0_20px_rgba(0,255,200,0.6)]
-           transition-all duration-500 ease-in-out">
-    <!-- Download icon -->
-    <svg class="w-5 h-5 shrink-0 transition-transform duration-300 group-hover:translate-y-0.5"
-         viewBox="0 0 24 24" fill="none" aria-hidden="true"
-         stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5"/>
-      <path d="M7.5 10.5 12 15l4.5-4.5"/>
-      <path d="M12 15V3"/>
-    </svg>
-    <span>Template</span>
-  </button>
-</form>
-
+                <form action="{% url 'download_budget_template' %}" method="get">
+                    <button type="submit"
+                        class="group inline-flex items-center gap-2 mt-4 px-6 py-2
+                               font-semibold tracking-wide
+                               bg-gradient-to-r from-[#0b0b0b]/20 to-[#0b0b0b]/10
+                               backdrop-blur-xl border border-white/20
+                               text-[#0b0b0b] shadow-[0_4px_20px_rgba(0,0,0,0.4)]
+                               hover:shadow-[0_0_20px_rgba(0,255,200,0.6)]
+                               transition-all duration-500 ease-in-out">
+                        <svg class="w-5 h-5 shrink-0 transition-transform duration-300 group-hover:translate-y-0.5"
+                             viewBox="0 0 24 24" fill="none" aria-hidden="true"
+                             stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5"/>
+                            <path d="M7.5 10.5 12 15l4.5-4.5"/>
+                            <path d="M12 15V3"/>
+                        </svg>
+                        <span>Template</span>
+                    </button>
+                </form>
             </div>
 
             <div>
-                <div class="bg-gray-100 rounded-lg p-6 shadow-md">
+                <div class=" bg-gradient-to-r from-[#0b0b0b]/5 to-[#0b0b0b]/8 backdrop-blur-xl border border-white/20 
+          text-[#0b0b0b] shadow-[0_4px_20px_rgba(0,0,0,0.4)] rounded-xl p-6 ">
                     <div class="mb-6">
-                      
                         <label class="input-option flex items-start mb-4 cursor-pointer" for="radio-manual">
                             <input type="radio" name="input_method" value="manual" id="radio-manual" checked class="form-radio mt-1">
                             <div>
-                                <span class="text-lg font-medium text-gray-900 m-3">Specify the total budget</span>
-                                <p class="text-sm text-gray-600 mt-1 mb-2">Enter the average total budget exercised during the sample period of the indicators.</p>
+                                <span class="text-lg font-medium text-[#0b0b0b] m-3">Specify the total budget</span>
+                                <p class="text-sm text-[#0b0b0b] leading-relaxed mt-1 mb-2">Enter the average total budget exercised during the sample period of the indicators.</p>
                                 <div id="manual-input-section" class="input-section">
-                                    <form  action="{% url 'budgets_page' %}" method="post" class="space-y-4" enctype="multipart/form-data" id="budget-form">
+                                    <form action="{% url 'budgets_page' %}" method="post" class="space-y-4" enctype="multipart/form-data" id="budget-form">
                                         {% csrf_token %}
                                         {{ budget_form.media }}
 
@@ -75,8 +71,8 @@ If you have data on how the government spends across different development categ
                         <label class="input-option flex items-start cursor-pointer" for="radio-upload">
                             <input type="radio" name="input_method" value="upload" id="radio-upload" class="form-radio mt-1">
                             <div>
-                                <span class="text-lg font-medium text-gray-900">Upload the disaggregated budget</span>
-                                <p class="text-sm text-gray-600 mt-1 mb-5">Provide a file with government expenditure data disaggregated into development categories. All the development categories uploaded in this file should be linked to at least one indicator from the dataset uploaded in the previous step (download the expenditure data template for more information).</p>
+                                <span class="text-lg font-medium text-[#0b0b0b] m-3">Upload the disaggregated budget</span>
+                                <p class="text-sm text-[#0b0b0b] leading-relaxed mt-1 mb-5">Provide a file with government expenditure data disaggregated into development categories. All the development categories uploaded in this file should be linked to at least one indicator from the dataset uploaded in the previous step (download the expenditure data template for more information).</p>
                             </div>
                         </label>
                     </div>
@@ -86,55 +82,55 @@ If you have data on how the government spends across different development categ
                             {% csrf_token %}
                             {{ upload_form.media }}
 
-                            {% if upload_form.errors or messages %}
-                                <div class="mb-4">
-                                    {% if upload_form.errors %}
-                                        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-                                            {% for field in upload_form %}
-                                                {% for error in field.errors %}
-                                                    <p class="text-sm font-semibold">{{ error }}</p>
-                                                {% endfor %}
-                                            {% endfor %}
-                                            {% for error in upload_form.non_field_errors %}
-                                                <p class="text-sm font-semibold">{{ error }}</p>
-                                            {% endfor %}
-                                        </div>
-                                    {% endif %}
+        <!-- Message area -->
+    {% if messages %}
+            {% for message in messages %}
+                <div id="{% if message.tags == 'success' %}upload-success-message{% endif %}"
+                    class="mt-2 p-3 rounded text-sm flex items-center gap-2
+                            {% if message.tags == 'success' %}  {% else %} bg-red-100 text-red-800 {% endif %}">
+                
+                <!-- Success icon -->
+                {% if message.tags == 'success' %}
+                    <svg class="w-10 h-10 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                    <path fill-rule="evenodd" d="M21.856 10.303c.086.554.144 1.118.144 1.697 0 6.075-4.925 11-11 11s-11-4.925-11-11 4.925-11 11-11c2.347 0 4.518.741 6.304 1.993l-1.422 1.457c-1.408-.913-3.082-1.45-4.882-1.45-4.962 0-9 4.038-9 9s4.038 9 9 9c4.894 0 8.879-3.928 8.99-8.795l1.866-1.902zm-.952-8.136l-9.404 9.639-3.843-3.614-3.095 3.098 6.938 6.71 12.5-12.737-3.096-3.096z" clip-rule="evenodd"/>
+                    </svg>
 
-                                    {% if messages %}
-                                        {% for message in messages %}
-                                            <div id="{% if message.tags == 'success' %}upload-success-message{% endif %}"
-                                                 class="mt-2 p-3 rounded text-sm text-black bg-{% if message.tags == 'success' %}white{% else %}red{% endif %}-600">
-                                                {{ message }}
-                                            </div>
-                                        {% endfor %}
-                                    {% endif %}
-                                </div>
-                            {% endif %}
+                
+                {% endif %}
 
-                            <div id="drop-zone" class="border-2 border-dashed border-gray-300 p-6 rounded-lg bg-white text-center transition-all duration-300 hover:border-gray-500">
+                <!-- Error icon -->
+                {% if message.tags == 'error' %}
+                    <svg class="w-5 h-5 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                {% endif %}
+
+                <!-- Message text -->
+                <span>{{ message }}</span>
+                </div>
+            {% endfor %}
+    {% endif %}
+
+                            <div id="drop-zone" class="border-2 border-dashed border-green-500 p-6 rounded-lg bg-white text-center transition-all duration-300 hover:border-gray-500">
                                 <div class="mb-4">
-                                    <svg   xmlns="http://www.w3.org/2000/svg" class="mx-auto h-8 w-8 text-gray-400" 
-                                            viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="1.8"
-                                            stroke-linecap="round" stroke-linejoin="round"
-                                            class="h-10 w-10 text-gray-700/90">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-11 w-11 text-gray-400"
+                                         viewBox="0 0 24 24" fill="none"
+                                         stroke="currentColor" stroke-width="1.8"
+                                         stroke-linecap="round" stroke-linejoin="round"
+                                         class="h-10 w-10 text-gray-700/90">
                                         <circle cx="12" cy="12" r="9.25"></circle>
                                         <path d="M12 16V8"></path>
                                         <path d="M8.75 11.25 12 8l3.25 3.25"></path>
                                         <path d="M8 16h8"></path>
                                     </svg>
-
-                                    
                                 </div>
                                 <p class="text-gray-700 leading-relaxed">Drag and drop your file here</p>
                                 <p class="text-sm text-gray-500 mb-4 leading-relaxed">Supported formats: xlsx, xls</p>
-
-                                <label for="{{ upload_form.government_expenditure.id_for_label }}" class="cursor-pointer inline-block  px-4 py-2  mt-2 bg-gradient-to-r from-[#0b0b0b]/20 to-[#0b0b0b]/10
-                               backdrop-blur-xl border border-white/20
-                               text-[#0b0b0b] 
-                              rounded-xl
-                               transition-all duration-500 ease-in-out font-bold">
+                                <label for="{{ upload_form.government_expenditure.id_for_label }}" class="cursor-pointer inline-block px-4 py-2 mt-2 bg-gradient-to-r from-[#0b0b0b]/20 to-[#0b0b0b]/10
+                                       backdrop-blur-xl border border-white/20
+                                       text-[#0b0b0b]
+                                       rounded-xl
+                                       transition-all duration-500 ease-in-out font-bold">
                                     Choose File
                                 </label>
                             </div>
@@ -148,8 +144,6 @@ If you have data on how the government spends across different development categ
             </div>
         </div>
 
-
-                <!-- NEXT BUTTON ROW – plain document flow -->
         <div class="mt-12 pb-10 text-right">
             <div id="next-button-container" class="hidden">
                 <button type="button" id="next-button"
@@ -172,7 +166,5 @@ If you have data on how the government spends across different development categ
     </div>
 </div>
 
-<script src="{% static 'Js/drag.js' %}"></script>
 <script src="{% static 'Js/Button.js' %}"></script>
 {% endblock %}
-
