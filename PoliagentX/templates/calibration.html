@@ -284,7 +284,7 @@
 
             <!-- Enabled button (hidden initially) -->
             <div id="next-button-container" class="hidden flex justify-between items-center">
-               <h1 class="text-xl font-medium text-gray-800">Ready for Simulation</h1>
+               <p class="text-xl  text-gray-500">Ready for Simulation</p>
               <a href="{% url 'simulation' %}"
                 class="inline-flex items-center gap-2 mt-4 px-4 py-2 font-semibold tracking-wide bg-gradient-to-r from-[#0b0b0b]/20 to-[#0b0b0b]/10 backdrop-blur-xl border border-white/20 text-[#0b0b0b]
                 shadow-[0_4px_20px_rgba(0,0,0,0.4)]
@@ -308,71 +308,13 @@
                 <div class="text-gray-600 font-medium">Maximum Quality</div>
             </div>
             <div class="stats-grid rounded-xl p-6 text-center border border-gray-200">
-                <div id="current-quality" class="text-3xl font-bold text-purple-600 mb-2">0.50</div>
+                <div id="current-quality" class="text-3xl font-bold text-[#cb8700] mb-2">0.50</div>
                 <div class="text-gray-600 font-medium">Current Setting</div>
             </div>
         </div>
     </div>
 </div>
 
-<script>
-const slider = document.getElementById("slider");
-const display = document.getElementById("slider-value");
-const qualityLabel = document.getElementById("quality-label");
-const currentQuality = document.getElementById("current-quality");
-const form = document.getElementById("calibration-form");
-const startBtn = document.getElementById("start-calibration-button");
-const processingState = document.getElementById("processing-state");
-const nextButtonContainer = document.getElementById("next-button-container");
-const disabledNext = document.getElementById("next-disabled");
-
-let isSubmitting = false;
-
-// Update quality label dynamically
-function updateQualityLabel(value) {
-    const numValue = parseFloat(value);
-    if (numValue <= 0.30) {
-        qualityLabel.className = "quality-indicator quality-low";
-        qualityLabel.textContent = "Quick Test";
-    } else if (numValue <= 0.70) {
-        qualityLabel.className = "quality-indicator quality-medium";
-        qualityLabel.textContent = "Balanced";
-    } else {
-        qualityLabel.className = "quality-indicator quality-high";
-        qualityLabel.textContent = "High Precision";
-    }
-}
-
-// Show live slider value
-slider.addEventListener("input", function () {
-    const value = parseFloat(this.value).toFixed(2);
-    display.textContent = value;
-    currentQuality.textContent = value;
-    updateQualityLabel(this.value);
-});
-
-// Initialize on load
-updateQualityLabel(slider.value);
-
-form.addEventListener("submit", function (e) {
-    e.preventDefault(); // Prevent actual form submission
-
-    if (isSubmitting) return; // Prevent double-clicks
-    isSubmitting = true;
-
-    // Show "calibrating..." state
-    startBtn.style.display = "none";
-    processingState.classList.remove("hidden");
-
-    // Simulate calibration (adjust time as needed)
-    setTimeout(() => {
-        processingState.classList.add("hidden");          // Hide spinner
-        nextButtonContainer.classList.remove("hidden");   // Show NEXT button
-        disabledNext.classList.add("hidden");            // Hide disabled notice
-    }, 3000); // 3 seconds simulation
-});
-</script>
-
-
+<script src="{% static 'Js/slider.js' %}"></script>
 
 {% endblock %}

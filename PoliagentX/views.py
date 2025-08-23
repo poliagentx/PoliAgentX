@@ -457,7 +457,6 @@ class NumpyJSONEncoder(json.JSONEncoder):
             return obj.tolist()
         # Fallback to the base class's default method for all other types.
         return super().default(obj)
-
 def results(request):
     if request.method == "POST":
         param_excel_path = request.session.get('param_excel_path')
