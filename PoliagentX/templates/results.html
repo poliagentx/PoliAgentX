@@ -109,7 +109,7 @@
 </div>
 
 <script src="https://cdn.plot.ly/plotly-2.27.1.min.js"></script>
-<script src="{% static 'Js/plots.js' %}"></script>
+
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -168,7 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 { x: dataObj.x, y: dataObj.goal, mode: 'lines', name: 'Goal', line: { color: '#000', width: 2, dash: 'dash' } }
             ], {
                 title: `Indicator: ${label}`,
-                xaxis: { title: 'Time' },
+                xaxis: { title: 'Simulation Periods' },
                 yaxis: { title: 'Indicator Level' },
                 legend: { orientation: 'h', y: -0.2 }
             }, { responsive: true });
@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             Plotly.newPlot(plotDiv, traces, {
                 title: 'Selected Indicators Comparison',
-                xaxis: { title: 'Time' },
+                xaxis: { title: 'Simulation Periods' },
                 yaxis: { title: 'Indicator Level' },
                 legend: { orientation: 'h', y: -0.2 }
             }, { responsive: true });

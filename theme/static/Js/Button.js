@@ -31,7 +31,7 @@
           progressText: document.getElementById('progress-text'),
           
           // Navigation
-         // statusMessages: document.getElementById('status-messages'),
+          statusMessages: document.getElementById('status-messages'),
           nextDisabled: document.getElementById('next-disabled'),
           nextButtonContainer: document.getElementById('next-button-container'),
           backButton: document.getElementById('back-button')
@@ -391,8 +391,11 @@
         return `
           <div class="checkmark-container w-full h-full flex items-center justify-center">
             <svg class="w-full h-full" viewBox="0 0 52 52">
-              <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
-              <path class="checkmark-check" fill="none" stroke="#10b981" stroke-width="3" d="m16 26 6 6 14-14"/>
+           
+
+          <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+           <path class="checkmark-check" fill="none" stroke="#10b981" stroke-width="3" d="m16 26 6 6 14-14"/>
+
             </svg>
           </div>
         `;

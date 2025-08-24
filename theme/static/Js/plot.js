@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 html += `<tr class="bg-white border-b hover:bg-gray-50"><td class="px-6 py-4 font-medium">${t}</td>` +
                         allIndicators.map(label => {
                             const { y, row } = indicatorData[label];
-                            return `<td class="px-6 py-4" style="background:${row.color};color:white;" title="SDG ${row.sdg}: ${y[idx].toFixed(4)}">${y[idx].toFixed(4)}</td>`;
+                            return `<td class="px-6 py-4" style="background:${row.color};color:white;" title="SDG ${row.sdg}: ${y[idx].toFixed(6)}">${y[idx].toFixed(6)}</td>`;
                         }).join('') + `</tr>`;
             });
         } else if (selectedIndicators.length > 1) {
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 html += `<tr class="bg-white border-b hover:bg-gray-50"><td class="px-6 py-4 font-medium">${t}</td>` +
                         selectedIndicators.map(label => {
                             const { y, goal, row } = indicatorData[label];
-                            return `<td class="px-6 py-4" style="background:${row.color};color:white;" title="SDG ${row.sdg}: ${y[idx].toFixed(4)}">${y[idx].toFixed(4)}</td>` +
+                            return `<td class="px-6 py-4" style="background:${row.color};color:white;" title="SDG ${row.sdg}: ${y[idx].toFixed(6)}">${y[idx].toFixed(6)}</td>` +
                                    `<td class="px-6 py-4" title="Goal: ${goal[idx].toFixed(4)}">${goal[idx].toFixed(4)}</td>`;
                         }).join('') + `</tr>`;
             });
@@ -117,8 +117,8 @@ document.addEventListener('DOMContentLoaded', () => {
             x.forEach((t, idx) => {
                 html += `<tr class="bg-white border-b hover:bg-gray-50">
                     <td class="px-6 py-4 font-medium">${t}</td>
-                    <td class="px-6 py-4" style="background:${row.color};color:white;" title="SDG ${row.sdg}: ${y[idx].toFixed(4)}">${y[idx].toFixed(4)}</td>
-                    <td class="px-6 py-4" title="Goal: ${goal[idx].toFixed(4)}">${goal[idx].toFixed(4)}</td>
+                    <td class="px-6 py-4" style="background:${row.color};color:white;" title="SDG ${row.sdg}: ${y[idx].toFixed(6)}">${y[idx].toFixed(6)}</td>
+                    <td class="px-6 py-4" title="Goal: ${goal[idx].toFixed(6)}">${goal[idx].toFixed(6)}</td>
                 </tr>`;
             });
         }

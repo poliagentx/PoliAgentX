@@ -59,8 +59,8 @@ def upload_indicators(request):
                     normalised_series.append(norm)
                 except Exception as e:
                     if request.headers.get("x-requested-with") == "XMLHttpRequest":
-                        return JsonResponse({"success": False, "message": f"❌ Error processing row {index}: {str(e)}"})
-                    messages.error(request, f"❌ Error processing row {index}: {str(e)}")
+                        return JsonResponse({"success": False, "message": f"Error processing row {index}: {str(e)}"})
+                    messages.error(request, f"Error processing row {index}: {str(e)}")
                     return render(request, 'indicators.html', {'form': form})
 
             # Create DataFrame with normalized values
@@ -115,14 +115,14 @@ def upload_indicators(request):
             if request.headers.get("x-requested-with") == "XMLHttpRequest":
                 return JsonResponse({
                     "success": True,
-                    "message": "✅ Validation successful",
+                    "message": "Validation successful",
                     "stats": {
                         "total_indicators": len(df)
                     }
                 })
 
             # If normal form POST → Django messages
-            messages.success(request, "✅ Validation successful")
+            messages.success(request, "Validation successful")
             return render(request, 'indicators.html', {'form': Uploaded_indicators()})
 
         # Invalid form
@@ -155,28 +155,28 @@ def budgets_page(request):
         if 'government_expenditure' in request.FILES:
             upload_form = Uploaded_Budget(request.POST, request.FILES)
             if not upload_form.is_valid():
-                return JsonResponse({"success": False, "message": "❌ Invalid file upload."})
+                return JsonResponse({"success": False, "message": "Invalid file upload."})
             try:
                 uploaded_file = request.FILES['government_expenditure']
                 data_exp = pd.read_excel(BytesIO(uploaded_file.read()))
                 if 'sdg' not in data_exp.columns:
-                    return JsonResponse({"success": False, "message": "❌ Uploaded file must have an 'sdg' column."})
+                    return JsonResponse({"success": False, "message": "Uploaded file must have an 'sdg' column."})
 
                 # Filter for matching & instrumental SDGs
                 data_exp = data_exp[data_exp.sdg.isin(data_indi.sdg.values)]
                 data_exp = data_exp[data_exp.sdg.isin(data_indi[data_indi.instrumental == 1].sdg.values)]
 
             except Exception as e:
-                return JsonResponse({"success": False, "message": f"❌ Failed to read uploaded file: {e}"})
+                return JsonResponse({"success": False, "message": f"Failed to read uploaded file: {e}"})
 
             # Add Django success message
-            # messages.success(request, "Budget uploaded successfully!")
+            # messages.success(request, "Budget data uploaded successfully!")
 
         # ---------------- Manual Input ----------------
         elif 'budget' in request.POST:
             budget_form = BudgetForm(request.POST)
             if not budget_form.is_valid():
-                return JsonResponse({"success": False, "message": "❌ Invalid manual budget input."})
+                return JsonResponse({"success": False, "message": "Invalid manual budget input."})
 
             budget = budget_form.cleaned_data['budget']
             inflation = budget_form.cleaned_data['inflation_rate']
@@ -198,7 +198,7 @@ def budgets_page(request):
             data_exp = data_exp[data_exp.sdg.isin(data_indi[data_indi.instrumental == 1].sdg.values)]
 
             # Add Django success message
-            messages.success(request, "Manual budget submitted successfully!")
+            # messages.success(request, "Manual budget submitted successfully!")
 
         else:
             return JsonResponse({"success": False, "message": "No input provided."})
@@ -213,6 +213,15 @@ def budgets_page(request):
                 df_rel.to_excel(writer, sheet_name='relational_table', index=False)
 
             request.session['budget_file_path'] = tmp_file.name
+                 # Save to cleaned Excel
+            # from django.conf import settings
+
+            # debug_dir = os.path.join(settings.BASE_DIR, 'clean_data')
+            # os.makedirs(debug_dir, exist_ok=True)
+
+            # output_path = os.path.join(debug_dir, 'exp.xlsx')
+            # df_exp.to_excel(output_path, index=False)
+            # print(f" Debug indicators file saved at: {output_path}")
 
         return JsonResponse({"success": True, "message": " Validation successful!"})
 
@@ -244,7 +253,7 @@ def upload_network(request):
                 try:
                     data_net = pd.read_excel(BytesIO(uploaded_file.read()))
                 except Exception as e:
-                    error_message = f"❌ Failed to read uploaded file: {e}"
+                    error_message = f"Failed to read uploaded file: {e}"
                     if is_ajax:
                         return JsonResponse({'success': False, 'message': error_message})
                     messages.error(request, error_message)
@@ -289,7 +298,7 @@ def upload_network(request):
                     edge_list = [[ids[i], ids[j], M[i, j]] for i, j in zip(*np.where(M != 0))]
                     data_net = pd.DataFrame(edge_list, columns=['origin', 'destination', 'weight'])
                 except Exception as e:
-                    error_message = f"❌ Failed to generate default network: {e}"
+                    error_message = f"Failed to generate default network: {e}"
                     if is_ajax:
                         return JsonResponse({'success': False, 'message': error_message})
                     messages.error(request, error_message)
@@ -314,7 +323,7 @@ def upload_network(request):
                     # output_path = os.path.join('clean_data', 'network.xlsx')    
                     # data_net.to_excel(output_path, index=False)
 
-                success_message = "Network file processed successfully."
+                success_message = "Validation successful."
 
                 if is_ajax:
                     return JsonResponse({'success': True, 'message': success_message})
@@ -326,12 +335,12 @@ def upload_network(request):
                     return redirect('upload_network')  # Upload → stay
 
             except Exception as e:
-                error_message = f"❌ Failed to save network: {e}"
+                error_message = f"Failed to save network: {e}"
                 if is_ajax:
                     return JsonResponse({'success': False, 'message': error_message})
                 messages.error(request, error_message)
                 return redirect('upload_network')
-
+        # return JsonResponse({"success": True, "message": "Validation successful!"})
     # -----------------------------
     # Default GET request
     # -----------------------------
@@ -420,6 +429,7 @@ def run_calibration(request, threshold=0.7):
 
     return parameters
 
+
 @csrf_exempt
 def start_calibration(request):
     if request.method == 'POST':
@@ -442,7 +452,17 @@ def start_calibration(request):
 
             # Save path + calibration flag in session
             request.session['param_excel_path'] = tmp_file.name
-            request.session['calibrated'] = True   # ✅ flag that calibration is done
+            request.session['calibrated'] = True
+            # ✅ flag that calibration is done
+            # from django.conf import settings
+            # debug_dir = os.path.join(settings.BASE_DIR, 'clean_data')
+            # os.makedirs(debug_dir, exist_ok=True)
+
+            # output_path = os.path.join(debug_dir, 'para.xlsx')
+            # parameters.to_excel(output_path, index=False)
+            
+            # print(f"✅ Debug  file saved at: {output_path}")
+            # print("POST data:", request.POST.dict())
             
             return render(request, 'calibration.html', {
                 'threshold': threshold,
@@ -475,6 +495,7 @@ class NumpyJSONEncoder(json.JSONEncoder):
             return obj.tolist()
         # Fallback to the base class's default method for all other types.
         return super().default(obj)
+    
 def results(request):
     if request.method == "POST":
         param_excel_path = request.session.get('param_excel_path')
@@ -524,11 +545,7 @@ def results(request):
         sample_size = 100
         outputs = []
         for _ in range(sample_size):
-            output = run_ppi(
-                I0, alpha, alpha_prime, betas,
-                A=A, Bs=Bs, B_dict=B_dict, T=T, R=R, qm=qm, rl=rl,
-                Imax=Imax, Imin=Imin, G=goals
-            )
+            output = run_ppi(I0, alpha, alpha_prime, betas, A=A, Bs=Bs, B_dict=B_dict, T=T, R=R, qm=qm, rl=rl, Imax=Imax, Imin=Imin, G=goals)
             outputs.append(output)
 
         tsI, tsC, tsF, tsP, tsS, tsG= zip(*outputs)

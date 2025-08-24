@@ -13,7 +13,7 @@
           uploadProgress: document.getElementById('upload-progress'),
           progressBar: document.getElementById('progress-bar'),
           progressText: document.getElementById('progress-text'),
-          //statusMessages: document.getElementById('status-messages'),
+          statusMessages: document.getElementById('status-messages'),
           nextDisabled: document.getElementById('next-disabled'),
           nextButtonContainer: document.getElementById('next-button-container'),
           backButton: document.getElementById('back-button')

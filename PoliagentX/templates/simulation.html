@@ -138,8 +138,9 @@
                         <div>
                             <h4 class="font-semibold text-[#0b0b0b] mb-2">Recommendation:</h4>
                             <p class="text-gray-500 leading-relaxed">
-                                Start with shorter simulations to validate your model, then scale up for comprehensive analysis. 
-                                Longer simulations provide more robust statistical insights but require more computational resources.
+                            Always align number of simulation periods with the time frame represented in your budget data. 
+                            For instance, if your budget data represent the average annual expenditure of 10 years, this is equivalent to 50 simulation periods, hence each year corresponds to 5 periods. Accordingly, if you intend to simulate 5 years, you should input 25 periods. 
+                              
                             </p>
                         </div>
                     </div>
@@ -222,15 +223,15 @@
         <!-- Stats Grid -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
             <div class="stats-grid rounded-xl p-6 text-center border border-gray-200">
-                <div class="text-3xl font-bold text-purple-600 mb-2">50</div>
+                <div class="text-3xl font-bold text-red-500 mb-2">50</div>
                 <div class="text-gray-600 font-medium">Calibration Periods</div>
             </div>
             <div class="stats-grid rounded-xl p-6 text-center border border-gray-200">
-                <div class="text-3xl font-bold text-indigo-600 mb-2">1000</div>
+                <div class="text-3xl font-bold text-green-500 mb-2">1000</div>
                 <div class="text-gray-600 font-medium">Maximum Periods</div>
             </div>
             <div class="stats-grid rounded-xl p-6 text-center border border-gray-200">
-                <div id="current-selection" class="text-3xl font-bold text-violet-600 mb-2">50</div>
+                <div id="current-selection" class="text-3xl font-bold text-[#cb8700] mb-2">50</div>
                 <div class="text-gray-600 font-medium">Current Selection</div>
             </div>
         </div>

@@ -141,7 +141,8 @@
                 <div class="mb-8">
                     <div class="flex items-center mb-4">
                         <svg class="w-6 h-6 text-[#cb8700] mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H9a2 2 0 01-2-2z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                         </svg>
                         <h2 class="text-2xl font-semibold text-[#0b0b0b]">Calibration Quality</h2>
                     </div>
@@ -284,7 +285,7 @@
 
             <!-- Enabled button (hidden initially) -->
             <div id="next-button-container" class="hidden flex justify-between items-center">
-               <p class="text-xl  text-gray-500">Ready for Simulation</p>
+               <p class="text-sm  text-gray-500">Click the next button to proceed to Simulation</p>
               <a href="{% url 'simulation' %}"
                 class="inline-flex items-center gap-2 mt-4 px-4 py-2 font-semibold tracking-wide bg-gradient-to-r from-[#0b0b0b]/20 to-[#0b0b0b]/10 backdrop-blur-xl border border-white/20 text-[#0b0b0b]
                 shadow-[0_4px_20px_rgba(0,0,0,0.4)]
@@ -315,6 +316,95 @@
     </div>
 </div>
 
-<script src="{% static 'Js/slider.js' %}"></script>
+<script> 
+
+
+    
+const slider = document.getElementById("slider");
+const display = document.getElementById("slider-value");
+const qualityLabel = document.getElementById("quality-label");
+const currentQuality = document.getElementById("current-quality");
+const form = document.getElementById("calibration-form");
+const startBtn = document.getElementById("start-calibration-button");
+const processingState = document.getElementById("processing-state");
+const nextButtonContainer = document.getElementById("next-button-container");
+const disabledNext = document.getElementById("next-disabled");
+
+let isSubmitting = false;
+
+// Update quality label dynamically
+function updateQualityLabel(value) {
+    const numValue = parseFloat(value);
+    if (numValue <= 0.30) {
+        qualityLabel.className = "quality-indicator quality-low";
+        qualityLabel.textContent = "Quick Test";
+    } else if (numValue <= 0.70) {
+        qualityLabel.className = "quality-indicator quality-medium";
+        qualityLabel.textContent = "Balanced";
+    } else {
+        qualityLabel.className = "quality-indicator quality-high";
+        qualityLabel.textContent = "High Precision";
+    }
+}
+
+// Show live slider value
+slider.addEventListener("input", function () {
+    const value = parseFloat(this.value).toFixed(2);
+    display.textContent = value;
+    currentQuality.textContent = value;
+    updateQualityLabel(this.value);
+});
+
+// Initialize on load
+updateQualityLabel(slider.value);
+
+// ✅ Only one submit handler
+form.addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    if (isSubmitting) return;
+    isSubmitting = true;
+
+    // UI state
+    startBtn.style.display = "none";
+    processingState.classList.remove("hidden");
+
+    const formData = new FormData(form);
+
+    fetch("{% url 'start_calibration' %}", {
+        method: "POST",
+        body: formData,
+        headers: {
+            "X-Requested-With": "XMLHttpRequest",
+        },
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error("Calibration failed");
+        }
+        return response.text(); // Django currently returns HTML
+    })
+    .then(html => {
+        // Calibration finished
+    processingState.classList.add("hidden");
+    
+    // Show Next button
+    nextButtonContainer.classList.remove("hidden");
+    disabledNext.classList.add("hidden");
+
+    // Optionally: show some results if needed
+    const resultsContainer = document.createElement("div");
+    resultsContainer.innerHTML = html;
+    document.querySelector(".mx-auto").appendChild(resultsContainer);
+    })
+    .catch(err => {
+        alert("Error: " + err.message);
+        startBtn.style.display = "block";
+        processingState.classList.add("hidden");
+        isSubmitting = false;
+    });
+});
+
+</script>
 
 {% endblock %}

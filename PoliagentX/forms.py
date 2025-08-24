@@ -5,6 +5,9 @@ from django.core.exceptions import ValidationError
 import pandas as pd
 import os
 
+
+
+
 def validate_extension(file):
     ext = os.path.splitext(file.name)[1].lower()
     if ext not in ['.xlsx', '.xls']:
@@ -48,7 +51,8 @@ class Uploaded_indicators(forms.Form):
         }),
         validators=[
             validate_extension,
-            lambda f: validate_contains_sheet(f, 'template')
+            lambda f: validate_contains_sheet(f, 'template'),
+        
         ]
     )
     
@@ -92,38 +96,6 @@ class BudgetForm(forms.Form):
                 css_class='bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded mt-4'
             )
         )
-class Uploaded_indicators(forms.Form):
-    government_indicators = forms.FileField(
-        label='Upload file',
-        required=True,
-        widget=forms.ClearableFileInput(attrs={
-            'id': 'file-upload',   # keep the ID for JS
-            'class': 'hidden'
-        }),
-        validators=[
-            validate_extension,
-            lambda f: validate_contains_sheet(f, 'template')
-        ]
-    )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_method = 'post'
-        self.helper.layout = Layout(
-            Field(
-                'government_indicators',   # don’t repeat id here
-                css_class='hidden'
-            ),
-            Submit(
-                'submit',
-                'Upload',
-                css_class='bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded mt-4'
-            )
-        )
-
-
-
 class Uploaded_networks(forms.Form):
     interdependency_network = forms.FileField(
         label='Upload file',
