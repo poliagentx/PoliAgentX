@@ -479,118 +479,214 @@ def start_calibration(request):
 # A custom JSONEncoder class to handle NumPy data types
 class NumpyJSONEncoder(json.JSONEncoder):
     """
-    A custom JSON encoder that handles NumPy data types.
+    A custom JSON encoder that handles NumPy data types and pandas objects.
     This prevents 'TypeError: Object of type int64 is not JSON serializable'
     by converting NumPy integers, floats, and arrays to standard Python types.
     """
     def default(self, obj):
-        # If the object is a NumPy integer type, return its standard integer value.
+        # Handle NumPy integer types (including int64, int32, etc.)
         if isinstance(obj, np.integer):
             return int(obj)
-        # If the object is a NumPy floating-point type, return its standard float value.
+        # Handle NumPy floating-point types (including float64, float32, etc.)
         elif isinstance(obj, np.floating):
+            # Handle NaN values
+            if np.isnan(obj):
+                return None
             return float(obj)
-        # If the object is a NumPy array, return its list representation.
+        # Handle NumPy arrays
         elif isinstance(obj, np.ndarray):
             return obj.tolist()
+        # Handle pandas Series
+        elif isinstance(obj, pd.Series):
+            return obj.tolist()
+        # Handle pandas Timestamp
+        elif isinstance(obj, pd.Timestamp):
+            return obj.isoformat()
+        # Handle pandas NaT (Not a Time)
+        elif pd.isna(obj):
+            return None
+        # Handle numpy bool types
+        elif isinstance(obj, np.bool_):
+            return bool(obj)
+        # Fallback: try to convert to standard Python types
+        elif hasattr(obj, 'item'):  # NumPy scalars have .item() method
+            return obj.item()
+        # Additional debug info - comment out in production
+        else:
+            print(f"DEBUG: Unhandled type in JSON encoder: {type(obj)} - {obj}")
+            # Try to convert to string as last resort
+            try:
+                return str(obj)
+            except:
+                pass
+        
         # Fallback to the base class's default method for all other types.
         return super().default(obj)
-    
 def results(request):
     if request.method == "POST":
+        # Get required file paths from session
         param_excel_path = request.session.get('param_excel_path')
         network_path = request.session.get('network_path')
         budget_path = request.session.get('budget_file_path')
         indicators_path = request.session.get('indicators_path')
 
+        # Validate that all required files are present
         if not all([param_excel_path, network_path, budget_path, indicators_path]):
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'error': 'Missing required files.'}, status=400)
             return HttpResponse("Missing required files.", status=400)
 
-        df_indis = pd.read_excel(indicators_path)
-        N = len(df_indis)
-        I0 = df_indis.I0.values
-        R = df_indis.instrumental
-        qm = df_indis.qm.values
-        rl = df_indis.rl.values
-        indis_index = {code: i for i, code in enumerate(df_indis.indicator_label)}
-        Imax = df_indis.max_value.values
-        Imin = df_indis.min_value.values
+        try:
+            # Load indicators data
+            df_indis = pd.read_excel(indicators_path)
+            N = len(df_indis)
+            I0 = df_indis.I0.values
+            R = df_indis.instrumental
+            qm = df_indis.qm.values
+            rl = df_indis.rl.values
+            indis_index = {code: i for i, code in enumerate(df_indis.indicator_label)}
+            Imax = df_indis.max_value.values
+            Imin = df_indis.min_value.values
 
-        df_params = pd.read_excel(param_excel_path, skiprows=1)
-        alpha = df_params.alpha.values
-        alpha_prime = df_params.alpha_prime.values
-        betas = df_params.beta.values
+            # Load parameters data
+            df_params = pd.read_excel(param_excel_path, skiprows=1)
+            alpha = df_params.alpha.values
+            alpha_prime = df_params.alpha_prime.values
+            betas = df_params.beta.values
 
-        df_net = pd.read_excel(network_path)
-        A = np.zeros((N, N))
-        for _, row in df_net.iterrows():
-            i = indis_index[row.origin]
-            j = indis_index[row.destination]
-            A[i, j] = row.weight
+            # Load network data
+            df_net = pd.read_excel(network_path)
+            A = np.zeros((N, N))
+            for _, row in df_net.iterrows():
+                i = indis_index[row.origin]
+                j = indis_index[row.destination]
+                A[i, j] = row.weight
 
-        T = int(request.POST.get("num_simulations", 50))
+            # Get number of simulation periods from form
+            T = int(request.POST.get("num_simulations", 50))
 
-        df_exp = pd.read_excel(budget_path, sheet_name='template_budget')
-        Bs_retrospective = df_exp.values[:, 1:]
-        Bs = np.tile(Bs_retrospective[:, -1], (T, 1)).T
+            # Load budget data
+            df_exp = pd.read_excel(budget_path, sheet_name='template_budget')
+            Bs_retrospective = df_exp.values[:, 1:]
+            Bs = np.tile(Bs_retrospective[:, -1], (T, 1)).T
 
-        df_rela = pd.read_excel(budget_path, sheet_name='relational_table')
-        B_dict = {
-            indis_index[row.indicator_label]: [p for p in row.values[1:] if pd.notna(p)]
-            for _, row in df_rela.iterrows()
-        }
-
-        goals = np.random.rand(N) * (Imax - I0) + I0
-
-        sample_size = 100
-        outputs = []
-        for _ in range(sample_size):
-            output = run_ppi(I0, alpha, alpha_prime, betas, A=A, Bs=Bs, B_dict=B_dict, T=T, R=R, qm=qm, rl=rl, Imax=Imax, Imin=Imin, G=goals)
-            outputs.append(output)
-
-        tsI, tsC, tsF, tsP, tsS, tsG= zip(*outputs)
-        tsI_hat = np.mean(tsI, axis=0)
-
-        # Build the list of dictionaries
-        df_output_list = []
-        for i, serie in enumerate(tsI_hat):
-            row_dict = {
-                'indicator_label': df_indis.iloc[i].indicator_label,
-                'sdg': df_indis.iloc[i].sdg, # Now handles sdg which may be int64
-                'color': df_indis.iloc[i].color,
-                'goal': goals[i]
+            # Load relational table
+            df_rela = pd.read_excel(budget_path, sheet_name='relational_table')
+            B_dict = {
+                indis_index[row.indicator_label]: [p for p in row.values[1:] if pd.notna(p)]
+                for _, row in df_rela.iterrows()
             }
-            for t, val in enumerate(serie):
-                row_dict[str(t)] = val
-            df_output_list.append(row_dict)
+
+            # Generate random goals
+            goals = np.random.rand(N) * (Imax - I0) + I0
+
+            # Run simulation
+            sample_size = 100
+            outputs = []
+            for _ in range(sample_size):
+                output = run_ppi(I0, alpha, alpha_prime, betas, A=A, Bs=Bs, B_dict=B_dict, 
+                               T=T, R=R, qm=qm, rl=rl, Imax=Imax, Imin=Imin, G=goals)
+                outputs.append(output)
+
+            # Process simulation results
+            tsI, tsC, tsF, tsP, tsS, tsG = zip(*outputs)
+            tsI_hat = np.mean(tsI, axis=0)
+
+            # Build the list of dictionaries for output
+            df_output_list = []
+            for i, serie in enumerate(tsI_hat):
+                # Get the row data and convert types explicitly
+                indicator_row = df_indis.iloc[i]
+                
+                row_dict = {
+                    'indicator_label': str(indicator_row.indicator_label),
+                    'sdg': int(indicator_row.sdg) if pd.notna(indicator_row.sdg) else None,
+                    'color': str(indicator_row.color),
+                    'goal': float(goals[i])
+                }
+                
+                # Add time series data, ensuring all values are floats
+                for t, val in enumerate(serie):
+                    # Handle potential NaN or inf values
+                    if pd.isna(val) or np.isinf(val):
+                        row_dict[str(t)] = None
+                    else:
+                        row_dict[str(t)] = float(val)
+                
+                df_output_list.append(row_dict)
             
-        # FIX: Use the custom NumpyJSONEncoder to handle serialization correctly
-        df_output_json = json.dumps(df_output_list, cls=NumpyJSONEncoder)
+            # Debug: Check data types before JSON serialization
+            # Uncomment the next few lines if you need to debug data types
+            # print("DEBUG: Sample data types in first row:")
+            # if df_output_list:
+            #     for key, value in df_output_list[0].items():
+            #         print(f"  {key}: {type(value)} = {value}")
+                
+            # Serialize data to JSON with custom encoder
+            try:
+                df_output_json = json.dumps(df_output_list, cls=NumpyJSONEncoder)
+            except TypeError as e:
+                print(f"JSON serialization error: {e}")
+                # If custom encoder fails, try with explicit conversion
+                df_output_json = json.dumps(df_output_list, default=str)
 
-        output = BytesIO()
-        df_output_for_excel = pd.DataFrame(df_output_list)
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df_output_for_excel.to_excel(writer, index=False, sheet_name="Simulation_Results")
-        output.seek(0)
-        request.session['excel_data'] = base64.b64encode(output.getvalue()).decode('utf-8')
-        # import pprint
+            # Generate Excel file for download
+            output = BytesIO()
+            df_output_for_excel = pd.DataFrame(df_output_list)
+            with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                df_output_for_excel.to_excel(writer, index=False, sheet_name="Simulation_Results")
+            output.seek(0)
+            request.session['excel_data'] = base64.b64encode(output.getvalue()).decode('utf-8')
 
-        # # Right before context
-        # print("\n=== DEBUG: df_output_list (first 2 rows) ===")
-        # pprint.pprint(df_output_list[:2])  # print only first 2 to avoid spamming logs
-        # print("\n=== DEBUG: df_output_json (truncated) ===")
-        # print(df_output_json[:500])  # first 500 chars
+            # Store simulation results in session for later use
+            request.session['simulation_results'] = {
+                'df_output_list': df_output_list,
+                'df_output_json': df_output_json,
+                'T': T,
+            }
 
-        context = {
-            'df_output_list': df_output_list,
-            'df_output_json': df_output_json,
-            'T': T,
-        }
-        return render(request, "results.html", context)
-
-    return HttpResponse("Please run the simulation first.", status=400)
-
-
+            # Handle AJAX request (from the new template)
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Simulation completed successfully',
+                    'periods': T,
+                    'indicators_count': N,
+                })
+            
+            # Handle regular form submission (fallback or direct access)
+            context = {
+                'df_output_list': df_output_list,
+                'df_output_json': df_output_json,
+                'T': T,
+            }
+            return render(request, "results.html", context)
+            
+        except Exception as e:
+            # Handle any errors that occur during simulation
+            error_message = f"Simulation failed: {str(e)}"
+            
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'error': error_message}, status=500)
+            return HttpResponse(error_message, status=500)
+    
+    # Handle GET requests - show results if they exist in session
+    elif request.method == "GET":
+        simulation_results = request.session.get('simulation_results')
+        
+        if simulation_results:
+            context = {
+                'df_output_list': simulation_results['df_output_list'],
+                'df_output_json': simulation_results['df_output_json'],
+                'T': simulation_results['T'],
+            }
+            return render(request, "results.html", context)
+        else:
+            # No simulation results available, redirect to simulation page
+            return redirect('simulation')
+    
+    # Handle other HTTP methods
+    return HttpResponse("Invalid request method.", status=405)
 
 def download_excel(request):
     excel_data = request.session.get('excel_data')

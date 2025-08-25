@@ -445,7 +445,7 @@ def run_ppi(I0, alphas, alphas_prime, betas, A=None, R=None, bs=None, qm=None, r
             P[relevant_indis] += Bs[i,t]*qs_hat/qs_hat.sum()
             
         # optional assertion that checks for consistency between the total budget and the sum of the allocations
-        # assert abs(P.sum() - Bs[:,t].sum()) < 1e-6, 'unequal budgets ' + str(abs(P.sum() - Bs[:,t].sum()))
+        assert abs(P.sum() - Bs[:,t].sum()) < 1e-6, 'unequal budgets ' + str(abs(P.sum() - Bs[:,t].sum()))
         
         assert np.sum(np.isnan(P)) == 0, 'P has invalid values!'
         assert np.sum(P==0) == 0, 'P has zero values!'

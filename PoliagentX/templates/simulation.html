@@ -88,7 +88,7 @@
         </div>
 
         <!-- Main Simulation Form Card -->
-        <form method="POST" action="{% url 'results' %}">
+        <form id="simulation-form" method="POST" action="{% url 'results' %}">
             {% csrf_token %}
             <div class="simulation-card rounded-2xl p-8 mb-8">
                 <div class="mb-8">
@@ -190,7 +190,7 @@
                                     stroke="currentColor" 
                                     stroke-width="2"/>
                             </svg>
-                            <span id="btn-text">Start Simulation</span>
+                            <span id="btn-text">START SIMULATION</span>
                         </div>
                     </button>
                     
@@ -201,11 +201,8 @@
                         <!-- Spinner + Text -->
                         <div class="flex items-center justify-center mb-2">
                             <div class="animate-spin rounded-full h-5 w-5 border-2 border-t-transparent border-[#0b0b0b] mr-3"></div>
-                            <span>Processing...</span>
+                            <span>PROCESSING...</span>
                         </div>
-
-                        <!-- Processing Bar -->
-  
                     </div>
 
                       <!-- Tailwind custom animation -->
@@ -219,6 +216,26 @@
                 </div>
             </div>
         </form>
+
+        <!-- Disabled button (shown by default) -->
+        <div id="next-disabled" class="flex justify-between items-center bg-white p-6 rounded-lg shadow-sm mt-4">
+            <p class="text-sm text-gray-500 mt-2">Complete simulation to proceed</p>
+            <button disabled class="inline-block px-6 py-2 bg-gray-400 text-white font-semibold rounded cursor-not-allowed">
+                <span class="mr-2">NEXT →</span>
+            </button>
+        </div>
+
+        <!-- Enabled button (hidden initially) -->
+        <div id="next-button-container" class="hidden flex justify-between items-center">
+            <p class="text-sm text-gray-500">Click the next button to proceed to Results</p>
+            <a href="{% url 'results' %}"
+                class="inline-flex items-center gap-2 mt-4 px-4 py-2 font-semibold tracking-wide bg-gradient-to-r from-[#0b0b0b]/20 to-[#0b0b0b]/10 backdrop-blur-xl border border-white/20 text-[#0b0b0b]
+                shadow-[0_4px_20px_rgba(0,0,0,0.4)]
+                hover:shadow-[0_0_20px_rgba(0,255,200,0.6)]
+                transition-all duration-500 ease-in-out">
+                <span class="mr-2">NEXT →</span>
+            </a>
+        </div>
 
         <!-- Stats Grid -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
@@ -238,6 +255,84 @@
     </div>
 </div>
 
-<script src="{% static 'Js/simulation.js' %}"></script>
+<script>
+
+    
+    
+function updateEquivalent(value) {
+    const years = (value / 50) * 10;
+    document.getElementById('time-equivalent').textContent = `Equivalent to ${years.toFixed(1)} years of simulation time`;
+    document.getElementById('current-selection').textContent = value;
+}
+
+// Handle form submission with loading animation and Next button logic
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('simulation-form');
+    const startBtn = document.getElementById('start-btn');
+    const processingState = document.getElementById('processing-state');
+    const nextButtonContainer = document.getElementById('next-button-container');
+    const disabledNext = document.getElementById('next-disabled');
+    const formCard = document.querySelector('.simulation-card');
+    let isSubmitting = false;
+    
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Prevent double submission
+        if (isSubmitting) {
+            return;
+        }
+        
+        isSubmitting = true;
+        
+        // Show processing state immediately
+        startBtn.style.display = 'none';
+        processingState.classList.remove('hidden');
+        processingState.classList.add('fade-in');
+        
+        // Add visual feedback to the card
+        formCard.style.opacity = '0.8';
+        
+        const formData = new FormData(form);
+
+        fetch("{% url 'results' %}", {
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-Requested-With": "XMLHttpRequest",
+            },
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Simulation failed");
+            }
+            return response.text(); // Django returns HTML
+        })
+        .then(html => {
+            // Simulation finished
+            processingState.classList.add("hidden");
+            
+            // Show Next button
+            nextButtonContainer.classList.remove("hidden");
+            disabledNext.classList.add("hidden");
+
+            // Optionally: show some results if needed
+            const resultsContainer = document.createElement("div");
+            resultsContainer.innerHTML = html;
+            document.querySelector(".mx-auto").appendChild(resultsContainer);
+        })
+        .catch(err => {
+            alert("Error: " + err.message);
+            startBtn.style.display = "block";
+            processingState.classList.add("hidden");
+            formCard.style.opacity = '1';
+            isSubmitting = false;
+        });
+    });
+});
+
+
+</script>
+
 
 {% endblock %}

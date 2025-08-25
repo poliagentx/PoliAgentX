@@ -3,7 +3,7 @@ import pandas as pd
 def expand_budget(data_exp):
     years = [col for col in data_exp.columns if str(col).isdigit()]
     periods = len(years)
-    T = 1 * periods
+    T = 3 * periods
     t = int(T / periods)
     new_rows = []
     for _, row in data_exp.iterrows():

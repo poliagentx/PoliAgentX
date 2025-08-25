@@ -1,16 +1,16 @@
 
-  // Enhanced JavaScript with animated SVG and AJAX - consistent with indicators template
   document.addEventListener('DOMContentLoaded', function() {
     class BudgetUploader {
       constructor() {
         this.elements = {
-          // Radio buttons
-          manualRadio: document.getElementById('radio-manual'),
-          uploadRadio: document.getElementById('radio-upload'),
+          // Tabs
+          uploadTab: document.getElementById('upload-tab'),
+          manualTab: document.getElementById('manual-tab'),
           
           // Sections
-          manualSection: document.getElementById('manual-input-section'),
-          uploadSection: document.getElementById('file-upload-section'),
+          uploadSection: document.getElementById('upload-section'),
+          manualSection: document.getElementById('manual-section'),
+          methodDivider: document.getElementById('method-divider'),
           
           // Forms
           manualForm: document.getElementById('budget-form'),
@@ -23,7 +23,6 @@
           
           // Upload UI
           dropZone: document.getElementById('drop-zone'),
-          chooseFileBtn: document.getElementById('choose-file-btn'),
           uploadIcon: document.getElementById('upload-icon'),
           uploadText: document.getElementById('upload-text'),
           uploadProgress: document.getElementById('upload-progress'),
@@ -38,6 +37,7 @@
         };
 
         this.state = {
+          activeMethod: 'upload', // 'upload' or 'manual'
           uploading: false,
           submitting: false,
           uploadSuccess: false,
@@ -50,13 +50,27 @@
       init() {
         this.setupEventListeners();
         this.addAnimatedCSS();
-        this.toggleSections();
+        this.updateTabUI();
         this.checkInitialState();
       }
 
       addAnimatedCSS() {
         const style = document.createElement('style');
         style.textContent = `
+          .tab-active {
+            background-color: white;
+            color: #cb8700;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          }
+          .tab-inactive {
+            background-color: transparent;
+            color: #6b7280;
+          }
+          .section-disabled {
+            opacity: 0.5;
+            pointer-events: none;
+            filter: grayscale(50%);
+          }
           .checkmark-circle {
             stroke-dasharray: 166;
             stroke-dashoffset: 166;
@@ -92,47 +106,54 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
           }
+          .slide-fade-in {
+            animation: slideFadeIn 0.3s ease-out forwards;
+          }
+          @keyframes slideFadeIn {
+            from { 
+              opacity: 0; 
+              transform: translateY(-10px); 
+            }
+            to { 
+              opacity: 1; 
+              transform: translateY(0); 
+            }
+          }
         `;
         document.head.appendChild(style);
       }
 
       setupEventListeners() {
-        // Radio button changes
-        this.elements.manualRadio?.addEventListener('change', () => {
-          this.toggleSections();
-          this.clearMessages();
-          if (this.isManualInputValid()) {
-            this.submitManualForm();
-          }
+        // Tab switching
+        this.elements.uploadTab?.addEventListener('click', () => {
+          this.switchMethod('upload');
         });
 
-        this.elements.uploadRadio?.addEventListener('change', () => {
-          this.toggleSections();
-          this.clearMessages();
-          if (this.elements.fileInput?.files?.length > 0) {
-            this.handleFileSelect(this.elements.fileInput.files);
-          }
+        this.elements.manualTab?.addEventListener('click', () => {
+          this.switchMethod('manual');
         });
 
         // Manual form inputs
         this.elements.budgetInput?.addEventListener('input', () => {
-          if (this.elements.manualRadio?.checked && this.isManualInputValid()) {
+          if (this.state.activeMethod === 'manual' && this.isManualInputValid()) {
             this.submitManualForm();
           }
         });
 
         this.elements.inflationInput?.addEventListener('input', () => {
-          if (this.elements.manualRadio?.checked && this.isManualInputValid()) {
+          if (this.state.activeMethod === 'manual' && this.isManualInputValid()) {
             this.submitManualForm();
           }
         });
 
         // File input
         this.elements.fileInput?.addEventListener('change', (e) => {
-          this.handleFileSelect(e.target.files);
+          if (this.state.activeMethod === 'upload') {
+            this.handleFileSelect(e.target.files);
+          }
         });
 
-        // Drag and drop
+        // Drag and drop (only for upload method)
         this.setupDragAndDrop();
 
         // Navigation
@@ -141,27 +162,84 @@
         });
       }
 
-      toggleSections() {
-        if (this.elements.manualRadio?.checked) {
-          this.show(this.elements.manualSection);
-          this.hide(this.elements.uploadSection);
-        } else if (this.elements.uploadRadio?.checked) {
-          this.hide(this.elements.manualSection);
-          this.show(this.elements.uploadSection);
+      switchMethod(method) {
+        if (this.state.activeMethod === method) return;
+        
+        // Clear any previous success states
+        this.clearSuccessStates();
+        this.clearMessages();
+        
+        this.state.activeMethod = method;
+        this.updateTabUI();
+        this.updateSectionVisibility();
+        
+        // Reset next button state
+        this.disableNext();
+        
+        // Auto-submit if switching to manual and inputs are valid
+        if (method === 'manual' && this.isManualInputValid()) {
+          setTimeout(() => this.submitManualForm(), 100);
         }
       }
 
-      show(element) {
-        element?.classList.remove('hidden');
+      updateTabUI() {
+        // Update upload tab
+        if (this.state.activeMethod === 'upload') {
+          this.elements.uploadTab?.classList.remove('tab-inactive');
+          this.elements.uploadTab?.classList.add('tab-active');
+        } else {
+          this.elements.uploadTab?.classList.remove('tab-active');
+          this.elements.uploadTab?.classList.add('tab-inactive');
+        }
+
+        // Update manual tab
+        if (this.state.activeMethod === 'manual') {
+          this.elements.manualTab?.classList.remove('tab-inactive');
+          this.elements.manualTab?.classList.add('tab-active');
+        } else {
+          this.elements.manualTab?.classList.remove('tab-active');
+          this.elements.manualTab?.classList.add('tab-inactive');
+        }
       }
 
-      hide(element) {
-        element?.classList.add('hidden');
+      updateSectionVisibility() {
+        if (this.state.activeMethod === 'upload') {
+          this.show(this.elements.uploadSection);
+          this.hide(this.elements.manualSection);
+          this.elements.uploadSection?.classList.add('slide-fade-in');
+        } else {
+          this.hide(this.elements.uploadSection);
+          this.show(this.elements.manualSection);
+          this.elements.manualSection?.classList.add('slide-fade-in');
+        }
+      }
+
+      clearSuccessStates() {
+        this.state.uploadSuccess = false;
+        this.state.manualSuccess = false;
+        
+        // Reset upload UI
+        if (this.elements.uploadIcon) {
+          this.elements.uploadIcon.innerHTML = `
+            <svg class="w-full h-full" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+            </svg>
+          `;
+        }
+        if (this.elements.uploadText) {
+          this.elements.uploadText.textContent = 'Drop your file here or click to browse';
+        }
+        
+        // Reset file input
+        if (this.elements.fileInput) {
+          this.elements.fileInput.value = '';
+        }
       }
 
       clearMessages() {
-        const messages = document.querySelectorAll('.success-message, .error-message');
-        messages.forEach(msg => msg.remove());
+        if (this.elements.statusMessages) {
+          this.elements.statusMessages.innerHTML = '';
+        }
       }
 
       checkInitialState() {
@@ -171,8 +249,8 @@
           this.enableNext();
         }
         
-        // Auto-submit if manual inputs are already valid
-        if (this.elements.manualRadio?.checked && this.isManualInputValid()) {
+        // Auto-submit if manual inputs are already valid and manual method is active
+        if (this.state.activeMethod === 'manual' && this.isManualInputValid()) {
           this.submitManualForm();
         }
       }
@@ -190,7 +268,7 @@
       }
 
       async submitManualForm() {
-        if (this.state.submitting) return;
+        if (this.state.submitting || this.state.activeMethod !== 'manual') return;
         
         this.state.submitting = true;
 
@@ -224,42 +302,40 @@
         if (!dropZone) return;
 
         dropZone.addEventListener('dragover', (e) => {
+          if (this.state.activeMethod !== 'upload') return;
           e.preventDefault();
-          dropZone.style.borderColor = '#3b82f6';
-          dropZone.style.backgroundColor = '#eff6ff';
+          dropZone.style.borderColor = '#cb8700';
+          dropZone.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
         });
 
         dropZone.addEventListener('dragleave', () => {
-          dropZone.style.borderColor = '#cb8700';
-          dropZone.style.backgroundColor = 'white';
+          if (this.state.activeMethod !== 'upload') return;
+          dropZone.style.borderColor = 'rgba(203, 135, 0, 0.4)';
+          dropZone.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
         });
 
         dropZone.addEventListener('drop', (e) => {
+          if (this.state.activeMethod !== 'upload') return;
           e.preventDefault();
-          dropZone.style.borderColor = '#cb8700';
-          dropZone.style.backgroundColor = 'white';
+          dropZone.style.borderColor = 'rgba(203, 135, 0, 0.4)';
+          dropZone.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
           
           const files = e.dataTransfer.files;
           if (files && files.length > 0) {
             this.elements.fileInput.files = files;
-            
-            // Switch to upload mode if not already
-            if (!this.elements.uploadRadio?.checked) {
-              this.elements.uploadRadio.checked = true;
-              this.toggleSections();
-            }
-            
             this.handleFileSelect(files);
           }
         });
 
         dropZone.addEventListener('click', () => {
-          this.elements.fileInput?.click();
+          if (this.state.activeMethod === 'upload') {
+            this.elements.fileInput?.click();
+          }
         });
       }
 
       async handleFileSelect(files) {
-        if (!files || files.length === 0) return;
+        if (!files || files.length === 0 || this.state.activeMethod !== 'upload') return;
 
         const file = files[0];
         
@@ -288,7 +364,7 @@
       }
 
       async uploadFile(file) {
-        if (this.state.uploading) return;
+        if (this.state.uploading || this.state.activeMethod !== 'upload') return;
 
         this.state.uploading = true;
         this.updateUploadUI(true);
@@ -383,7 +459,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
           </svg>
         `;
-        this.elements.uploadText.textContent = 'Drop your budget file here';
+        this.elements.uploadText.textContent = 'Drop your file here or click to browse';
         this.showMessage(message, 'error');
       }
 
@@ -391,17 +467,16 @@
         return `
           <div class="checkmark-container w-full h-full flex items-center justify-center">
             <svg class="w-full h-full" viewBox="0 0 52 52">
-           
-
-          <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
-           <path class="checkmark-check" fill="none" stroke="#10b981" stroke-width="3" d="m16 26 6 6 14-14"/>
-
+              <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+              <path class="checkmark-check" fill="none" stroke="#10b981" stroke-width="3" d="m16 26 6 6 14-14"/>
             </svg>
           </div>
         `;
       }
 
       showMessage(text, type) {
+        this.clearMessages(); // Clear existing messages when showing new ones
+        
         const messageEl = document.createElement('div');
         messageEl.className = `fade-in flex items-start p-4 rounded-lg border ${
           type === 'success' ? 'bg-green-50 text-green-800 border-green-200' : 
@@ -426,12 +501,28 @@
 
         this.elements.statusMessages?.appendChild(messageEl);
 
-        setTimeout(() => messageEl?.remove(), 8000);
+        // Auto-remove error messages after 8 seconds, keep success messages
+        if (type === 'error') {
+          setTimeout(() => messageEl?.remove(), 8000);
+        }
       }
 
       enableNext() {
         this.hide(this.elements.nextDisabled);
         this.show(this.elements.nextButtonContainer);
+      }
+
+      disableNext() {
+        this.show(this.elements.nextDisabled);
+        this.hide(this.elements.nextButtonContainer);
+      }
+
+      hide(element) {
+        element?.classList.add('hidden');
+      }
+
+      show(element) {
+        element?.classList.remove('hidden');
       }
 
       getCSRFToken() {
