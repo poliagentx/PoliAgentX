@@ -5,8 +5,11 @@
 
 {% block content %}
 
+
+
+
 <div class="container mx-auto px-4 my-4">
-    <h1 class="text-2xl font-bold text-gray-900 text-center mb-6">Simulation Results</h1>
+    
 
     {% if error %}
         <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative" role="alert">
@@ -14,35 +17,54 @@
         </div>
     {% else %}
      
-
         <div class="bg-white shadow-lg rounded-xl p-6 mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
             <div class="w-full md:flex-grow">
-                <label for="indicator-select" class="block text-sm font-semibold text-gray-700">Select Indicator:</label>
+                <label for="indicator-select" class="block text-sm font-semibold text-gray-700">Select View:</label>
                 <select id="indicator-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                    <option  value="all"  selected>All Indicators Combined</option>
+                    <option value="individual" selected>Individual Indicator Charts</option>
+                    <option value="all">All Indicators Combined</option>
                     {% for row in df_output_list %}
-                        <option value="{{ row.indicator_label }}">{{ row.indicator_label }}</option>
+                        <option value="{{ row.indicator_label }}">{{ row.indicator_label }} Only</option>
                     {% endfor %}
                 </select>
             </div>
             <button 
                 type="button" 
-                class="w-full md:w-auto  px-6 py-2  text-[#f2f2f2]  font-semibold  bg-[#cb8700]  rounded-lg tracking-wide  backdrop-blur-xl border border-white/20  transition-all duration-500 ease-in-out  hover:bg-indigo-700  hover:text-white"
+                class="w-full md:w-auto px-6 py-2 text-[#f2f2f2] font-semibold bg-[#cb8700] rounded-lg tracking-wide backdrop-blur-xl border border-white/20 transition-all duration-500 ease-in-out hover:bg-indigo-700 hover:text-white"
                 onclick="document.getElementById('compareModal').classList.remove('hidden')">
                 Compare Indicators
             </button>
         </div>
 {% endif %}
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="plots-container"></div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="plots-container"></div>
 
+        <!-- Excel Download Section -->
         <div class="bg-white shadow-lg rounded-xl p-6 mt-6">
-            <h4 class="text-xl font-semibold text-gray-800 mb-4">Simulation Table</h4>
-            <div class="overflow-auto max-h-[400px]">
-                <table class="w-full text-sm text-left text-gray-500 rounded-lg overflow-hidden" id="simulation-table">
-                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0" id="table-head"></thead>
-                    <tbody id="table-body"></tbody>
-                </table>
-            </div>
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div>
+                    <h4 class="text-xl font-semibold text-gray-800 mb-2">Download Simulation Data</h4>
+                    <p class="text-gray-600 text-sm">Export the complete simulation results</p>
+                </div>
+                
+                <button 
+                    type="button" 
+                    id="download-excel-btn"
+                    class=" group inline-flex items-center
+                bg-gradient-to-r from-[#0b0b0b]/20 to-[#0b0b0b]/10
+                backdrop-blur-xl border border-white/20
+                text-[#0b0b0b] shadow-[0_4px_20px_rgba(0,0,0,0.4)]
+                hover:shadow-[0_0_20px_rgba(0,255,200,0.6)]
+                transition-all duration-500 ease-in-out gap-2 mt-4 px-6 py-2">
+            <svg class="w-5 h-5 shrink-0 transition-transform duration-300 group-hover:translate-y-0.5"
+              viewBox="0 0 24 24" fill="none" aria-hidden="true"
+              stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5"/>
+            <path d="M7.5 10.5 12 15l4.5-4.5"/>
+            <path d="M12 15V3"/>
+          </svg>
+                  <span>Simulation Data</span>
+        </button>
+        </div>
         </div>
     
 </div>
@@ -60,8 +82,31 @@
                 </svg>
             </button>
         </div>
-        
-<div class="p-6 max-h-80 overflow-y-auto space-y-3">
+
+        <div class="p-6 max-h-80 overflow-y-auto space-y-3">
+            <div class="flex items-center space-x-3 mb-4">
+                <input 
+                    type="radio" 
+                    id="compare-combined" 
+                    name="compare-mode" 
+                    value="combined"
+                    class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                <label for="compare-combined" class="text-sm font-medium text-gray-700">
+                    Combined Chart (All Selected)
+                </label>
+            </div>
+            <div class="flex items-center space-x-3 mb-4">
+                <input 
+                    type="radio" 
+                    id="compare-separate" 
+                    name="compare-mode" 
+                    value="separate"
+                    class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500" checked>
+                <label for="compare-separate" class="text-sm font-medium text-gray-700">
+                    Separate Charts
+                </label>
+            </div>
+            <hr class="my-4">
             <form id="compare-form" class="space-y-2">
                 {% for row in df_output_list %}
                 <div class="flex items-center space-x-3">
@@ -90,7 +135,7 @@
             <button 
                 type="button" 
                 id="compare-submit"
-                class="px-4 py-2  bg-gradient-to-r from-[#0b0b0b]/20 to-[#0b0b0b]/10 backdrop-blur-xl text-black rounded-lg shadow hover:bg-blue-700 transition">
+                class="px-4 py-2 bg-gradient-to-r from-[#0b0b0b]/20 to-[#0b0b0b]/10 backdrop-blur-xl text-black rounded-lg shadow hover:bg-blue-700 transition">
                 Compare Selected
             </button>
         </div>
@@ -98,7 +143,7 @@
 </div>
 
 <script src="https://cdn.plot.ly/plotly-2.27.1.min.js"></script>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -117,7 +162,9 @@ document.addEventListener('DOMContentLoaded', () => {
             row,
             x: timeKeys.map(k => parseInt(k)),
             y: timeKeys.map(k => row[k]),
-            goal: Array(timeKeys.length).fill(row.goal)
+            goal: Array(timeKeys.length).fill(row.goal),
+         
+         
         };
     });
 
@@ -125,9 +172,41 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectEl = document.getElementById('indicator-select');
 
     // --- Helpers ---
-    function makePlotWrapper(id) {
+    function makePlotWrapper(id, title, color, sdg) {
         const plotWrapper = document.createElement('div');
-        plotWrapper.className = 'col-span-1 md:col-span-2 bg-white shadow-lg rounded-xl p-6 h-[600px]';
+        plotWrapper.className = 'bg-white shadow-lg rounded-xl p-6 h-[400px]';
+        
+        // Add title and SDG badge
+        const header = document.createElement('div');
+        header.className = 'flex justify-between items-center mb-4';
+        
+        const titleEl = document.createElement('h3');
+        titleEl.className = 'text-lg font-semibold text-gray-800 truncate';
+        titleEl.textContent = title;
+        titleEl.title = title; // Full title on hover
+        
+        if (sdg) {
+            const badge = document.createElement('span');
+            badge.className = 'inline-block px-2 py-1 text-xs font-semibold text-white rounded-full';
+            badge.style.backgroundColor = color;
+            badge.textContent = 'SDG ' + sdg;
+            header.appendChild(badge);
+        }
+        
+        header.insertBefore(titleEl, header.firstChild);
+        plotWrapper.appendChild(header);
+        
+        const plotDiv = document.createElement('div');
+        plotDiv.id = id;
+        plotDiv.style.height = 'calc(100% - 60px)'; // Account for header
+        plotWrapper.appendChild(plotDiv);
+        container.appendChild(plotWrapper);
+        return plotDiv;
+    }
+
+    function makeLargePlotWrapper(id) {
+        const plotWrapper = document.createElement('div');
+        plotWrapper.className = 'col-span-1 lg:col-span-2 bg-white shadow-lg rounded-xl p-6 h-[600px]';
         const plotDiv = document.createElement('div');
         plotDiv.id = id;
         plotDiv.style.height = '100%';
@@ -137,121 +216,195 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Plots ---
-    function renderPlots(selectedIndicators) {
+    function renderIndividualPlots(selectedIndicators) {
         container.innerHTML = '';
 
-        if (selectedIndicators.length === 1) {
-            const label = selectedIndicators[0];
+        selectedIndicators.forEach(label => {
             const dataObj = indicatorData[label];
-            const plotDiv = makePlotWrapper(`plot-${label.replace(/[^a-zA-Z0-9-_]/g,'')}`);
-
-            // Add SDG badge
-            const badge = document.createElement('span');
-            badge.className = 'inline-block px-3 py-1 text-xs font-semibold text-white rounded-full mb-2';
-            badge.style.backgroundColor = dataObj.row.color;
-            badge.textContent = 'SDG ' + dataObj.row.sdg;
-            plotDiv.parentNode.insertBefore(badge, plotDiv);
+            const plotDiv = makePlotWrapper(
+                `plot-${label.replace(/[^a-zA-Z0-9-_]/g,'')}`, 
+                label, 
+                dataObj.row.color, 
+                dataObj.row.sdg
+            );
 
             Plotly.newPlot(plotDiv, [
-                { x: dataObj.x, y: dataObj.y, mode: 'lines+markers', name: label, line: { color: dataObj.row.color, width: 3 } },
-                { x: dataObj.x, y: dataObj.goal, mode: 'lines', name: 'Goal', line: { color: '#000', width: 2, dash: 'dash' } }
+                { 
+                    x: dataObj.x, 
+                    y: dataObj.y, 
+                    mode: 'lines+markers', 
+                    name: 'Value', 
+                    line: { color: dataObj.row.color, width: 3 },
+                    marker: { size: 6 }
+                }
             ], {
-                title: `Indicator: ${label}`,
-                xaxis: { title: 'Simulation Periods' },
-                yaxis: { title: 'Indicator Level' },
-                legend: { orientation: 'h', y: -0.2 }
-            }, { responsive: true });
-
-        } else {
-            const plotDiv = makePlotWrapper('combined-plot');
-            const traces = selectedIndicators.flatMap(label => {
-                const d = indicatorData[label];
-                return [
-                    { x: d.x, y: d.y, mode: 'lines+markers', name: label, line: { color: d.row.color, width: 3 } },
-                    { x: d.x, y: d.goal, mode: 'lines', name: `${label} Goal`, line: { color: d.row.color, width: 2, dash: 'dot' } }
-                ];
+                 xaxis: {title: {  text: 'Time',font: {size: 12,family: 'Roboto, sans-serif',color: '#0b0b0b'},standoff: 10}},
+                 yaxis: {title: { text: 'Indicator Level',font: {  size: 12,   family: 'Roboto, sans-serif', color: '#0b0b0b'},standoff: 10}},
+                legend: { 
+                    orientation: 'h', 
+                    y: -0.15,
+                    x: 0.5,
+                    xanchor: 'center',
+                    font: { size: 10 }
+                },
+                margin: { l: 60, r: 20, t: 20, b: 60 },
+                font: { size: 11 }
+            }, { 
+                responsive: true,
+                displayModeBar: false 
             });
-
-            Plotly.newPlot(plotDiv, traces, {
-                title: 'Selected Indicators Comparison',
-                xaxis: { title: 'Simulation Periods' },
-                yaxis: { title: 'Indicator Level' },
-                legend: { orientation: 'h', y: -0.2 }
-            }, { responsive: true });
-        }
+        });
     }
 
-    // --- Table ---
-    function renderTable(selectedIndicators) {
-        const thead = document.getElementById('table-head');
-        const tbody = document.getElementById('table-body');
-        thead.innerHTML = '';
-        tbody.innerHTML = '';
+    function renderCombinedPlot(selectedIndicators) {
+        container.innerHTML = '';
+        const plotDiv = makeLargePlotWrapper('combined-plot');
+        
+        const traces = selectedIndicators.map(label => {
+            const d = indicatorData[label];
+            return { 
+                x: d.x, 
+                y: d.y, 
+                mode: 'lines+markers', 
+                name: label, 
+                line: { color: d.row.color, width: 3 },
+                marker: { size: 6 }
+            };
+        });
 
-        let html = '';
-        if (selectedIndicators.length === allIndicators.length) {
-            const headerRow = ['Time', ...allIndicators];
-            thead.innerHTML = `<tr class="bg-gray-100">${headerRow.map(h => `<th class="px-6 py-3">${h}</th>`).join('')}</tr>`;
-
-            indicatorData[allIndicators[0]].x.forEach((t, idx) => {
-                html += `<tr class="bg-white border-b hover:bg-gray-50"><td class="px-6 py-4 font-medium">${t}</td>` +
-                        allIndicators.map(label => {
-                            const { y, row } = indicatorData[label];
-                            return `<td class="px-6 py-4" style="background:${row.color};color:white;" title="SDG ${row.sdg}: ${y[idx].toFixed(6)}">${y[idx].toFixed(6)}</td>`;
-                        }).join('') + `</tr>`;
-            });
-        } else if (selectedIndicators.length > 1) {
-            const headerRow = ['Time', ...selectedIndicators.flatMap(l => [`${l} Value`, `${l} Goal`])];
-            thead.innerHTML = `<tr class="bg-gray-100">${headerRow.map(h => `<th class="px-6 py-3">${h}</th>`).join('')}</tr>`;
-
-            indicatorData[selectedIndicators[0]].x.forEach((t, idx) => {
-                html += `<tr class="bg-white border-b hover:bg-gray-50"><td class="px-6 py-4 font-medium">${t}</td>` +
-                        selectedIndicators.map(label => {
-                            const { y, goal, row } = indicatorData[label];
-                            return `<td class="px-6 py-4" style="background:${row.color};color:white;" title="SDG ${row.sdg}: ${y[idx].toFixed(6)}">${y[idx].toFixed(6)}</td>` +
-                                   `<td class="px-6 py-4" title="Goal: ${goal[idx].toFixed(4)}">${goal[idx].toFixed(4)}</td>`;
-                        }).join('') + `</tr>`;
-            });
-        } else {
-            const label = selectedIndicators[0];
-            const { x, y, goal, row } = indicatorData[label];
-            thead.innerHTML = `<tr class="bg-gray-100"><th class="px-6 py-3">Time</th><th class="px-6 py-3">Value</th><th class="px-6 py-3">Goal</th></tr>`;
-            x.forEach((t, idx) => {
-                html += `<tr class="bg-white border-b hover:bg-gray-50">
-                    <td class="px-6 py-4 font-medium">${t}</td>
-                    <td class="px-6 py-4" style="background:${row.color};color:white;" title="SDG ${row.sdg}: ${y[idx].toFixed(6)}">${y[idx].toFixed(6)}</td>
-                    <td class="px-6 py-4" title="Goal: ${goal[idx].toFixed(6)}">${goal[idx].toFixed(6)}</td>
-                </tr>`;
-            });
-        }
-        tbody.innerHTML = html;
+        Plotly.newPlot(plotDiv, traces, {
+            title: 'Selected Indicators Comparison',
+            xaxis: {title: {  text: 'Time',font: {size: 12,family: 'Roboto, sans-serif',color: '#0b0b0b'},standoff: 10}},
+            yaxis: {title: { text: 'Indicator Level',font: {  size: 12,   family: 'Roboto, sans-serif', color: '#0b0b00b'},standoff: 10}},
+            legend: { orientation: 'h', y: -0.2 }
+        }, { responsive: true });
     }
 
-    // --- Initial render ---
-    renderPlots(allIndicators);
-    renderTable(allIndicators);
+    function renderSinglePlot(label) {
+        container.innerHTML = '';
+        const dataObj = indicatorData[label];
+        const plotDiv = makeLargePlotWrapper(`plot-${label.replace(/[^a-zA-Z0-9-_]/g,'')}`);
+
+        // Add SDG badge
+        const badge = document.createElement('span');
+        badge.className = 'inline-block px-3 py-1 text-xs font-semibold text-white rounded-full mb-2';
+        badge.style.backgroundColor = dataObj.row.color;
+        badge.textContent = 'SDG ' + dataObj.row.sdg;
+        plotDiv.parentNode.insertBefore(badge, plotDiv);
+
+        Plotly.newPlot(plotDiv, [
+            { 
+                x: dataObj.x, 
+                y: dataObj.y, 
+                mode: 'lines+markers', 
+                name: label, 
+                line: { color: dataObj.row.color, width: 3 } 
+            }
+        ], {
+            title: `Indicator: ${label}`,
+            xaxis: {title: {  text: 'Time',font: {size: 12,family: 'Roboto, sans-serif',color: '#0b0b0b'},standoff: 10}},
+            yaxis: {title: { text: 'Indicator Level',font: {  size: 12,   family: 'Roboto, sans-serif', color: '#0b0b0b'},standoff: 10}},
+            legend: { orientation: 'h', y: -0.2 }
+        }, { responsive: true });
+    }
+
+    // --- Excel Download Function ---
+    function downloadExcel() {
+        // Create workbook
+        const wb = XLSX.utils.book_new();
+        
+        // Create main data worksheet
+        const wsData = [];
+        
+        // Add headers
+        const headers = ['Time', ...allIndicators];
+        wsData.push(headers);
+        
+        // Add data rows
+        indicatorData[allIndicators[0]].x.forEach((time, idx) => {
+            const row = [time];
+            allIndicators.forEach(indicator => {
+                row.push(indicatorData[indicator].y[idx]);
+            });
+            wsData.push(row);
+        });
+        
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        XLSX.utils.book_append_sheet(wb, ws, "Simulation Data");
+        
+        // Create metadata worksheet
+        const wsMetaData = [];
+        wsMetaData.push(['Indicator', 'SDG', 'Color', 'Goal','Name']);
+        
+        allIndicators.forEach(indicator => {
+            const data = indicatorData[indicator];
+            wsMetaData.push([
+                indicator,
+                data.row.sdg || 'N/A',
+                data.row.color || 'N/A',
+                data.row.goal || 'N/A'
+            ]);
+        });
+        
+        const wsMeta = XLSX.utils.aoa_to_sheet(wsMetaData);
+        XLSX.utils.book_append_sheet(wb, wsMeta, "Indicator Metadata");
+        
+        // Generate filename with timestamp
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+        const filename = `simulation_results_${timestamp}.xlsx`;
+        
+        // Download file
+        XLSX.writeFile(wb, filename);
+        
+        // Show success message (optional)
+        const btn = document.getElementById('download-excel-btn');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            Downloaded!
+        `;
+        btn.classList.add('bg-green-500');
+        
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.classList.remove('bg-green-500');
+        }, 2000);
+    }
+
+    // --- Initial render (Individual plots by default) ---
+    renderIndividualPlots(allIndicators);
 
     // Dropdown
     selectEl.addEventListener('change', () => {
         const val = selectEl.value;
-        if (val === 'all') {
-            renderPlots(allIndicators);
-            renderTable(allIndicators);
+        if (val === 'individual') {
+            renderIndividualPlots(allIndicators);
+        } else if (val === 'all') {
+            renderCombinedPlot(allIndicators);
         } else {
-            renderPlots([val]);
-            renderTable([val]);
+            renderSinglePlot(val);
         }
     });
 
     // Compare Modal
     document.getElementById('compare-submit').addEventListener('click', () => {
         const checked = [...document.querySelectorAll('.compare-checkbox:checked')].map(c => c.value);
+        const mode = document.querySelector('input[name="compare-mode"]:checked').value;
+        
         if (checked.length > 0) {
-            renderPlots(checked);
-            renderTable(checked);
+            if (mode === 'combined') {
+                renderCombinedPlot(checked);
+            } else {
+                renderIndividualPlots(checked);
+            }
             document.getElementById('compareModal').classList.add('hidden');
         }
     });
+
+    // Excel Download Event Listener
+    document.getElementById('download-excel-btn').addEventListener('click', downloadExcel);
 });
 </script>
 

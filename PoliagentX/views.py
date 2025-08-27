@@ -21,7 +21,8 @@ import numpy as np
 import tempfile
 import matplotlib.pyplot as plt
 from openpyxl.utils.dataframe import dataframe_to_rows
-import plotly.graph_objects as go
+from scipy.stats import linregress
+
 
 def upload_indicators(request):
     if request.method == 'POST':
@@ -124,12 +125,12 @@ def upload_indicators(request):
             # If normal form POST → Django messages
             messages.success(request, "Validation successful")
             return render(request, 'indicators.html', {'form': Uploaded_indicators()})
-
+            
         # Invalid form
         if request.headers.get("x-requested-with") == "XMLHttpRequest":
             return JsonResponse({"success": False, "message": "Invalid form submission"})
         return render(request, 'indicators.html', {'form': form})
-
+        
     # GET request
     return render(request, 'indicators.html', {'form': Uploaded_indicators()})
 
@@ -142,6 +143,7 @@ def budgets_page(request):
             return JsonResponse({"success": False, "message": "Indicators file is missing."})
         messages.error(request, "Indicators file is missing. Please upload it first.")
         return redirect('upload_indicators')
+    
 
     allocation = get_sdg_allocation_from_file(indicators_path)
     budget_form = BudgetForm()
@@ -353,7 +355,53 @@ def upload_network(request):
 
        
 def simulation(request):
-    return render(request,'simulation.html')
+   
+    try:
+        # Get indicators path from session to calculate data_time
+        indicators_path = request.session.get('indicators_path')
+        
+        if indicators_path:
+            # Load indicators data to get the time columns
+            df_indis = pd.read_excel(indicators_path)
+            data_time1 = [col for col in df_indis.columns if str(col).isdigit()]
+            data_time = len(data_time1)
+            T = int(request.POST.get("num_simulations", 50))
+            # Calculate t1 and t2 based on the same logic as in results view
+            years_equivalent=(T*data_time)/50
+            t1=round(250/data_time,2)
+            t2=round(1000/data_time,2)  # For 5-year simulation (25 periods)
+             # For 20-year simulation (100 periods)
+            
+            # Calculate years equivalent for default value (50 periods)
+        
+            
+        else:
+            # Default values if no indicators file is loaded
+            t1 = 25
+            t2 = 100
+            years_equivalent = 10
+            data_time = 50
+        
+        context = {
+            't1': t1,
+            't2': t2,
+            'years_equivalent': years_equivalent,
+            'data_time': data_time,
+        }
+        
+        return render(request, 'simulation.html', context)
+        
+    except Exception as e:
+        # Handle errors gracefully
+        context = {
+            't1': 25,  # Default fallback values
+            't2': 100,
+            'years_equivalent': 10,
+            'data_time': 50,
+        }
+        return render(request, 'simulation.html', context)
+
+
 def calibration(request):
     return render(request,'calibration.html')
 
@@ -522,6 +570,7 @@ class NumpyJSONEncoder(json.JSONEncoder):
         
         # Fallback to the base class's default method for all other types.
         return super().default(obj)
+    
 def results(request):
     if request.method == "POST":
         # Get required file paths from session
@@ -564,7 +613,7 @@ def results(request):
 
             # Get number of simulation periods from form
             T = int(request.POST.get("num_simulations", 50))
-
+        
             # Load budget data
             df_exp = pd.read_excel(budget_path, sheet_name='template_budget')
             Bs_retrospective = df_exp.values[:, 1:]
@@ -579,7 +628,7 @@ def results(request):
 
             # Generate random goals
             goals = np.random.rand(N) * (Imax - I0) + I0
-
+            request.session['goals'] = goals
             # Run simulation
             sample_size = 100
             outputs = []
@@ -587,10 +636,14 @@ def results(request):
                 output = run_ppi(I0, alpha, alpha_prime, betas, A=A, Bs=Bs, B_dict=B_dict, 
                                T=T, R=R, qm=qm, rl=rl, Imax=Imax, Imin=Imin, G=goals)
                 outputs.append(output)
-
+ 
+ 
+            request.session['ppi_outputs'] = outputs
             # Process simulation results
             tsI, tsC, tsF, tsP, tsS, tsG = zip(*outputs)
             tsI_hat = np.mean(tsI, axis=0)
+            
+           
 
             # Build the list of dictionaries for output
             df_output_list = []
@@ -600,9 +653,11 @@ def results(request):
                 
                 row_dict = {
                     'indicator_label': str(indicator_row.indicator_label),
+                    'indicator_name': str(indicator_row.indicator_name),
                     'sdg': int(indicator_row.sdg) if pd.notna(indicator_row.sdg) else None,
                     'color': str(indicator_row.color),
                     'goal': float(goals[i])
+                    
                 }
                 
                 # Add time series data, ensuring all values are floats
@@ -614,21 +669,16 @@ def results(request):
                         row_dict[str(t)] = float(val)
                 
                 df_output_list.append(row_dict)
-            
-            # Debug: Check data types before JSON serialization
-            # Uncomment the next few lines if you need to debug data types
-            # print("DEBUG: Sample data types in first row:")
-            # if df_output_list:
-            #     for key, value in df_output_list[0].items():
-            #         print(f"  {key}: {type(value)} = {value}")
                 
-            # Serialize data to JSON with custom encoder
+
             try:
                 df_output_json = json.dumps(df_output_list, cls=NumpyJSONEncoder)
+                df_output_json = json.dumps(df_output_list, default=str)
+               
             except TypeError as e:
                 print(f"JSON serialization error: {e}")
                 # If custom encoder fails, try with explicit conversion
-                df_output_json = json.dumps(df_output_list, default=str)
+              
 
             # Generate Excel file for download
             output = BytesIO()
@@ -637,12 +687,14 @@ def results(request):
                 df_output_for_excel.to_excel(writer, index=False, sheet_name="Simulation_Results")
             output.seek(0)
             request.session['excel_data'] = base64.b64encode(output.getvalue()).decode('utf-8')
-
+            
+            
             # Store simulation results in session for later use
             request.session['simulation_results'] = {
                 'df_output_list': df_output_list,
                 'df_output_json': df_output_json,
                 'T': T,
+                
             }
 
             # Handle AJAX request (from the new template)
@@ -659,6 +711,7 @@ def results(request):
                 'df_output_list': df_output_list,
                 'df_output_json': df_output_json,
                 'T': T,
+                
             }
             return render(request, "results.html", context)
             
@@ -679,6 +732,7 @@ def results(request):
                 'df_output_list': simulation_results['df_output_list'],
                 'df_output_json': simulation_results['df_output_json'],
                 'T': simulation_results['T'],
+                
             }
             return render(request, "results.html", context)
         else:
@@ -688,17 +742,132 @@ def results(request):
     # Handle other HTTP methods
     return HttpResponse("Invalid request method.", status=405)
 
+
+
+def another_results(request):
+    if request.method == "POST":
+        # Load session data
+        outputs_json = request.session.get('ppi_outputs')
+        goals = request.session.get('goals')
+        indicators_path = request.session.get('indicators_path')
+        
+        if not all([outputs_json, goals, indicators_path]):
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'error': 'Missing required files.'}, status=400)
+            return HttpResponse("Missing required files.", status=400)
+
+        try:
+            # Decode stored outputs (list of tuples)
+            outputs = json.loads(outputs_json)
+
+            # Read indicators sheet
+            df_indis = pd.read_excel(indicators_path)
+            N = len(df_indis)
+
+            # Unpack trajectories
+            tsI, tsC, tsF, tsP, tsS, tsG = zip(*outputs)
+
+            # Average across simulations
+            tsC_hat = np.mean(tsC, axis=0)  # shape: (N, T)
+            T = tsC_hat.shape[1]
+
+            # Build result list
+            df_output_list1 = []
+            for i, serie in enumerate(tsC_hat):
+                indicator_row = df_indis.iloc[i]
+                row_dict = {
+                    'indicator_label': str(indicator_row.indicator_label),
+                    'indicator_name': str(indicator_row.indicator_name),
+                    'sdg': int(indicator_row.sdg) if pd.notna(indicator_row.sdg) else None,
+                    'color': str(indicator_row.color),
+                    'goal': float(goals[i])
+                }
+                for t, val in enumerate(serie):
+                    row_dict[str(t)] = None if pd.isna(val) or np.isinf(val) else float(val)
+                df_output_list1.append(row_dict)
+
+            # Convert to JSON
+            df_output_json1 = json.dumps(df_output_list1, cls=NumpyJSONEncoder)
+            print(df_output_json1)
+            # Save Excel to session (base64 encoded)
+            output = BytesIO()
+            df_output_for_excel = pd.DataFrame(df_output_list1)
+            with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                df_output_for_excel.to_excel(writer, index=False, sheet_name="Simulation_Results")
+            output.seek(0)
+            request.session['excel_data'] = base64.b64encode(output.getvalue()).decode('utf-8')
+
+            # Store results in session
+            request.session['simulation_results'] = {
+                'df_output_list1': df_output_list1,
+                'df_output_json1': df_output_json1,
+                'T': T,
+            }
+
+            # Handle AJAX
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Simulation completed successfully',
+                    'periods': T,
+                    'indicators_count': N,
+                })
+
+            # Regular page render
+            context = {
+                'df_output_list1': df_output_list1,
+                'df_output_json1': df_output_json1,
+                'T': T,
+            }
+            return render(request, "results.html", context)
+
+        except Exception as e:
+            error_message = f"Simulation failed: {str(e)}"
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'error': error_message}, status=500)
+            return HttpResponse(error_message, status=500)
+
+ # Handle GET requests - show results if they exist in session
+    elif request.method == "GET":
+        simulation_results = request.session.get('simulation_results')
+        
+        if simulation_results:
+            context = {
+                'df_output_list1': simulation_results['df_output_list1'],
+                'df_output_json1': simulation_results['df_output_json1'],
+                'T': simulation_results['T'],
+                
+            }
+            return render(request, "results.html", context)
+        else:
+            # No simulation results available, redirect to simulation page
+            return redirect('simulation')
+    
+    # Handle other HTTP methods
+    return HttpResponse("Invalid request method.", status=405)
+
+    
+    
+
+
+from django.http import HttpResponse
+
 def download_excel(request):
     excel_data = request.session.get('excel_data')
     if not excel_data:
         return HttpResponse("No Excel file available.", status=400)
 
     response = HttpResponse(
-        excel_data,
+        excel_data,  # this must be bytes
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
     response['Content-Disposition'] = 'attachment; filename="simulation_results.xlsx"'
+    
+    # optional: clear session so it doesn’t stay forever
+    # del request.session['excel_data']
+
     return response
+
 
 def download_plots_excel(request):
     df_output = request.session.get('df_output')
@@ -721,7 +890,3 @@ def download_plots_excel(request):
     )
     response['Content-Disposition'] = 'attachment; filename="all_plots_data.xlsx"'
     return response
-
-
-
-

@@ -42,21 +42,6 @@
             rgba(248, 250, 252, 0.8) 100%);
     }
     
-    
-    
-    .fade-out {
-        opacity: 0;
-        transition: opacity 0.5s ease-in-out;
-    }
-    
-    .fade-in {
-        opacity: 1;
-        transition: opacity 0.5s ease-in-out;
-    }
-    
- 
-    
-
     .fade-out {
         opacity: 0;
         transition: opacity 0.5s ease-in-out;
@@ -99,7 +84,11 @@
                         </svg>
                         <h2 class="text-2xl font-semibold text-gray-800">Simulation Parameters</h2>
                     </div>
-                    <p class="text-gray-600 mb-6">Understanding simulation periods and time equivalence</p>
+                    <p class="text-gray-600 mb-6">PoliagentX always divides the time span into 50 'simulation periods'
+Where these simulation periods give the agents inside the model time to learn. If your data spans 10 years,
+1 simulation period of the simulation will be equal to 10 ÷ 50 = 2.4 months
+So you use that figure to tell the model how many future simulation periods it should simulate
+Hence if you want to simulate 5 years into the future you would specify 25 simulation periods</p>
                 </div>
 <!-- Time Equivalence Guide -->
                 <div class="glass-card rounded-xl p-6 mb-8">
@@ -107,15 +96,15 @@
                     <div class="space-y-3 text-gray-600">
                         <div class="flex items-center">
                             <span class="w-2 h-2 bg-black rounded-full mr-3"></span>
-                            <span>Calibration baseline: <span class="font-semibold text-[#c88b05ff]">50 periods</span> <span class="font-semibold"></span></span>
+                            <span>Simulation baseline: <span class="font-semibold text-[#c88b05ff]">50 periods</span> <span class="font-semibold"></span></span>
                         </div>
                         <div class="flex items-center">
                             <span class="w-2 h-2 bg-black rounded-full mr-3"></span>
-                            <span>For 5-year simulation: <span class="font-semibold text-green-500">25 periods</span></span>
+                            <span>For 5-year simulation: <span class="font-semibold text-green-500">{{ t1 }} periods</span></span>
                         </div>
                         <div class="flex items-center">
                             <span class="w-2 h-2 bg-black rounded-full mr-3"></span>
-                            <span>For 20-year simulation: <span class="font-semibold text-[#cb8700]">100 periods</span></span>
+                            <span>For 20-year simulation: <span class="font-semibold text-[#cb8700]">{{ t2 }} periods</span></span>
                         </div>
                         <div class="flex items-center">
                             <span class="w-2 h-2 bg-black rounded-full mr-3"></span>
@@ -138,9 +127,9 @@
                         <div>
                             <h4 class="font-semibold text-[#0b0b0b] mb-2">Recommendation:</h4>
                             <p class="text-gray-500 leading-relaxed">
-                            Always align number of simulation periods with the time frame represented in your budget data. 
-                            For instance, if your budget data represent the average annual expenditure of 10 years, this is equivalent to 50 simulation periods, hence each year corresponds to 5 periods. Accordingly, if you intend to simulate 5 years, you should input 25 periods. 
-                              
+                            Always align number of simulation periods with the time frame you wish to simulate into the future.
+                            Each year corresponds to 5 periods. Accordingly, if you intend to simulate 5 years, you should input 25 periods.
+
                             </p>
                         </div>
                     </div>
@@ -167,16 +156,50 @@
                     <p class="text-gray-600 mb-6">Set the number of simulation periods to execute</p>
                 </div>
 
-                <!-- Input Section -->
+                <!-- Input Section with Slider -->
                 <div class="space-y-6">
-                    <div>
-                         <label class="block text-xl font-medium text-[#0b0b0b] mb-3">Number of Simulation Periods</label>
-                        <div class="rounded-xl p-1 text-center bg-white backdrop-blur-xl border border-[#e4c891]">
-                            <input type="number" name="num_simulations" value="50" min="5" max="1000" required 
-                                   class="w-full text-4xl font-bold text-center bg-transparent outline-none input-glow rounded-lg py-2 text-gray-800"
-                                   oninput="updateEquivalent(this.value)">
+                    <div class="glass-card rounded-xl p-8 text-center">
+                        <!-- Periods Value Display -->
+                        <div class="mb-6">
+                            <div id="periods-value" class="text-4xl font-bold text-center text-gray-800 mb-2">50</div>
+                            <div class="text-sm font-medium text-[#cb8700] uppercase tracking-wide">Simulation Periods</div>
                         </div>
-                        <p id="time-equivalent" class="text-sm text-gray-500 text-center mt-2">Equivalent to 10.0 years of simulation time</p>
+                        
+                        <!-- Slider -->
+                        <div class="px-4">
+                           <input type="range" id="periods-slider" name="num_simulations" min="1" max="1000" step="1" value="50"
+                         class="w-full h-2 appearance-none rounded-lg outline-none bg-gradient-to-r from-[#8B45FF4D] via-[#6366F14D] to-[#A78BFA4D] [&::-webkit-slider-thumb]:appearance-none
+                              [&::-webkit-slider-thumb]:w-6
+                              [&::-webkit-slider-thumb]:h-6
+                              [&::-webkit-slider-thumb]:rounded-full
+                              [&::-webkit-slider-thumb]:cursor-pointer
+                              [&::-webkit-slider-thumb]:bg-gradient-to-br
+                              [&::-webkit-slider-thumb]:from-[#8B45FF]
+                              [&::-webkit-slider-thumb]:to-[#6366F1]
+                              [&::-webkit-slider-thumb]:shadow-lg
+                              [&::-webkit-slider-thumb]:transition
+                              [&::-webkit-slider-thumb]:duration-200
+                              [&::-webkit-slider-thumb]:hover:scale-110
+                              [&::-webkit-slider-thumb]:hover:shadow-xl
+                              [&::-moz-range-thumb]:w-6
+                              [&::-moz-range-thumb]:h-6
+                              [&::-moz-range-thumb]:rounded-full
+                              [&::-moz-range-thumb]:border-0
+                              [&::-moz-range-thumb]:cursor-pointer
+                              [&::-moz-range-thumb]:bg-gradient-to-br
+                              [&::-moz-range-thumb]:from-[#8B45FF]
+                              [&::-moz-range-thumb]:to-[#6366F1]
+                              [&::-moz-range-thumb]:shadow-lg
+                            "/>
+                          <div class="flex justify-between text-sm text-gray-500 mt-2">
+                            <span>1</span>
+                            <span class="text-[#0b0b0b] font-medium">Simulation Periods</span>
+                            <span>1000</span>
+                          </div>
+                        </div>
+                        
+                        <!-- Time Equivalent Display -->
+                        <p id="time-equivalent" class="text-sm text-gray-500 text-center mt-4">Equivalent to {{ years_equivalent }} years into the future you wish to simulate</p>
                     </div>
 
                     <!-- Submit Button -->
@@ -238,7 +261,7 @@
         </div>
 
         <!-- Stats Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6  mt-8">
             <div class="stats-grid rounded-xl p-6 text-center border border-gray-200">
                 <div class="text-3xl font-bold text-red-500 mb-2">50</div>
                 <div class="text-gray-600 font-medium">Calibration Periods</div>
@@ -256,14 +279,31 @@
 </div>
 
 <script>
+// Make data_time available to JavaScript
+const data_time = {{ data_time|default:50 }};
 
-    
-    
+// Get slider elements
+const periodsSlider = document.getElementById("periods-slider");
+const periodsDisplay = document.getElementById("periods-value");
+const currentSelection = document.getElementById("current-selection");
+const timeEquivalent = document.getElementById("time-equivalent");
+
+// Update equivalent years calculation
 function updateEquivalent(value) {
-    const years = (value / 50) * 10;
-    document.getElementById('time-equivalent').textContent = `Equivalent to ${years.toFixed(1)} years of simulation time`;
-    document.getElementById('current-selection').textContent = value;
+    const years = ((value / 50) * data_time).toFixed(1);
+    timeEquivalent.textContent = `Equivalent to ${years} years into the future that you wish to simulate`;
+    currentSelection.textContent = value;
 }
+
+// Show live slider value
+periodsSlider.addEventListener("input", function () {
+    const value = parseInt(this.value);
+    periodsDisplay.textContent = value;
+    updateEquivalent(value);
+});
+
+// Initialize on load
+updateEquivalent(periodsSlider.value);
 
 // Handle form submission with loading animation and Next button logic
 document.addEventListener('DOMContentLoaded', function() {
@@ -331,8 +371,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-
 </script>
-
 
 {% endblock %}
