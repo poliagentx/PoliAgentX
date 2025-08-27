@@ -204,7 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const dataObj = indicatorData[label];
             const plotDiv = makePlotWrapper(
                 `plot-${label.replace(/[^a-zA-Z0-9-_]/g,'')}`, 
-                label, 
+                 dataObj.row.indicator_name, 
                 dataObj.row.color, 
                 dataObj.row.sdg,
                 evolutionContainer

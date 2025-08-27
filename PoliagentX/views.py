@@ -770,18 +770,18 @@ def results(request):
 def another_results(request):
     if request.method == "POST":
         # Load session data
-        outputs_json = request.session.get('ppi_outputs')
+        outputs= request.session.get('ppi_outputs')
         goals = request.session.get('goals')
         indicators_path = request.session.get('indicators_path')
         
-        if not all([outputs_json, goals, indicators_path]):
+        if not all([outp, goals, indicators_path]):
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse({'error': 'Missing required files.'}, status=400)
             return HttpResponse("Missing required files.", status=400)
 
         try:
             # Decode stored outputs (list of tuples)
-            outputs = json.loads(outputs_json)
+            outputs = json.loads(outputs)
 
             # Read indicators sheet
             df_indis = pd.read_excel(indicators_path)
@@ -872,9 +872,9 @@ def another_results(request):
 def progress(request):
     if request.method == "POST":
         # Load session data
-        outputs_json = request.session.get('ppi_outputs')
+        outputs = request.session.get('ppi_outputs')
         indicators_path = request.session.get('indicators_path')
-        if not outputs_json:
+        if not outputs:
             return JsonResponse({'error': 'No progress data available.'}, status=400)
         
             
