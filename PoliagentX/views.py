@@ -570,7 +570,31 @@ class NumpyJSONEncoder(json.JSONEncoder):
         
         # Fallback to the base class's default method for all other types.
         return super().default(obj)
-    
+
+def serialize_for_session(data):
+    """
+    Convert NumPy arrays and other non-serializable types to JSON-serializable formats
+    for Django session storage.
+    """
+    if isinstance(data, np.ndarray):
+        return data.tolist()
+    elif isinstance(data, (np.integer, np.int64, np.int32)):
+        return int(data)
+    elif isinstance(data, (np.floating, np.float64, np.float32)):
+        if np.isnan(data):
+            return None
+        return float(data)
+    elif isinstance(data, np.bool_):
+        return bool(data)
+    elif isinstance(data, list):
+        return [serialize_for_session(item) for item in data]
+    elif isinstance(data, tuple):
+        return tuple(serialize_for_session(item) for item in data)
+    elif isinstance(data, dict):
+        return {key: serialize_for_session(value) for key, value in data.items()}
+    else:
+        return data
+
 def results(request):
     if request.method == "POST":
         # Get required file paths from session
@@ -628,7 +652,10 @@ def results(request):
 
             # Generate random goals
             goals = np.random.rand(N) * (Imax - I0) + I0
-            request.session['goals'] = goals
+            
+            # Convert goals to list before storing in session
+            request.session['goals'] = serialize_for_session(goals)
+            
             # Run simulation
             sample_size = 100
             outputs = []
@@ -636,15 +663,14 @@ def results(request):
                 output = run_ppi(I0, alpha, alpha_prime, betas, A=A, Bs=Bs, B_dict=B_dict, 
                                T=T, R=R, qm=qm, rl=rl, Imax=Imax, Imin=Imin, G=goals)
                 outputs.append(output)
- 
- 
-            request.session['ppi_outputs'] = outputs
+
+            # Convert outputs to serializable format before storing in session
+            request.session['ppi_outputs'] = serialize_for_session(outputs)
+            
             # Process simulation results
-            tsI, tsC, tsF, tsP, tsS, tsG = zip(*outputs)
+            tsI, _,_,_, _,_ = zip(*outputs)
             tsI_hat = np.mean(tsI, axis=0)
             
-           
-
             # Build the list of dictionaries for output
             df_output_list = []
             for i, serie in enumerate(tsI_hat):
@@ -657,7 +683,6 @@ def results(request):
                     'sdg': int(indicator_row.sdg) if pd.notna(indicator_row.sdg) else None,
                     'color': str(indicator_row.color),
                     'goal': float(goals[i])
-                    
                 }
                 
                 # Add time series data, ensuring all values are floats
@@ -669,16 +694,14 @@ def results(request):
                         row_dict[str(t)] = float(val)
                 
                 df_output_list.append(row_dict)
-                
 
             try:
                 df_output_json = json.dumps(df_output_list, cls=NumpyJSONEncoder)
-                df_output_json = json.dumps(df_output_list, default=str)
-               
+                
             except TypeError as e:
                 print(f"JSON serialization error: {e}")
                 # If custom encoder fails, try with explicit conversion
-              
+                df_output_json = json.dumps(df_output_list, default=str)
 
             # Generate Excel file for download
             output = BytesIO()
@@ -687,14 +710,13 @@ def results(request):
                 df_output_for_excel.to_excel(writer, index=False, sheet_name="Simulation_Results")
             output.seek(0)
             request.session['excel_data'] = base64.b64encode(output.getvalue()).decode('utf-8')
-            
-            
+              
             # Store simulation results in session for later use
+            # Make sure all data is serializable
             request.session['simulation_results'] = {
-                'df_output_list': df_output_list,
+                'df_output_list': df_output_list,  # This should already be JSON-serializable
                 'df_output_json': df_output_json,
                 'T': T,
-                
             }
 
             # Handle AJAX request (from the new template)
@@ -711,7 +733,6 @@ def results(request):
                 'df_output_list': df_output_list,
                 'df_output_json': df_output_json,
                 'T': T,
-                
             }
             return render(request, "results.html", context)
             
@@ -723,27 +744,29 @@ def results(request):
                 return JsonResponse({'error': error_message}, status=500)
             return HttpResponse(error_message, status=500)
     
-    # Handle GET requests - show results if they exist in session
+    # Handle GET requests
     elif request.method == "GET":
+        # Check if we have simulation results stored in session
         simulation_results = request.session.get('simulation_results')
         
         if simulation_results:
+            # We have previous simulation results, display them
             context = {
                 'df_output_list': simulation_results['df_output_list'],
                 'df_output_json': simulation_results['df_output_json'],
                 'T': simulation_results['T'],
-                
             }
             return render(request, "results.html", context)
         else:
-            # No simulation results available, redirect to simulation page
-            return redirect('simulation')
+            # No simulation results available, redirect to home or show error
+            return HttpResponse(
+                "No simulation results available. Please run a simulation first.",
+                status=400
+            )
     
-    # Handle other HTTP methods
-    return HttpResponse("Invalid request method.", status=405)
-
-
-
+    # Handle other HTTP methods (PUT, DELETE, etc.) - return method not allowed
+    else:
+        return HttpResponse("Method not allowed", status=405)
 def another_results(request):
     if request.method == "POST":
         # Load session data
@@ -846,9 +869,17 @@ def another_results(request):
     # Handle other HTTP methods
     return HttpResponse("Invalid request method.", status=405)
 
-    
-    
-
+def progress(request):
+    if request.method == "POST":
+        # Load session data
+        outputs_json = request.session.get('ppi_outputs')
+        indicators_path = request.session.get('indicators_path')
+        if not outputs_json:
+            return JsonResponse({'error': 'No progress data available.'}, status=400)
+        
+            
+      
+        
 
 from django.http import HttpResponse
 

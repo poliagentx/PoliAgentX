@@ -5,40 +5,48 @@
 
 {% block content %}
 
-
-
-
 <div class="container mx-auto px-4 my-4">
     
-
     {% if error %}
         <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative" role="alert">
             {{ error }}
         </div>
     {% else %}
      
-        <div class="bg-white shadow-lg rounded-xl p-6 mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
-            <div class="w-full md:flex-grow">
-                <label for="indicator-select" class="block text-sm font-semibold text-gray-700">Select View:</label>
-                <select id="indicator-select" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                    <option value="individual" selected>Individual Indicator Charts</option>
-                    <option value="all">All Indicators Combined</option>
-                    {% for row in df_output_list %}
-                        <option value="{{ row.indicator_label }}">{{ row.indicator_label }} Only</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <button 
-                type="button" 
-                class="w-full md:w-auto px-6 py-2 text-[#f2f2f2] font-semibold bg-[#cb8700] rounded-lg tracking-wide backdrop-blur-xl border border-white/20 transition-all duration-500 ease-in-out hover:bg-indigo-700 hover:text-white"
-                onclick="document.getElementById('compareModal').classList.remove('hidden')">
-                Compare Indicators
-            </button>
+        <!-- Tab Navigation -->
+        <div class="mb-6">
+            <nav class="flex space-x-1 bg-gray-100 p-1 rounded-lg" aria-label="Tabs">
+                <button 
+                    id="tab-evolution" 
+                    class="tab-button active flex-1 py-3 px-6 text-sm font-medium rounded-md focus:outline-none transition-all duration-300 ease-in-out"
+                    onclick="switchTab('evolution')">
+                    Evolution Charts
+                </button>
+                <button 
+                    id="tab-impact" 
+                    class="tab-button flex-1 py-3 px-6 text-sm font-medium rounded-md focus:outline-none transition-all duration-300 ease-in-out"
+                    onclick="switchTab('impact')">
+                    Impact Charts
+                </button>
+                <button 
+                    id="tab-priority" 
+                    class="tab-button flex-1 py-3 px-6 text-sm font-medium rounded-md focus:outline-none transition-all duration-300 ease-in-out"
+                    onclick="switchTab('priority')">
+                    Priority Rankings
+                </button>
+                <button 
+                    id="tab-scenarios" 
+                    class="tab-button flex-1 py-3 px-6 text-sm font-medium rounded-md focus:outline-none transition-all duration-300 ease-in-out"
+                    onclick="switchTab('scenarios')">
+                    Scenarios
+                </button>
+            </nav>
         </div>
-{% endif %}
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="plots-container"></div>
 
-        <!-- Excel Download Section -->
+        <!-- Tab Content -->
+        <div id="content-evolution" class="tab-content">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="evolution-plots-container"></div>
+                    <!-- Excel Download Section -->
         <div class="bg-white shadow-lg rounded-xl p-6 mt-6">
             <div class="flex flex-col md:flex-row items-center justify-between gap-4">
                 <div>
@@ -49,97 +57,54 @@
                 <button 
                     type="button" 
                     id="download-excel-btn"
-                    class=" group inline-flex items-center
-                bg-gradient-to-r from-[#0b0b0b]/20 to-[#0b0b0b]/10
-                backdrop-blur-xl border border-white/20
-                text-[#0b0b0b] shadow-[0_4px_20px_rgba(0,0,0,0.4)]
-                hover:shadow-[0_0_20px_rgba(0,255,200,0.6)]
-                transition-all duration-500 ease-in-out gap-2 mt-4 px-6 py-2">
-            <svg class="w-5 h-5 shrink-0 transition-transform duration-300 group-hover:translate-y-0.5"
-              viewBox="0 0 24 24" fill="none" aria-hidden="true"
-              stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5"/>
-            <path d="M7.5 10.5 12 15l4.5-4.5"/>
-            <path d="M12 15V3"/>
-          </svg>
-                  <span>Simulation Data</span>
-        </button>
+                    class="group inline-flex items-center
+                    bg-gradient-to-r from-[#0b0b0b]/20 to-[#0b0b0b]/10
+                    backdrop-blur-xl border border-white/20
+                    text-[#0b0b0b] shadow-[0_4px_20px_rgba(0,0,0,0.4)]
+                    hover:shadow-[0_0_20px_rgba(0,255,200,0.6)]
+                    transition-all duration-500 ease-in-out gap-2 mt-4 px-6 py-2">
+                    <svg class="w-5 h-5 shrink-0 transition-transform duration-300 group-hover:translate-y-0.5"
+                        viewBox="0 0 24 24" fill="none" aria-hidden="true"
+                        stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5"/>
+                        <path d="M7.5 10.5 12 15l4.5-4.5"/>
+                        <path d="M12 15V3"/>
+                    </svg>
+                    <span>Simulation Data</span>
+                </button>
+            </div>
         </div>
         </div>
-    
-</div>
-
-<div id="compareModal" class="fixed inset-0 z-50 hidden backdrop-blur-md bg-white/1 flex items-center justify-center">
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md">
         
-        <div class="flex justify-between items-center px-6 py-4 border-b">
-            <h3 class="text-lg font-semibold text-gray-800">Select Indicators to Compare</h3>
-            <button 
-                class="text-gray-500 hover:text-gray-700" 
-                onclick="document.getElementById('compareModal').classList.add('hidden')">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-        </div>
 
-        <div class="p-6 max-h-80 overflow-y-auto space-y-3">
-            <div class="flex items-center space-x-3 mb-4">
-                <input 
-                    type="radio" 
-                    id="compare-combined" 
-                    name="compare-mode" 
-                    value="combined"
-                    class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500">
-                <label for="compare-combined" class="text-sm font-medium text-gray-700">
-                    Combined Chart (All Selected)
-                </label>
-            </div>
-            <div class="flex items-center space-x-3 mb-4">
-                <input 
-                    type="radio" 
-                    id="compare-separate" 
-                    name="compare-mode" 
-                    value="separate"
-                    class="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500" checked>
-                <label for="compare-separate" class="text-sm font-medium text-gray-700">
-                    Separate Charts
-                </label>
-            </div>
-            <hr class="my-4">
-            <form id="compare-form" class="space-y-2">
-                {% for row in df_output_list %}
-                <div class="flex items-center space-x-3">
-                    <input 
-                        type="checkbox" 
-                        id="compare-{{ row.indicator_label }}" 
-                        value="{{ row.indicator_label }}" 
-                        class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 compare-checkbox">
-                    
-                    <label for="compare-{{ row.indicator_label }}" class="text-sm text-gray-700 flex items-center">
-                        <span class="w-3 h-3 rounded-full mr-2" style="background-color: {{ row.color }}"></span>
-                        {{ row.indicator_label }}
-                    </label>
+        <div id="content-impact" class="tab-content hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" id="impact-plots-container">
+                <div class="col-span-1 lg:col-span-2 bg-white shadow-lg rounded-xl p-6 text-center text-gray-600">
+                    <h3 class="text-lg font-semibold mb-2">Impact Charts</h3>
+                    <p>Impact analysis charts will be displayed here.</p>
                 </div>
-                {% endfor %}
-            </form>
+            </div>
         </div>
-        
-        <div class="flex justify-end space-x-3 px-6 py-4 border-t">
-            <button 
-                type="button" 
-                class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
-                onclick="document.getElementById('compareModal').classList.add('hidden')">
-                Cancel
-            </button>
-            <button 
-                type="button" 
-                id="compare-submit"
-                class="px-4 py-2 bg-gradient-to-r from-[#0b0b0b]/20 to-[#0b0b0b]/10 backdrop-blur-xl text-black rounded-lg shadow hover:bg-blue-700 transition">
-                Compare Selected
-            </button>
+
+        <div id="content-priority" class="tab-content hidden">
+            <div class="bg-white shadow-lg rounded-xl p-6" id="priority-rankings-container">
+                <h3 class="text-lg font-semibold mb-4 text-gray-800">Priority Rankings</h3>
+                <div class="text-center text-gray-600">
+                    <p>Priority ranking analysis will be displayed here.</p>
+                </div>
+            </div>
         </div>
-    </div>
+        <div id="content-scenarios" class="tab-content hidden">
+            <div class="bg-white shadow-lg rounded-xl p-6" id="scenarios-container">
+                <h3 class="text-lg font-semibold mb-4 text-gray-800"></h3>
+                <div class="text-center text-gray-600">
+                <p>what if? scenarios will be displayed here.</p>
+                </div>
+            </div>
+        </div>
+
+    {% endif %}
+    
 </div>
 
 <script src="https://cdn.plot.ly/plotly-2.27.1.min.js"></script>
@@ -148,7 +113,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const rawData = JSON.parse("{{ df_output_json|escapejs }}");
-    const container = document.getElementById("plots-container");
+    const evolutionContainer = document.getElementById("evolution-plots-container");
 
     // --- Preprocess Data ---
     const firstRow = rawData[0];
@@ -163,16 +128,43 @@ document.addEventListener('DOMContentLoaded', () => {
             x: timeKeys.map(k => parseInt(k)),
             y: timeKeys.map(k => row[k]),
             goal: Array(timeKeys.length).fill(row.goal),
-         
-         
         };
     });
 
     const allIndicators = Object.keys(indicatorData);
-    const selectEl = document.getElementById('indicator-select');
 
-    // --- Helpers ---
-    function makePlotWrapper(id, title, color, sdg) {
+    // --- Tab Functionality ---
+    window.switchTab = function(tabName) {
+        // Remove active class from all tab buttons
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.remove('active');
+            btn.classList.add('text-gray-600', 'hover:text-gray-800');
+            btn.classList.remove('bg-white', 'text-gray-900', 'shadow-sm');
+        });
+        
+        // Add active class to clicked tab button
+        const activeButton = document.getElementById(`tab-${tabName}`);
+        activeButton.classList.add('active');
+        activeButton.classList.remove('text-gray-600', 'hover:text-gray-800');
+        activeButton.classList.add('bg-white', 'text-gray-900', 'shadow-sm');
+        
+        // Hide all tab content
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.add('hidden');
+        });
+        
+        // Show selected tab content
+        document.getElementById(`content-${tabName}`).classList.remove('hidden');
+    };
+
+    // Initialize active tab styles
+    document.getElementById('tab-evolution').classList.add('bg-white', 'text-gray-900', 'shadow-sm');
+    document.querySelectorAll('.tab-button:not(#tab-evolution)').forEach(btn => {
+        btn.classList.add('text-gray-600', 'hover:text-gray-800');
+    });
+
+    // --- Helper Functions ---
+    function makePlotWrapper(id, title, color, sdg, container) {
         const plotWrapper = document.createElement('div');
         plotWrapper.className = 'bg-white shadow-lg rounded-xl p-6 h-[400px]';
         
@@ -204,28 +196,18 @@ document.addEventListener('DOMContentLoaded', () => {
         return plotDiv;
     }
 
-    function makeLargePlotWrapper(id) {
-        const plotWrapper = document.createElement('div');
-        plotWrapper.className = 'col-span-1 lg:col-span-2 bg-white shadow-lg rounded-xl p-6 h-[600px]';
-        const plotDiv = document.createElement('div');
-        plotDiv.id = id;
-        plotDiv.style.height = '100%';
-        plotWrapper.appendChild(plotDiv);
-        container.appendChild(plotWrapper);
-        return plotDiv;
-    }
+    // --- Evolution Charts (Individual Plots) ---
+    function renderEvolutionCharts() {
+        evolutionContainer.innerHTML = '';
 
-    // --- Plots ---
-    function renderIndividualPlots(selectedIndicators) {
-        container.innerHTML = '';
-
-        selectedIndicators.forEach(label => {
+        allIndicators.forEach(label => {
             const dataObj = indicatorData[label];
             const plotDiv = makePlotWrapper(
                 `plot-${label.replace(/[^a-zA-Z0-9-_]/g,'')}`, 
                 label, 
                 dataObj.row.color, 
-                dataObj.row.sdg
+                dataObj.row.sdg,
+                evolutionContainer
             );
 
             Plotly.newPlot(plotDiv, [
@@ -238,8 +220,28 @@ document.addEventListener('DOMContentLoaded', () => {
                     marker: { size: 6 }
                 }
             ], {
-                 xaxis: {title: {  text: 'Time',font: {size: 12,family: 'Roboto, sans-serif',color: '#0b0b0b'},standoff: 10}},
-                 yaxis: {title: { text: 'Indicator Level',font: {  size: 12,   family: 'Roboto, sans-serif', color: '#0b0b0b'},standoff: 10}},
+                xaxis: {
+                    title: {  
+                        text: 'Time',
+                        font: {
+                            size: 12,
+                            family: 'Roboto, sans-serif',
+                            color: '#0b0b0b'
+                        },
+                        standoff: 10
+                    }
+                },
+                yaxis: {
+                    title: { 
+                        text: 'Indicator Level',
+                        font: {  
+                            size: 12,   
+                            family: 'Roboto, sans-serif', 
+                            color: '#0b0b0b'
+                        },
+                        standoff: 10
+                    }
+                },
                 legend: { 
                     orientation: 'h', 
                     y: -0.15,
@@ -254,58 +256,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 displayModeBar: false 
             });
         });
-    }
-
-    function renderCombinedPlot(selectedIndicators) {
-        container.innerHTML = '';
-        const plotDiv = makeLargePlotWrapper('combined-plot');
-        
-        const traces = selectedIndicators.map(label => {
-            const d = indicatorData[label];
-            return { 
-                x: d.x, 
-                y: d.y, 
-                mode: 'lines+markers', 
-                name: label, 
-                line: { color: d.row.color, width: 3 },
-                marker: { size: 6 }
-            };
-        });
-
-        Plotly.newPlot(plotDiv, traces, {
-            title: 'Selected Indicators Comparison',
-            xaxis: {title: {  text: 'Time',font: {size: 12,family: 'Roboto, sans-serif',color: '#0b0b0b'},standoff: 10}},
-            yaxis: {title: { text: 'Indicator Level',font: {  size: 12,   family: 'Roboto, sans-serif', color: '#0b0b00b'},standoff: 10}},
-            legend: { orientation: 'h', y: -0.2 }
-        }, { responsive: true });
-    }
-
-    function renderSinglePlot(label) {
-        container.innerHTML = '';
-        const dataObj = indicatorData[label];
-        const plotDiv = makeLargePlotWrapper(`plot-${label.replace(/[^a-zA-Z0-9-_]/g,'')}`);
-
-        // Add SDG badge
-        const badge = document.createElement('span');
-        badge.className = 'inline-block px-3 py-1 text-xs font-semibold text-white rounded-full mb-2';
-        badge.style.backgroundColor = dataObj.row.color;
-        badge.textContent = 'SDG ' + dataObj.row.sdg;
-        plotDiv.parentNode.insertBefore(badge, plotDiv);
-
-        Plotly.newPlot(plotDiv, [
-            { 
-                x: dataObj.x, 
-                y: dataObj.y, 
-                mode: 'lines+markers', 
-                name: label, 
-                line: { color: dataObj.row.color, width: 3 } 
-            }
-        ], {
-            title: `Indicator: ${label}`,
-            xaxis: {title: {  text: 'Time',font: {size: 12,family: 'Roboto, sans-serif',color: '#0b0b0b'},standoff: 10}},
-            yaxis: {title: { text: 'Indicator Level',font: {  size: 12,   family: 'Roboto, sans-serif', color: '#0b0b0b'},standoff: 10}},
-            legend: { orientation: 'h', y: -0.2 }
-        }, { responsive: true });
     }
 
     // --- Excel Download Function ---
@@ -334,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Create metadata worksheet
         const wsMetaData = [];
-        wsMetaData.push(['Indicator', 'SDG', 'Color', 'Goal','Name']);
+        wsMetaData.push(['Indicator', 'SDG', 'Color', 'Goal']);
         
         allIndicators.forEach(indicator => {
             const data = indicatorData[indicator];
@@ -356,7 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Download file
         XLSX.writeFile(wb, filename);
         
-        // Show success message (optional)
+        // Show success message
         const btn = document.getElementById('download-excel-btn');
         const originalText = btn.innerHTML;
         btn.innerHTML = `
@@ -373,35 +323,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 2000);
     }
 
-    // --- Initial render (Individual plots by default) ---
-    renderIndividualPlots(allIndicators);
-
-    // Dropdown
-    selectEl.addEventListener('change', () => {
-        const val = selectEl.value;
-        if (val === 'individual') {
-            renderIndividualPlots(allIndicators);
-        } else if (val === 'all') {
-            renderCombinedPlot(allIndicators);
-        } else {
-            renderSinglePlot(val);
-        }
-    });
-
-    // Compare Modal
-    document.getElementById('compare-submit').addEventListener('click', () => {
-        const checked = [...document.querySelectorAll('.compare-checkbox:checked')].map(c => c.value);
-        const mode = document.querySelector('input[name="compare-mode"]:checked').value;
-        
-        if (checked.length > 0) {
-            if (mode === 'combined') {
-                renderCombinedPlot(checked);
-            } else {
-                renderIndividualPlots(checked);
-            }
-            document.getElementById('compareModal').classList.add('hidden');
-        }
-    });
+    // --- Initial render ---
+    renderEvolutionCharts();
 
     // Excel Download Event Listener
     document.getElementById('download-excel-btn').addEventListener('click', downloadExcel);
