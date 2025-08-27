@@ -23,32 +23,32 @@
     </div>
 
     <div class="workflow-progress-container text-white">
-      <a class="workflow-step {% if request.resolver_match.url_name == 'upload_indicators' %}current{% elif 'indicators_completed' in request.session %}completed{% endif %}">
+      <a href="upload-indicators/" class="workflow-step {% if request.resolver_match.url_name == 'upload_indicators' %}current{% elif 'indicators_completed' in request.session %}completed{% endif %}">
         Indicators
       </a>
       &gt;
 
-      <a href=""
+      <a 
          class="{% if request.resolver_match.url_name == 'budgets_page' %}text-black font-bold underline{% else %}text-gray-600 hover:text-black hover:underline{% endif %}">
          Budget
       </a>
       &gt;
 
-      <a class="workflow-step {% if request.resolver_match.url_name == 'upload_network' %}current{% elif 'network_completed' in request.session %}completed{% endif %}">
+      <a  class="workflow-step {% if request.resolver_match.url_name == 'upload_network' %}current{% elif 'network_completed' in request.session %}completed{% endif %}">
         Network (optional)
       </a>
       &gt;
 
-      <a class="workflow-step {% if request.resolver_match.url_name == 'calibration' or request.resolver_match.url_name == 'start_calibration' %}current{% elif 'calibration_completed' in request.session %}completed{% endif %}">
+      <a  class="workflow-step {% if request.resolver_match.url_name == 'calibration' or request.resolver_match.url_name == 'start_calibration' %}current{% elif 'calibration_completed' in request.session %}completed{% endif %}">
         Calibration
       </a>
 
       <span class="separator">&gt;</span>
 
-      <a class="workflow-step {% if request.resolver_match.url_name == 'simulation' or request.resolver_match.url_name == 'start_simulation' %}current{% elif 'simulation_completed' in request.session %}completed{% endif %}">
+      <a  class="workflow-step {% if request.resolver_match.url_name == 'simulation' or request.resolver_match.url_name == 'start_simulation' %}current{% elif 'simulation_completed' in request.session %}completed{% endif %}">
         Simulation
       </a>
-      <a class="workflow-step {% if request.resolver_match.url_name == 'results' %}current{% elif 'simulation_completed' in request.session %}completed{% endif %}">
+      <a  class="workflow-step {% if request.resolver_match.url_name == 'results' %}current{% elif 'simulation_completed' in request.session %}completed{% endif %}">
         Results
       </a>
     </div>

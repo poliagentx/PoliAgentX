@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 
 def build_relational_table(data_indi):
     is_instrumental = dict(zip(data_indi.indicator_label, data_indi.instrumental == 1))
@@ -13,4 +12,11 @@ def build_relational_table(data_indi):
         M[i][0] = sdg
         for j, indi in enumerate(indis):
             M[i][j+1] = indi
-    return pd.DataFrame(M, columns=['indicator_label'] + list(range(n_cols)))
+
+    # Build DataFrame
+    df = pd.DataFrame(M, columns=['indicator_label'] + list(range(n_cols)))
+
+    # Rename the first numeric column to 'sdg'
+    df = df.rename(columns={0: 'sdg'})
+
+    return df
