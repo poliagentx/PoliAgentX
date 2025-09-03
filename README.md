@@ -1,5 +1,6 @@
 **Summary**  
-Our project is built using django for the backend and strictly  HTML,Taiwind-CSS,CSS & Javascript for the frontend.    
+Our project is built using django for the backend and strictly  HTML,Taiwind-CSS,CSS & Javascript for the frontend.  
+   
 
 **Structure of our project**           
 1.Django Project: Poliagent   
