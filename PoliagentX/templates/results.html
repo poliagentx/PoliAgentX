@@ -4,14 +4,14 @@
 {% block title %}Simulation Results{% endblock %}
 
 {% block content %}
-<div class="container mx-auto my-6">
+<div class="container mx-auto my-6 px-4">
 
     <!-- Top Controls: Indicator select, Compare, Simulation Steps -->
-    <div class="flex flex-wrap gap-4 items-center">
+    <div class="flex flex-wrap gap-4 items-center mb-6">
         <!-- Indicator Select -->
         <div>
-            <label for="indicator-select" class="text-gray-700 font-semibold">Select Indicator</label>
-            <select id="indicator-select" class="border rounded p-2">
+            <label for="indicator-select" class="block text-gray-700 font-semibold mb-2">Select Indicator</label>
+            <select id="indicator-select" class="border border-gray-300 rounded-lg p-2 min-w-[200px]">
                 <option value="all">All</option>
                 {% for row in df_output_list %}
                     <option value="{{ row.indicator_label }}">{{ row.indicator_label }}</option>
@@ -21,56 +21,92 @@
 
         <!-- Compare Button -->
         <div>
-            <button id="compare-button" class="bg-blue-600 text-white px-4 py-2 rounded">Compare Indicators</button>
+            <label class="block text-gray-700 font-semibold mb-2">&nbsp;</label>
+            <button id="compare-button" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                Compare Indicators
+            </button>
         </div>
 
         <!-- Simulation Steps Input -->
-        <div class="ml-auto flex items-center gap-2">
-            <label for="num-steps" class="text-gray-700 font-semibold">Simulation Steps</label>
-            <input id="num-steps" type="number" value="{{ T }}" class="border rounded p-2 w-20">
-            <button id="update-steps" class="bg-green-600 text-white px-3 py-2 rounded">Update</button>
+        <div class="ml-auto flex flex-col">
+            <label for="num-steps" class="block text-gray-700 font-semibold mb-2">Simulation Steps</label>
+            <div class="flex items-center gap-2">
+                <input id="num-steps" type="number" value="{{ T }}" class="border border-gray-300 rounded-lg p-2 w-20">
+                <button id="update-steps" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg transition-colors">
+                    Update
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- Compare Dropdown (hidden by default) -->
-    <div id="compare-dropdown" class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-4 hidden">
-        {% for row in df_output_list %}
-        <label class="flex items-center bg-white shadow-lg rounded-xl p-2 cursor-pointer hover:bg-gray-100">
-            <input type="checkbox" class="compare-checkbox mr-2" value="{{ row.indicator_label }}">
-            <span>{{ row.indicator_label }}</span>
-        </label>
-        {% endfor %}
-        <div class="col-span-full flex justify-end gap-2 mt-2">
-            <button id="compare-submit" class="bg-blue-600 text-white px-4 py-2 rounded">Compare</button>
+    <!-- Compare Modal (fixed CSS conflicts) -->
+    <div id="compareModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-4xl w-full max-h-[80vh] overflow-y-auto">
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold mb-4">Select Indicators to Compare</h3>
+                    
+                    <!-- Compare Dropdown Content (removed conflicting classes) -->
+                    <div id="compare-dropdown" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+                        {% for row in df_output_list %}
+                        <label class="flex items-center bg-gray-50 hover:bg-gray-100 rounded-lg p-3 cursor-pointer transition-colors">
+                            <input type="checkbox" class="compare-checkbox mr-3" value="{{ row.indicator_label }}">
+                            <span class="text-sm">{{ row.indicator_label }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Modal Actions -->
+                    <div class="flex justify-end gap-3">
+                        <button id="compare-cancel" class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">
+                            Cancel
+                        </button>
+                        <button id="compare-submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                            Compare Selected
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Plots Container -->
-    <div id="plots-container" class="grid grid-cols-1 gap-4 mt-6"></div>
+    <!-- Plots Container (fixed width and spacing) -->
+    <div id="plots-container" class="w-full space-y-6">
+        <!-- Plots will be dynamically inserted here -->
+    </div>
 
-    <!-- Indicator Dashboard -->
+    <!-- Indicator Dashboard (removed conflicting classes) -->
     <div id="indicator-dashboard" class="bg-white shadow-lg rounded-xl p-6 mt-6 hidden">
         <h4 class="text-xl font-semibold text-gray-800 mb-4">Indicator Dashboard</h4>
-        <div id="dashboard-content" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <p>Select an indicator to see details here.</p>
+        <!-- Fixed dashboard content container -->
+        <div id="dashboard-content" class="space-y-4">
+            <p class="text-gray-500">Select an indicator to see details here.</p>
         </div>
     </div>
 
-    <!-- Simulation Table -->
-    <div class="bg-white shadow-lg rounded-xl p-6 mt-6">
-        <h4 class="text-xl font-semibold text-gray-800 mb-4">Simulation Table</h4>
-        <div class="overflow-auto max-h-[400px]">
-            <table class="w-full text-sm text-left text-gray-500 rounded-lg overflow-hidden" id="simulation-table">
-                <thead class="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0" id="table-head"></thead>
-                <tbody id="table-body"></tbody>
+    <!-- Simulation Table (improved layout) -->
+    <div class="bg-white shadow-lg rounded-xl overflow-hidden mt-6">
+        <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+            <h4 class="text-xl font-semibold text-gray-800">Simulation Data</h4>
+        </div>
+        <div class="overflow-auto max-h-[500px]">
+            <table class="w-full text-sm text-left" id="simulation-table">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 sticky top-0" id="table-head">
+                    <!-- Table headers will be populated by JavaScript -->
+                </thead>
+                <tbody id="table-body" class="divide-y divide-gray-200">
+                    <!-- Table rows will be populated by JavaScript -->
+                </tbody>
             </table>
         </div>
     </div>
 </div>
 
+<!-- Scripts -->
 <script>
     const rawData = {{ df_output_json|safe }};
 </script>
 <script src="{% static 'Js/dashboard.js' %}"></script>
 <script src="{% static 'Js/results.js' %}"></script>
+
 {% endblock %}
