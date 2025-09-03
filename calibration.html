@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPI Calibration Interface</title>
+    <link rel="stylesheet" href="calibration.css">
+</head>
+<body>
+    <div class="header">
+        <button class="logo-button">LOGO</button>
+    </div>
+
+    <div class="main-content">
+        <div class="content-wrapper">
+            <div class="left-section">
+                <div class="title-section">
+                    <h1>STEP 4</h1>
+                    <h2>CALIBRATION</h2>
+                </div>
+                
+                <div class="placeholder-box">
+                    <button class="help-button">HELP</button>
+                </div>
+            </div>
+
+            <div class="right-section">
+                <div class="instructions-box">
+                    <div class="instructions-text">
+                        THIS WILL HELP TO DETERMINE THE QUALITY OF<br>
+                        THE SIMULATIONS THAT WILL OCCUR
+                    </div>
+                    <div class="slider-section">
+                        <div class="slider-value" id="slider-value">0.50</div>
+                        <input type="range" id="slider" min="0" max="1" step="0.01" value="0.5">
+                        <div class="slider-labels">
+                            <span>0</span>
+                            <span>1</span>
+                        </div>
+                    </div>
+                    
+                    <div class="button-container">
+                        <button class="action-button">START CALIBRATION</button>
+                        <button class="action-button next-button">NEXT</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+<script>
+  const slider = document.getElementById("slider");
+  const display = document.getElementById("slider-value");
+
+  slider.addEventListener("input", function () {
+    display.textContent = parseFloat(this.value).toFixed(2);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+ * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #ffffff;
+            color: #333;
+        }
+
+        .header {
+            background-color: #e8e8e8;
+            padding: 0 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            overflow: hidden;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .logo-badge {
+            display: inline-block;
+            background: #60a5fa;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 25px;
+            margin-top: 10px;
+        }
+
+        .title {
+            font-size: 50px;
+            font-weight: 700;
+            color: #000;
+            text-align: center;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #000;
+            text-align: center;
+            line-height: 1.5;
+            max-width: 600px;
+            margin: 0 auto 50px;
+        }
+
+        .visualizations-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px;
+            margin-bottom: 40px;
+        }
+
+        .visualization-card {
+            background: #E5E5E5;
+            border-radius: 8px;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .visualization-card:hover {
+            background: #DCDCDC;
+            border-color: #3b82f6;
+        }
+
+        .visualization-card.large {
+            grid-column: span 2;
+        }
+
+        .download-section {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 30px;
+        }
+
+        .download-btn {
+            background: #60a5fa;
+            color: white;
+            border: none;
+            padding: 15px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin: 30px;
+        }
+
+        .download-btn:hover {
+            background:  #3b82f6;
+            transform: translateY(-1px);
+        }
+
+        .visualization-title {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .viz-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .visualizations-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .visualization-card.large {
+                grid-column: span 1;
+            }
+            
+            .title {
+                font-size: 36px;
+            }
+            
+            .container {
+                padding: 20px 15px;
+            }
+        }
